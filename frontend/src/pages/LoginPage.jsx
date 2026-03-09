@@ -1,12 +1,16 @@
 function LoginPage () {
+    const handleSubmit = (event) => {
+        event.preventDefault();
+        console.log("Login submitted");
+    };
     return (
         
     <div className="LoginPage">
 
         <div className="LoginBox">
-            <h1>AthletePal</h1>
+            <h1 className="LoginHeader text-3xl font-bold text-center text-blue-800 mb-6">AthletePal</h1>
 
-            <form>
+            <form classNameonSubmit={handleSubmit}>
 
                 <label>Email / Username</label>
                 <input type="text" placeholder="Enter email or username" />
