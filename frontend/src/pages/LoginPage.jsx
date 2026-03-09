@@ -11,6 +11,9 @@ function LoginPage () {
             <h1 className="LoginHeader text-3xl font-bold text-center text-blue-800 mb-6">AthletePal</h1>
 
             <form classNameonSubmit={handleSubmit}>
+            <h1>AthletePal</h1>
+
+            <form>
 
                 <label>Email / Username</label>
                 <input type="text" placeholder="Enter email or username" />
