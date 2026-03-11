@@ -5,20 +5,34 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.routing.*
 import io.ktor.server.response.*
+import io.ktor.server.plugins.cors.routing.*
+import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.serialization.kotlinx.json.*
 
-
-fun Application.module() {
-    configureSerialization()
-    configureHTTP()
-    configureRouting()
-}
+// Import routing functions for authorisation requests (i.e. login and create account functions)
+import routes.authRoutes
 
 fun main() {
     embeddedServer(Netty, port = 3000) { // Server with Netty engine on port 3000
-        routing {
-            get("/") { // On get method, with no path ('/')...
-                call.respondText("Server Running") // Send confirmation message (shows server running)
-            }
+        module() // Call func. 'Application.module()'
         }
     }.start(wait = true) // Start server
+}
+
+fun Application.module() { // Function for config. of Ktor app.
+    install(CORS) { // Install CORS plugin
+        anyHost() // Allow requests from any port number
+    }
+    install(ContentNegotiation) { // Install content negociation plugin
+        json() // Automatic JSON handling
+    }
+
+    routing{
+        get("/health") { // When GET HTTP request made for server health...
+            call.respond(mapOf("Status" to "Running")) // Respond with affirmative good health response
+        }
+
+        authRoutes() // Add authRoutes to Ktor routing table
+
+    }
 }
