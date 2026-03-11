@@ -1,6 +1,6 @@
 function CreateAccountPage() {
   const handleSubmit = (event) => {
-    event.preventDefault()
+    event.preventDefault() 
     console.log("Account created")
   }
 
@@ -18,7 +18,7 @@ function CreateAccountPage() {
           <label>Full Name</label>
           <input
             type="text"
-            placeholder="Enter your name"
+            placeholder="Enter your  name"
             className="border p-2 rounded"
           />
 

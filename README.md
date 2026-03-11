@@ -1,1 +1,1 @@
-# Gym-Program-Project
+# AthletePal
