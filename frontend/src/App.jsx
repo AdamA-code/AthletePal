@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import LoginPage from "./pages/LoginPage"
 import CreateAccountPage from "./pages/CreateAccountPage"
+import DashboardPage from "./pages/Dashboard"
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
 
         <Route path="/create-account" element={<CreateAccountPage />} />
 
+        <Route path="dashboard" element={<DashboardPage />} />
       </Routes>
 
     </BrowserRouter>
