@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom"
+
 function LoginPage () {
     const handleSubmit = (event) => {
         event.preventDefault();
@@ -24,7 +26,9 @@ function LoginPage () {
 
             <button>Forgot password?</button>
 
-            <button>Create Account</button>
+            <Link to="/create-account">
+                <button>Create Account</button>
+            </Link>
 
         </div>
 
