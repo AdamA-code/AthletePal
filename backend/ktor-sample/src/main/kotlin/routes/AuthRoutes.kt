@@ -18,7 +18,9 @@ fun Route.authRoutes() {
             val isValid = authService.validateLogin(loginRequest.username, loginRequest.password) // If authService deems the password acceptable
 
         if (isValid) {
-            call.respond(mapOf())
+            call.respond(mapOf("message" to "Login Successful")) // Response for valid login
+        } else {
+            call.respond(mapOf("message" to "Invalid Credentials")) // Response for invalid login
         }
 
         }
