@@ -1,8 +1,17 @@
+import { Link } from "react-router-dom"
+import { useState } from "react";
+
+
 function CreateAccountPage() {
   const handleSubmit = (event) => {
     event.preventDefault() 
     console.log("Account created")
   }
+  const [fullName, setFullName] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [age, setAge] = useState("")
+  const [accountType, setAccountType] = useState("")
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -19,6 +28,8 @@ function CreateAccountPage() {
           <input
             type="text"
             placeholder="Enter your  name"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
             className="border p-2 rounded"
           />
 
@@ -26,6 +37,8 @@ function CreateAccountPage() {
           <input
             type="email"
             placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="border p-2 rounded"
           />
 
@@ -33,6 +46,8 @@ function CreateAccountPage() {
           <input
             type="password"
             placeholder="Enter password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             className="border p-2 rounded"
           />
 
@@ -40,6 +55,8 @@ function CreateAccountPage() {
           <input
             type="number"
             placeholder="Enter your age"
+            value={age}
+            onChange={(e) => setAge(e.target.value)}
             className="border p-2 rounded"
           />
 
@@ -48,12 +65,24 @@ function CreateAccountPage() {
           <div className="flex gap-4">
 
             <label className="flex items-center gap-2">
-              <input type="radio" name="accountType" value="trainer" />
+              <input 
+                type="radio" 
+                name="accountType" 
+                value="trainer"
+                checked={accountType === "trainer"}
+                onChange={(e) => setAccountType(e.target.value)}
+              />
               Trainer
             </label>
 
             <label className="flex items-center gap-2">
-              <input type="radio" name="accountType" value="user" />
+              <input 
+                type="radio"
+                name="accountType" 
+                value="user"
+                checked={accountType === "user"}
+                onChange={(e) => setAccountType(e.target.value)} 
+              />
               User
             </label>
 
@@ -67,6 +96,14 @@ function CreateAccountPage() {
           </button>
 
         </form>
+
+        <p className="text-center mt-4">
+          Already have an account?{" "}
+          <Link to="/" className="text-blue-700 hover:underline">
+            Login
+          </Link>
+        </p>
+
 
       </div>
 

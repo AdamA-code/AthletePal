@@ -1,10 +1,16 @@
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
+import { useState } from "react";
 
 function LoginPage () {
+    const navigate = useNavigate()
+
     const handleSubmit = (event) => {
         event.preventDefault();
-        console.log("Login submitted");
+        navigate("/dashboard");
     };
+
+    const [emailOrUsername, setEmailOrUsername] = useState("")
+    const [password, setPassword] = useState("")
     return (
         
         <div className="LoginPage min-h-screen flex items-center justify-center bg-gray-100 px-4">
@@ -21,6 +27,8 @@ function LoginPage () {
                             id="emailOrUsername"
                             type="text"
                             placeholder="Enter email or username"
+                            value={emailOrUsername}
+                            onChange={(e) => setEmailOrUsername(e.target.value)}
                             className="border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                     </div>
@@ -33,12 +41,14 @@ function LoginPage () {
                             id="password"
                             type="password" 
                             placeholder="Enter password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
                             className="border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                     </div>
                     <button 
                         type="submit"
-                        className="Login bg-blue-500 text-white py-2 rounded-md font-semibold hover:bg-blue-600 transistion"
+                        className="Login bg-blue-500 text-white py-2 rounded-md font-semibold hover:bg-blue-600 transition"
                     >
                         Login
                     </button>
