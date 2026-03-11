@@ -15,9 +15,9 @@ import routes.authRoutes
 fun main() {
     embeddedServer(Netty, port = 3000) { // Server with Netty engine on port 3000
         module() // Call func. 'Application.module()'
-        }
     }.start(wait = true) // Start server
 }
+
 
 fun Application.module() { // Function for config. of Ktor app.
     install(CORS) { // Install CORS plugin
@@ -28,6 +28,9 @@ fun Application.module() { // Function for config. of Ktor app.
     }
 
     routing{
+        get("/"){
+            call.respond("")
+        }
         get("/health") { // When GET HTTP request made for server health...
             call.respond(mapOf("Status" to "Running")) // Respond with affirmative good health response
         }

@@ -6,16 +6,18 @@ import io.ktor.server.testing.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+
+
 class ApplicationTest {
 
     @Test
-    fun testRoot() = testApplication {
+    fun testHealthRoot() = testApplication {
         application {
             module()
         }
-        client.get("/").apply {
-            assertEquals(HttpStatusCode.OK, status)
-        }
+        val response = client.get("/health")
+        assertEquals(HttpStatusCode.OK, response.status)
     }
-
 }
+
+

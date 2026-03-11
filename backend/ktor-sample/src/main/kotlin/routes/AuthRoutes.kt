@@ -13,7 +13,7 @@ fun Route.authRoutes() {
 
     route("/auth") { // If HTTP request in the '/auth' route... 
         post("/login") { // If HTTP request is a POST of '/login'...
-            val loginRequest = call.recieve = call.recieve<LoginRequest>() // Break down the request into usable data, as outlined in LoginRequest
+            val loginRequest = call.receive<LoginRequest>() // Break down the request into usable data, as outlined in LoginRequest
 
             val isValid = authService.validateLogin(loginRequest.username, loginRequest.password) // If authService deems the password acceptable
 
