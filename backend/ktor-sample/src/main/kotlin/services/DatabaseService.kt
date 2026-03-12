@@ -17,7 +17,7 @@ data class User(
 )
 
 // Connect to DB
-val connection: Connection = DriverManager.getConnection("")
+pribate val connection: Connection = DriverManager.getConnection("/workspaces/AthletePal/backend/ktor-sample/src/main/resources/users.db")
 
 fun createUser(user: User) {
     // SQL INSERT statement with "?"" as a placeholder
