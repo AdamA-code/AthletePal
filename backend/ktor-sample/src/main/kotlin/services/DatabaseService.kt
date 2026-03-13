@@ -6,7 +6,7 @@ import java.sql.ResultSet // Represents results of SQL queries
 data class User(
     val userID: Int,
     val name: String,
-    val emai: String,
+    val email: String,
     val passwordHash: String,
     val passwordKey: String,
     val gender: String?,
@@ -20,27 +20,31 @@ data class User(
 pribate val connection: Connection = DriverManager.getConnection("/workspaces/AthletePal/backend/ktor-sample/src/main/resources/users.db")
 
 fun createUser(user: User) {
-    // SQL INSERT statement with "?"" as a placeholder
-    val stmt: PreparedStatement = connection.prepareStatement(
-        """
-        INSERT INTO users(name, email, passwordHash, key, gender, age, height, weight, accountType)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """.trimIndent()
-    )
+    if findUser(user) == null {
+        // SQL INSERT statement with "?"" as a placeholder
+        val stmt: PreparedStatement = connection.prepareStatement(
+            """
+            INSERT INTO users(name, email, passwordHash, key, gender, age, height, weight, accountType)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """.trimIndent()
+        )
 
-    // Set the values for each placeholder in the SQL statement
-    stmt.setString(1, user.name)
-    stmt.setString(2, user.email)
-    stmt.setString(3, user.passwordHash)
-    stmt.setString(4, user.key)
-    stmt.setString(5, user.gender)
-    stmt.setObject(6, user.age)
-    stmt.setObject(7, user.height)
-    stmt.setObject(8, user.weight)
-    stmt.setString(9, user.accountType)
+        // Set the values for each placeholder in the SQL statement
+        stmt.setString(1, user.name)
+        stmt.setString(2, user.email)
+        stmt.setString(3, user.passwordHash)
+        stmt.setString(4, user.key)
+        stmt.setString(5, user.gender)
+        stmt.setObject(6, user.age)
+        stmt.setObject(7, user.height)
+        stmt.setObject(8, user.weight)
+        stmt.setString(9, user.accountType)
 
-    stmt.executeUpdate() // Execute the INSERT command
-    stmt.close() // Close the statement
+        stmt.executeUpdate() // Execute the INSERT command
+        stmt.close() // Close the statement
+        return True
+    } else (return False)
+
 }
 
 fun findUser(email: String): User? {
