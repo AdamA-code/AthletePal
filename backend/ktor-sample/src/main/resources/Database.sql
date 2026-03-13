@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS users;
+
 CREATE TABLE users (
     userID INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NUll,
@@ -8,5 +10,5 @@ CREATE TABLE users (
     age INTEGER,
     height REAL,
     weight REAL,
-    accountType TEXT
+    accountType BOOLEAN
     );
