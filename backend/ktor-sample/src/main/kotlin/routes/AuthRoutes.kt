@@ -9,9 +9,11 @@ import models.LoginRequest // Import the model for a login request (i.e. formatt
 import models.CreateAccountRequest // Import the model for account creation data
 
 import services.AuthService // Import service (logic) for validating a login
+import service.DatabaseService // Import service for storing to database
 
 fun Route.authRoutes() {
     val authService = AuthService() // Initialise AuthService in routes
+    val databaseService = DatabaseService() // Initialise databaseService
 
     route("/auth") { // If HTTP request in the '/auth' route... 
         post("/login") { // If HTTP request is a POST of '/login'...
@@ -30,18 +32,27 @@ fun Route.authRoutes() {
         post("/create-account") { // If HTTP request is post of account creation
             val createAccountRequest = call.recieve<CreateAccountRequest>() // Retrieve data from POST, and store in a class 'createAccountRequest'
 
-            val accountCreated = authService.newAccount() // Call function for account creation in authService, retrieve boolean confirmation
+            val accountCreated = databaseService.createUser(/* */) // Call function for account creation in authService, retrieve boolean confirmation
 
-            if (accountCreated == 1) {
+            if (accountCreated) {
                 call.respond(mapOf("message" to "Account created!")) // Success message if account successfully created
-            } else if (accountCreated == 2) {
+            } else if not(accountCreated) {
                 call.respond(mapOf("message" to "User already exists!")) // Fail message if account not created (as user already exists)
-            } else if (accountCreated == 3) {
-                call.respond(mapOf("message" to "Invalid email!")) // Fail message if account not created (due to invalid email format, i.e. no @, etc)
-            } else {
-                call.respond("message" to "Account could not be created!")
             }
-        }
+
+
+    
+        /* post("/forgot-password") {
+            val targetUser = call.recieve<ForgotPasswordRequest>() // Retrieve data from request
+
+            val verificationSent: Boolean = databaseService.PLACEHOLDER(targetUser.email)
+            
+            if (verificationSent) {
+                call.respond(mapOf("message" to "E-Mail sent!"))
+            } else {
+                call.respond(mapOf("message" to "Account does not exist!"))
+            }
+        } */
 
     }
 
