@@ -1,17 +1,35 @@
 import { Link } from "react-router-dom"
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 
 function CreateAccountPage() {
   const handleSubmit = (event) => {
     event.preventDefault() 
-    console.log("Account created")
+    if (!fullName || !email || !password || !age || !accountType) {
+      setError("Please fill in all the fields.")
+      return
+    }
+
+    setError("")
+
+    console.log({
+      fullName,
+      email,
+      password,
+      age,
+      accountType
+    })
+
+    navigate("/")
   }
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [age, setAge] = useState("")
   const [accountType, setAccountType] = useState("")
+  const [error, setError] = useState("")
+  const navigate = useNavigate()
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -21,6 +39,10 @@ function CreateAccountPage() {
         <h1 className="text-3xl font-bold text-center text-blue-800 mb-6">
           Create Account
         </h1>
+
+        {error && (
+          <p className="text-red-600 text-sm mb-4 text-center">{error}</p>
+        )}
 
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
 
