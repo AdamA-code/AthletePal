@@ -6,11 +6,17 @@ function LoginPage () {
 
     const handleSubmit = (event) => {
         event.preventDefault();
+        if (!emailOrUsername || !password) {
+            setError("Please enter both email/username and password")
+            return
+        }
+        setError("")
         navigate("/dashboard");
     };
 
     const [emailOrUsername, setEmailOrUsername] = useState("")
     const [password, setPassword] = useState("")
+    const [error, setError] = useState("")
     return (
         
         <div className="LoginPage min-h-screen flex items-center justify-center bg-gray-100 px-4">
@@ -18,6 +24,9 @@ function LoginPage () {
             <div className="LoginBox bg-white p-10 rounded-x1 shadow-lg w-full max-w-md">
                 <h1 className="LoginHeader text-3xl font-bold text-center text-blue-800 mb-6">AthletePal</h1>
 
+                {error && (
+                    <p className="text-red-600 text-sm mb-4 text-center">{error}</p>
+                )}
                 <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
                     <div className="flex flex-col">
                         <label htmlFor="emailOrUsername" className="text-sm font-semibold mb-1">
