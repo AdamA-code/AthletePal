@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.example.ApplicationTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-03-11T17:18:40.522Z" hostname="codespaces-ec4c1f" time="1.635">
+<testsuite name="com.example.ApplicationTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-03-15T23:07:29.872Z" hostname="codespaces-146f87" time="1.589">
   <properties/>
-  <testcase name="testHealthRoot" classname="com.example.ApplicationTest" time="1.622"/>
-  <system-out><![CDATA[2026-03-11 17:18:41.875 [DefaultDispatcher-worker-2 @call-context#3] INFO  io.ktor.test - No ktor.deployment.watch patterns specified, automatic reload is not active.
-2026-03-11 17:18:41.958 [DefaultDispatcher-worker-2 @call-context#3] INFO  io.ktor.test - Application started in 0.111 seconds.
-2026-03-11 17:18:41.960 [DefaultDispatcher-worker-1 @coroutine#5] INFO  io.ktor.test - Responding at http://localhost:80
-2026-03-11 17:18:41.962 [DefaultDispatcher-worker-1 @coroutine#5] INFO  io.ktor.test - Responding at https://localhost:443
+  <testcase name="testHealthRoot" classname="com.example.ApplicationTest" time="1.582"/>
+  <system-out><![CDATA[2026-03-15 23:07:31.204 [DefaultDispatcher-worker-2 @call-context#3] INFO  io.ktor.test - No ktor.deployment.watch patterns specified, automatic reload is not active.
+2026-03-15 23:07:31.270 [DefaultDispatcher-worker-2 @call-context#3] INFO  io.ktor.test - Application started in 0.08 seconds.
+2026-03-15 23:07:31.274 [DefaultDispatcher-worker-1 @coroutine#5] INFO  io.ktor.test - Responding at http://localhost:80
+2026-03-15 23:07:31.274 [DefaultDispatcher-worker-1 @coroutine#5] INFO  io.ktor.test - Responding at https://localhost:443
 ]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>
