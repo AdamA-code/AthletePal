@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="test.AuthTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-03-15T23:07:31.468Z" hostname="codespaces-146f87" time="0.413">
+  <properties/>
+  <testcase name="testSignupAndLogin" classname="test.AuthTest" time="0.413"/>
+  <system-out><![CDATA[User created: false
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

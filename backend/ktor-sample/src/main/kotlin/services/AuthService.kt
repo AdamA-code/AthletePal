@@ -1,21 +1,23 @@
 package services
+import services.createUser
+import services.findUser
 import java.security.MessageDigest // Provides hashing algorithms
 import java.security.SecureRandom // Used for generating random salt
 import java.util.Base64 // Converts binary data into readable strings
 
 class AuthService {
 
-    fun validateLogin(username: String, password: String): Boolean {
+    fun validateLogin(email: String, password: String): Boolean {
         val user = findUser(email) // Load user from databsed
 
-        if (user != null && verifyPassword(inputPassword, user.key, user.passwordHash)) {
-            return True
+        if (user != null && verifyPassword(password, user.passwordKey, user.passwordHash)) {
+            return true
         }
-        return False
+        return false
     }
 
 
-    fun generateSalt() String {
+    fun generateSalt(): String {
 
         val random = SecureRandom() // Create secure random number generator
         val saltBytes = ByteArray(16) // Create array to hold random data
@@ -24,7 +26,7 @@ class AuthService {
         return Base64.getEncoder().encodeToString(saltBytes) // Convert binary to text
     }
 
-    fun passwordHash(password: String, salt: String) String {
+    fun hashPassword(password: String, salt: String): String {
         
         val digest = MessageDigest.getInstance("SHA-256") // Create a SHA-256 hashing object
 
@@ -35,10 +37,36 @@ class AuthService {
         return encoded
     }
 
-    fun verifyPassword(password: String, key: String, hash: String): Boolean {
+    fun verifyPassword(password: String, passwordKey: String, passwordHash: String): Boolean {
 
-        val newHash = passwordHash(password, key) // Recreate hash using the same password and key
-        return newHash == storedHash // Return if it is equal to what is stored
+        val newHash = hashPassword(password, passwordKey) // Recreate hash using the same password and key
+        return newHash == passwordHash // Return if it is equal to what is stored
+    }
+
+    fun registerUser(
+        name: String,
+        email: String,
+        password: String,
+        accountType: Boolean
+    ): Boolean {
+
+        val key = generateSalt()
+        val hash = hashPassword(password, key)
+
+        val user = User(
+            0,
+            name,
+            email,
+            hash,
+            key,
+            null,
+            null,
+            null,
+            null,
+            accountType
+        )
+
+        return createUser(user)
     }
 
 }
