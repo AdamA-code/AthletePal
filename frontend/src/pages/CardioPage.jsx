@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom"
 import { useState } from "react"
+import RouteMap from "../components/RouteMap"
 
 function CardioPage() {
 
@@ -115,9 +116,7 @@ function CardioPage() {
                         Record Your Route on the Map
                     </label>
 
-                    <div className="bg-gray-200 h-64 rounded flex items-center justify-center">
-                        Map will go here
-                    </div>
+                    <RouteMap />
                 </div>
 
 
