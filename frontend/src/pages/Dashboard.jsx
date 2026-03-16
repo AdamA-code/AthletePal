@@ -10,7 +10,7 @@ function DashboardPage() {
                         Dashboard
                     </Link>
 
-                    <Link to="#" className="hover:text-blue-700">
+                    <Link to="/workout-log" className="hover:text-blue-700">
                         Workout Logs (Weights)
                     </Link>
 
