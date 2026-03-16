@@ -22,6 +22,8 @@ private val connection: Connection = DriverManager.getConnection("jdbc:sqlite:${
 
 fun createUser(user: User): Boolean {
     if (findUser(user.email) == null) {
+        // Connect to db, pepare query struct, use object that allows updating
+        // and prevent SQL injection, store to set values and exec
         // SQL INSERT statement with "?"" as a placeholder
         val stmt: PreparedStatement = connection.prepareStatement(
             """
@@ -51,6 +53,8 @@ fun createUser(user: User): Boolean {
 }
 
 fun findUser(email: String): User? {
+    // Connect to db, pepare query struct, use object that allows updating
+    // and prevent SQL injection, store to set values and exec
     val stmt: PreparedStatement = connection.prepareStatement(
         "SELECT * FROM users WHERE email = ?"
     )
@@ -80,4 +84,35 @@ fun findUser(email: String): User? {
     rs.close()
     stmt.close()
     return null
-    }
+}
+
+fun updateAccount(
+    email: String,
+    gender: String?,
+    age: Int?,
+    height: Double?,
+    weight: Double?
+): Boolean {
+
+    // Connect to db, pepare query struct, use object that allows updating
+    // and prevent SQL injection, store to set values and exec
+    val stmt: PreparedStatement = connection.prepareStatement(
+        """
+        UPDATE users
+        SET gender = ?, age = ?, height = ?, weight = ?
+        WHERE email = ?
+        """.trimIndent()
+    )
+
+    // Set placeholder values based on given data
+    stmt.setString(1, gender)
+    stmt.setObject(2, age)
+    stmt.setObject(3, height)
+    stmt.setObject(4, weight)
+    stmt.setString(5, email)
+
+    val rowsUpdated = stmt.executeUpdate() // smt.executeUpdate returns 0 if nothing updated and 1 if updated
+    stmt.close()
+
+    return rowsUpdated > 0 // Returns True is rowsUpdated == 1
+}
