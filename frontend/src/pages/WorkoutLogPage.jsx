@@ -18,7 +18,7 @@ function WorkoutLogPage() {
                         Workout Logs (Weights)
                     </Link>
 
-                    <Link to="#" className="hover:text-blue-700">
+                    <Link to="/cardio" className="hover:text-blue-700">
                         Cardio
                     </Link>
 
