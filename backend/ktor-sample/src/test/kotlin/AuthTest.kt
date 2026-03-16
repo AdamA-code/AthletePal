@@ -2,7 +2,7 @@ package test
 
 import java.sql.SQLException
 import services.AuthService
-import org.junit.Test
+import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.test.assertNotNull
 
