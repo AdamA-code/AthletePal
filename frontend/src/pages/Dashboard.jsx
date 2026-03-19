@@ -18,7 +18,7 @@ function DashboardPage() {
                         Cardio
                     </Link>
 
-                    <Link to="#" className="hover:text-blue-700">
+                    <Link to="/activity-history" className="hover:text-blue-700">
                         Activity History
                     </Link>
 

@@ -27,7 +27,10 @@ function CardioPage() {
                         Cardio
                     </Link>
 
-                    <Link to="#">Activity History</Link>
+                    <Link to="/activity-history" className="hover:text-blue-700">
+                        Activity History
+                    </Link>
+                    
                     <Link to="#">Competitions</Link>
                     <Link to="#">Training Groups</Link>
                     <Link to="#">Statistics / Visualisation</Link>
