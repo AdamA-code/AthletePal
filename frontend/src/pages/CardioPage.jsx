@@ -34,7 +34,9 @@ function CardioPage() {
                     <Link to="#">Competitions</Link>
                     <Link to="#">Training Groups</Link>
                     <Link to="#">Statistics / Visualisation</Link>
-                    <Link to="#">Profile</Link>
+                    <Link to="/profile" className="hover:text-blue-700">
+                        Profile
+                    </Link>
 
                 </nav>
             </aside>

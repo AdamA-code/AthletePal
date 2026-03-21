@@ -38,7 +38,7 @@ function WorkoutLogPage() {
                         Statistics / Visualisation
                     </Link>
 
-                    <Link to="#" className="hover:text-blue-700">
+                    <Link to="/profile" className="hover:text-blue-700">
                         Profile
                     </Link>
 
