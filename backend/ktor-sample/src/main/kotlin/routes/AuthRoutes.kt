@@ -42,17 +42,17 @@ fun Route.authRoutes() {
 
 
     
-        /* post("/forgot-password") {
+        post("/forgot-password") {
             val targetUser = call.recieve<ForgotPasswordRequest>() // Retrieve data from request
 
-            val verificationSent: Boolean = databaseService.PLACEHOLDER(targetUser.email)
+            val verificationSent: Boolean = databaseService.PasswordReset(targetUser.email) // Call password reset function
             
             if (verificationSent) {
                 call.respond(mapOf("message" to "E-Mail sent!"))
             } else {
                 call.respond(mapOf("message" to "Account does not exist!"))
             }
-        } */
+        }
 
     }
 
