@@ -6,10 +6,14 @@ import io.ktor.server.request.* // Import functionalityy to read JSON requests
 import io.ktor.server.response.* // Import functionality to send responses to frontend
 
 import models.LoginRequest // Import the model for a login request (i.e. formatting of HTTP request)
+import models.CreateAccountRequest // Import the model for account creation data
+
 import services.AuthService // Import service (logic) for validating a login
+import service.DatabaseService // Import service for storing to database
 
 fun Route.authRoutes() {
     val authService = AuthService() // Initialise AuthService in routes
+    val databaseService = DatabaseService() // Initialise databaseService
 
     route("/auth") { // If HTTP request in the '/auth' route... 
         post("/login") { // If HTTP request is a POST of '/login'...
@@ -17,13 +21,39 @@ fun Route.authRoutes() {
 
             val isValid = authService.validateLogin(loginRequest.username, loginRequest.password) // If authService deems the password acceptable
 
-        if (isValid) {
-            call.respond(mapOf("message" to "Login Successful")) // Response for valid login
-        } else {
-            call.respond(mapOf("message" to "Invalid Credentials")) // Response for invalid login
-        }
+            if (isValid) {
+                call.respond(mapOf("message" to "Login Successful")) // Response for valid login
+            } else {
+                call.respond(mapOf("message" to "Invalid Credentials")) // Response for invalid login
+            }
 
         }
+
+        post("/create-account") { // If HTTP request is post of account creation
+            val createAccountRequest = call.recieve<CreateAccountRequest>() // Retrieve data from POST, and store in a class 'createAccountRequest'
+
+            val accountCreated = databaseService.createUser(/* */) // Call function for account creation in authService, retrieve boolean confirmation
+
+            if (accountCreated) {
+                call.respond(mapOf("message" to "Account created!")) // Success message if account successfully created
+            } else if not(accountCreated) {
+                call.respond(mapOf("message" to "User already exists!")) // Fail message if account not created (as user already exists)
+            }
+
+
+    
+        post("/forgot-password") {
+            val targetUser = call.recieve<ForgotPasswordRequest>() // Retrieve data from request
+
+            val verificationSent: Boolean = databaseService.PasswordReset(targetUser.email) // Call password reset function
+            
+            if (verificationSent) {
+                call.respond(mapOf("message" to "E-Mail sent!"))
+            } else {
+                call.respond(mapOf("message" to "Account does not exist!"))
+            }
+        }
+
     }
 
 }
