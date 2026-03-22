@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom"
+import Sidebar from "../components/Sidebar"
 
 function ProfilePage() {
     const user = {
@@ -13,35 +14,7 @@ function ProfilePage() {
 
     return (
         <div className="min-h-screen bg-gray-100 flex">
-            {/* Sidebar */}
-            <aside className="w-64 bg-white shadow-md p-6 flex flex-col">
-                <h1 className="text-2xl font-bold text-blue-800 mb-8">AthletePal</h1>
-                <nav className="flex flex-col gap-4 text-gray-700">
-
-                    <Link to="/dashboard" className="hover:text-blue-700">
-                        Dashboard
-                    </Link>
-                    
-                    <Link to="/workout-log" className="hover:text-blue-700">
-                        Workout Logs (Weights)
-                    </Link>
-
-                    <Link to="/cardio" className="hover:text-blue-700">
-                        Cardio
-                    </Link>
-
-                    <Link to="/activity-history" className="hover:text-blue-700">
-                        Activity History
-                    </Link>
-
-                    <Link to="#">Competitions</Link>
-                    <Link to="#">Training Groups</Link>
-                    <Link to="#">Statistics / Visualisation</Link>
-                    <Link to="/profile" className="bg-blue-100 text-blue-800 px-3 py-2 rounded-lg font-medium">
-                        Profile
-                    </Link>
-                </nav>
-            </aside>
+            <Sidebar />
 
             <main className="flex-1 p-8">
                 <h1 className="text-3x1 font-bold text-blue-800 mb-6">Profile</h1>
