@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom"
 import { useState } from "react"
 import RouteMap from "../components/RouteMap"
+import Sidebar from "../components/Sidebar"
 
 function CardioPage() {
 
@@ -13,33 +14,7 @@ function CardioPage() {
 
     return (
         <div className="min-h-screen bg-gray-100 flex">
-
-            {/* Sidebar */}
-            <aside className="w-64 bg-white shadow-md p-6 flex flex-col">
-                <h1 className="text-2xl font-bold text-blue-800 mb-8">AthletePal</h1>
-
-                <nav className="flex flex-col gap-4 text-gray-700">
-
-                    <Link to="/dashboard">Dashboard</Link>
-                    <Link to="/workout-log">Workout Logs (Weights)</Link>
-
-                    <Link to="/cardio" className="bg-blue-100 text-blue-800 px-3 py-2 rounded-lg font-medium">
-                        Cardio
-                    </Link>
-
-                    <Link to="/activity-history" className="hover:text-blue-700">
-                        Activity History
-                    </Link>
-                    
-                    <Link to="#">Competitions</Link>
-                    <Link to="#">Training Groups</Link>
-                    <Link to="#">Statistics / Visualisation</Link>
-                    <Link to="#">Profile</Link>
-
-                </nav>
-            </aside>
-
-
+            <Sidebar />
             {/* Main Content */}
             <main className="flex-1 p-8 max-w-3xl">
 
