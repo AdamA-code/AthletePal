@@ -6,6 +6,7 @@ import WorkoutLogPage from "./pages/WorkoutLogPage"
 import CardioPage from "./pages/CardioPage"
 import ActivityHistoryPage from "./pages/ActivityHistory"
 import ProfilePage from "./pages/Profile"
+import StatisticsPage from "./pages/StatisticsPage"
 
 function App() {
   return (
@@ -26,6 +27,10 @@ function App() {
         <Route path="/activity-history" element={<ActivityHistoryPage />} />
 
         <Route path="/profile" element={<ProfilePage />} />
+
+        <Route path="/statistics" element={<StatisticsPage />} />
+
+        {/* Add more routes as needed */}
       </Routes>
 
     </BrowserRouter>

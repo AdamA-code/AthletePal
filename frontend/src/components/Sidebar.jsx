@@ -44,6 +44,10 @@ function Sidebar() {
                 <Link to="/profile" className={linkClass("/profile")}>
                     Profile
                 </Link>
+
+                <Link to="/statistics" className={linkClass("/statistics")}>
+                    Statistics / Visualisation
+                </Link>
             </nav>
         </aside>
     )
