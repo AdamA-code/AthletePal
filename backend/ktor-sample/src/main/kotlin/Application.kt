@@ -1,3 +1,4 @@
+/*
 package com.example
 
 import io.ktor.server.application.*
@@ -10,7 +11,7 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
 
 // Import routing functions for authorisation requests (i.e. login and create account functions)
-import routes.authRoutes
+import routes.AuthRoutes
 
 fun main() {
     embeddedServer(Netty, port = 3000) { // Server with Netty engine on port 3000
@@ -35,7 +36,8 @@ fun Application.module() { // Function for config. of Ktor app.
             call.respond(mapOf("Status" to "Running")) // Respond with affirmative good health response
         }
 
-        authRoutes() // Add authRoutes to Ktor routing table
+        AuthRoutes() // Add authRoutes to Ktor routing table
 
     }
 }
+ */

@@ -4,6 +4,8 @@ import java.sql.DriverManager // To connect to the DB
 import java.sql.PreparedStatement // Precompiled SQL statement
 import java.sql.ResultSet // Represents results of SQL queries
 
+// data classes to finitely store inputs (and potentially outputs) to database
+
 data class User(
     val userID: Int,
     val name: String,
@@ -17,8 +19,33 @@ data class User(
     val accountType: Boolean
 )
 
+data class Exercise(
+    val exerciseID: Int,
+    val name: String,
+    val category: String,
+    val description: String?
+)
+
+data class Workout(
+    val createdBy: Int,
+    val assignedTo: Int,
+    val date: String,
+    val duration: Int?
+)
+
+data class WorkoutExercise(
+    val workoutID: Int,
+    val exerciseID: Int,
+    val sets: Int?,
+    val reps: Int?,
+    val weight: Double?,
+    val duration: Int?
+)
+
 // Connect to DB
 private val connection: Connection = DriverManager.getConnection("jdbc:sqlite:${System.getProperty("user.dir")}/src/main/resources/users.db")
+
+// User db
 
 fun createUser(user: User): Boolean {
     if (findUser(user.email) == null) {
@@ -115,4 +142,100 @@ fun updateAccount(
     stmt.close()
 
     return rowsUpdated > 0 // Returns True is rowsUpdated == 1
+}
+
+// Exercise db
+
+fun createExercise(exercise: Exercise): Boolean {
+    if (findExercise(exercise.name) == null) {
+
+        val stmt: PreparedStatement = connection.prepareStatement(
+            """
+            INSERT INTO exercises(name, category, description)
+            VALUES (?, ?, ?)
+            """.trimIndent()
+        )
+
+        stmt.setString(1, exercise.name)
+        stmt.setString(2, exercise.category)
+        stmt.setString(3, exercise.description)
+
+        val rowsInserted = stmt.executeUpdate()
+        stmt.close()
+        return rowsInserted > 0
+    } else{
+        return false
+    }
+}
+
+fun findExercise(name: String): Exercise? {
+
+    val stmt: PreparedStatement = connection.prepareStatement(
+        "SELECT * FROM exercises WHERE name = ?"
+    )
+
+    stmt.setString(1, name)
+
+    val rs: ResultSet = stmt.executeQuery()
+
+    val exercise = if (rs.next()) {
+        Exercise(
+            exerciseID = rs.getInt("exerciseID"),
+            name = rs.getString("name"),
+            category = rs.getString("category"),
+            description = rs.getString("description")
+        )
+    } else {
+        null
+    }
+
+    rs.close()
+    stmt.close()
+
+    return exercise
+}
+
+// Workout to DB
+fun createWorkout(workout : Workout): Boolean {
+
+    val stmt: PreparedStatement = connection.prepareStatement(
+        """
+        INSERT INTO workouts(createdBy, assignedTo, date, duration)
+        VALUES (?, ?, ?, ?)
+        """.trimIndent()
+    )
+
+    stmt.setInt(1, workout.createdBy)
+    stmt.setObject(2, workout.assignedTo)
+    stmt.setString(3, workout.date)
+    stmt.setObject(4, workout.duration)
+
+    val rowsInserted = stmt.executeUpdate()
+    stmt.close()
+
+    return rowsInserted > 0
+}
+
+// Workout_exercise join table
+
+fun addExerciseToWorkout(workout_exercise : WorkoutExercise
+): Boolean {
+
+    val stmt: PreparedStatement = connection.prepareStatement(
+        """
+        INSERT INTO workout_exercises(workoutID, exerciseID, sets, reps, weight)
+        VALUES (?, ?, ?, ?, ?)
+        """.trimIndent()
+    )
+
+    stmt.setInt(1, workout_exercise.workoutID)
+    stmt.setInt(2, workout_exercise.exerciseID)
+    stmt.setObject(3, workout_exercise.sets)
+    stmt.setObject(4, workout_exercise.reps)
+    stmt.setObject(5, workout_exercise.weight)
+
+    val rowsInserted = stmt.executeUpdate()
+    stmt.close()
+
+    return rowsInserted > 0
 }

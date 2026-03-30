@@ -1,7 +1,6 @@
 package test
 
-import services.updateAccount
-import services.AuthService
+import services.*
 import kotlin.test.Test
 import kotlin.test.assertTrue
 

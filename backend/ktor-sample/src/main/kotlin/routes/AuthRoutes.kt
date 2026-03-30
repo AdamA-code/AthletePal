@@ -1,3 +1,4 @@
+/*
 package routes
 
 import io.ktor.server.routing.*
@@ -9,7 +10,7 @@ import models.LoginRequest // Import the model for a login request (i.e. formatt
 import models.CreateAccountRequest // Import the model for account creation data
 
 import services.AuthService // Import service (logic) for validating a login
-import service.DatabaseService // Import service for storing to database
+import services.DatabaseService // Import service for storing to database
 
 fun Route.authRoutes() {
     val authService = AuthService() // Initialise AuthService in routes
@@ -30,20 +31,20 @@ fun Route.authRoutes() {
         }
 
         post("/create-account") { // If HTTP request is post of account creation
-            val createAccountRequest = call.recieve<CreateAccountRequest>() // Retrieve data from POST, and store in a class 'createAccountRequest'
+            // val createAccountRequest = call.recieve<CreateAccountRequest>() // Retrieve data from POST, and store in a class 'createAccountRequest'
 
             val accountCreated = databaseService.createUser(/* */) // Call function for account creation in authService, retrieve boolean confirmation
 
             if (accountCreated) {
                 call.respond(mapOf("message" to "Account created!")) // Success message if account successfully created
-            } else if not(accountCreated) {
+            } if not(accountCreated) {
                 call.respond(mapOf("message" to "User already exists!")) // Fail message if account not created (as user already exists)
             }
 
 
     
         post("/forgot-password") {
-            val targetUser = call.recieve<ForgotPasswordRequest>() // Retrieve data from request
+            // val targetUser = call.recieve<ForgotPasswordRequest>() // Retrieve data from request
 
             val verificationSent: Boolean = databaseService.PasswordReset(targetUser.email) // Call password reset function
             
@@ -57,3 +58,5 @@ fun Route.authRoutes() {
     }
 
 }
+}
+*/

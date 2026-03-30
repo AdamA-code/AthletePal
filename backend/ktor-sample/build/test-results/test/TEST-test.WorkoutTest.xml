@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="test.WorkoutTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-03-30T21:19:34.116Z" hostname="codespaces-64c3ff" time="0.002">
+  <properties/>
+  <testcase name="testWorkoutDB" classname="test.WorkoutTest" time="0.001"/>
+  <system-out><![CDATA[Exercise(exerciseID=5, name=Bench Press, category=Chest, description=Barbell chest exercise featuring an athelete laying horizontally on a bench whilst pushing a barbell directly upwards, perpendicularly above their chest.)
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
