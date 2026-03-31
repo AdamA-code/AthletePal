@@ -1,6 +1,7 @@
 package services
 import services.createUser
 import services.findUser
+import services.User
 import java.security.MessageDigest // Provides hashing algorithms
 import java.security.SecureRandom // Used for generating random salt
 import java.util.Base64 // Converts binary data into readable strings
@@ -53,7 +54,7 @@ class AuthService {
         val key = generateSalt()
         val hash = hashPassword(password, key)
 
-        val user = User(
+        val user = services.User(
             0,
             name,
             email,
@@ -66,7 +67,6 @@ class AuthService {
             accountType
         )
 
-        return createUser(user)
+        return services.createUser(user)
     }
-
 }
