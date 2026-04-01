@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="test.updateAccountTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-03-16T21:03:51.073Z" hostname="codespaces-21e670" time="0.027">
+<testsuite name="test.updateAccountTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-04-01T16:06:04.562Z" hostname="codespaces-56a888" time="0.015">
   <properties/>
-  <testcase name="testUpdateAccount" classname="test.updateAccountTest" time="0.025"/>
+  <testcase name="testUpdateAccount" classname="test.updateAccountTest" time="0.015"/>
   <system-out><![CDATA[User(userID=1, name=Finn, email=Finn@outlook.com, passwordHash=BAJXDpNNL20qD2cIM1anjE4/Wx6/5gdMsuAukdenVr4=, passwordKey=c0qDKet2rB0rn4azlKe1Mw==, gender=Male, age=19, height=180.5, weight=75.2, accountType=true)
 ]]></system-out>
   <system-err><![CDATA[]]></system-err>
