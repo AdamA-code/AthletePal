@@ -4,6 +4,9 @@ import java.sql.DriverManager // To connect to the DB
 import java.sql.PreparedStatement // Precompiled SQL statement
 import java.sql.ResultSet // Represents results of SQL queries
 
+import models.Activity as Activity
+import models.Competitions as Competitions
+
 
 class DatabaseService{
     
@@ -119,4 +122,20 @@ class DatabaseService{
 
         return rowsUpdated > 0 // Returns True is rowsUpdated == 1
     }
+
+    fun getRecentActivity(email: String?, username: String?): List<Activity>{
+        val RecentActivity = listOf<Activity>()
+        return RecentActivity
+    }
+
+    fun getTodaysWorkout(email: String?, username: String?): List<Activity>{
+        val TodaysWorkout = listOf<Activity>()
+        return TodaysWorkout 
+    }
+    
+    fun getUpcomingCompetitions(email: String?, username: String?): List<Competitions>{
+        val UpcomingCompetitions = listOf<Competitions>()
+        return UpcomingCompetitions
+    }
+
 }

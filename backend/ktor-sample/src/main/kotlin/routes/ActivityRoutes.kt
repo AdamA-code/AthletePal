@@ -9,6 +9,7 @@ import models.TodayWorkoutsRequest
 import models.UpcomingCompetitionsRequest
 import models.RecentActivityRequest
 import models.Activity
+import models.Competitions
 
 import services.DatabaseService
 
@@ -22,7 +23,7 @@ fun Route.activityRoutes(){
             val recentActivityRequest = call.receive<RecentActivityRequest>() // Extract data from request
 
             if ( (recentActivityRequest.email != null) || (recentActivityRequest.username != null) ){ // If request contains some user identifier (i.e. username or email)
-                val recentActivity: List<Activity> = DatabaseService.RecentActivity(recentActivityRequest.email, recentActivityRequest.username) // Call relevent function in database service
+                val recentActivity: List<Activity> = databaseService.getRecentActivity(recentActivityRequest.email, recentActivityRequest.username) // Call relevent function in database service
                 call.respond(mapOf("message" to recentActivity))
             }
             else {
@@ -31,23 +32,24 @@ fun Route.activityRoutes(){
         }
 
 
-        post("/todays-workouts"){ // TODO
-            val todaysWorkoutRequest = call.recieve<TodayWorkoutsRequest>() // Extract data from request recieved
+        post("/todays-workouts"){
+            val todaysWorkoutRequest = call.receive<TodayWorkoutsRequest>() // Extract data from request recieved
 
             if ( (todaysWorkoutRequest.email != null) || (todaysWorkoutRequest.username != null) ){ // If request contains some user identifier (i.e. username or email)
-                val todaysWorkout: List<Activity> = DatabaseService.TodaysWorkout(todaysWorkoutRequest.email, todaysWorkoutRequest.username) // Call TodaysWorkout function in database service
+                val todaysWorkout: List<Activity> = databaseService.getTodaysWorkout(todaysWorkoutRequest.email, todaysWorkoutRequest.username) // Call TodaysWorkout function in database service
                 call.respond(mapOf("message" to todaysWorkout))
             }
             else {
                 call.respond(mapOf("message" to "Error: No email or username provided")) // Return error to fronend if no user identifier given
+            }
         }
 
 
         post("/upcoming-competitions"){
-            val upcomingCompetitionsRequest = call.recieve<UpcomingCompetitionsRequest>() // Extract data from request in format from models
+            val upcomingCompetitionsRequest = call.receive<UpcomingCompetitionsRequest>() // Extract data from request in format from models
 
             if ( (upcomingCompetitionsRequest.email != null) || (upcomingCompetitionsRequest != null) ){ // If request contains some user identifier (username or email)
-                val upcomingCompetitions: List<Competitions> = DatabaseService.UpcomingCompetitions(upcomingCompetitionsRequest.email, upcomingCompetitionsRequest.username) // Call UpcomingCompetitions function in database service
+                val upcomingCompetitions: List<Competitions> = databaseService.getUpcomingCompetitions(upcomingCompetitionsRequest.email, upcomingCompetitionsRequest.username) // Call UpcomingCompetitions function in database service
                 call.respond(mapOf("message" to upcomingCompetitions))
             }
             else {

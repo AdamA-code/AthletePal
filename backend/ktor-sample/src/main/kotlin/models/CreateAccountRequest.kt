@@ -1,5 +1,4 @@
 package models
-
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -13,6 +12,6 @@ data class CreateAccountRequest(
     val height: Int?,
     val weight: Float?,
 
-    val isPT: Boolean
+    val accountType: Boolean
 
 )

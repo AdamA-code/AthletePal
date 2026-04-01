@@ -6,7 +6,7 @@ import io.ktor.server.request.* // Import functionalityy to read JSON requests
 import io.ktor.server.response.* // Import functionality to send responses to frontend
 
 import models.LoginRequest // Import the model for a login request (i.e. formatting of HTTP request)
-import models.CreateAccountRequest // Import the model for account creation data
+import services.DatabaseService.User as User // Import the model for account creation data
 import models.ForgotPasswordRequest
 
 import services.AuthService // Import service (logic) for validating a login
@@ -31,9 +31,9 @@ fun Route.authRoutes() {
         }
 
         post("/create-account") { // If HTTP request is post of account creation
-            val createAccountRequest = call.receive<CreateAccountRequest>() // Retrieve data from POST, and store in a class 'createAccountRequest'
+            val createAccountRequest = call.receive<User>() // Retrieve data from POST, and store in a class 'createAccountRequest'
 
-            val accountCreated = databaseService.createUser(/* */) // Call function for account creation in authService, retrieve boolean confirmation
+            val accountCreated = databaseService.createUser(createAccountRequest) // Call function for account creation in authService, retrieve boolean confirmation
 
             if (accountCreated) {
                 call.respond(mapOf("message" to "Account created!")) // Success message if account successfully created
@@ -43,7 +43,7 @@ fun Route.authRoutes() {
         }
 
 
-    
+        /* 
         post("/forgot-password") {
             val targetUser = call.receive<ForgotPasswordRequest>() // Retrieve data from request
 
@@ -54,7 +54,7 @@ fun Route.authRoutes() {
             } else {
                 call.respond(mapOf("message" to "Account does not exist!"))
             }
-        }
+        } */
 
     }
 
