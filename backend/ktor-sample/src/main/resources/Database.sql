@@ -6,7 +6,7 @@ CREATE TABLE calendar_events (
     status TEXT NOT NULL,
     scheduledDate TEXT NOT NULL,
     name TEXT NOT NULL,
-    FOREIGN KEY(userID) REFERENCES users(userID)
+    FOREIGN KEY(userID) REFERENCES users(userID) ON DELETE CASCADE
 );
 
 CREATE TABLE routes (
@@ -16,8 +16,7 @@ CREATE TABLE routes (
     distance REAL NOT NULL,
     estimatedTime REAL,
     date TEXT NOT NULL,
-
-    FOREIGN KEY(userID) REFERENCES users(userID)
+    FOREIGN KEY(userID) REFERENCES users(userID) ON DELETE CASCADE
 );
 
 CREATE TABLE competition_exercises (
@@ -25,7 +24,7 @@ CREATE TABLE competition_exercises (
     competitionID INTEGER NOT NULL,
     exerciseID INTEGER NOT NULL,
     performance REAL,
-    FOREIGN KEY(competitionID) REFERENCES competitions(competitionID),
+    FOREIGN KEY(competitionID) REFERENCES competitions(competitionID) ON DELETE CASCADE,
     FOREIGN KEY(exerciseID) REFERENCES exercises(exerciseID)
 );
 
@@ -35,7 +34,7 @@ CREATE TABLE competitions (
     name TEXT NOT NULL,
     date TEXT NOT NULL,
     rank INTEGER,
-    FOREIGN KEY(userID) REFERENCES users(userID)
+    FOREIGN KEY(userID) REFERENCES users(userID) ON DELETE CASCADE
 );
 
 CREATE TABLE statistics (
@@ -44,7 +43,7 @@ CREATE TABLE statistics (
     exerciseID INTEGER NOT NULL,
     value REAL NOT NULL,
     date TEXT NOT NULL,
-    FOREIGN KEY(userID) REFERENCES users(userID),
+    FOREIGN KEY(userID) REFERENCES users(userID) ON DELETE CASCADE,
     FOREIGN KEY(exerciseID) REFERENCES exercises(exerciseID)
 );
 
@@ -55,8 +54,8 @@ CREATE TABLE workouts (
     date TEXT NOT NULL,
     duration INTEGER,
     workoutType TEXT,
-    FOREIGN KEY (createdBy) REFERENCES users(userID),
-    FOREIGN KEY (assignedTo) REFERENCES users(userID)
+    FOREIGN KEY (createdBy) REFERENCES users(userID) ON DELETE CASCADE,
+    FOREIGN KEY (assignedTo) REFERENCES users(userID) ON DELETE CASCADE
 );
 
 CREATE TABLE workout_exercises (
@@ -66,7 +65,7 @@ CREATE TABLE workout_exercises (
     sets INTEGER,
     reps INTEGER,
     weight REAL,
-    FOREIGN KEY (workoutID) REFERENCES workouts(workoutID),
+    FOREIGN KEY (workoutID) REFERENCES workouts(workoutID) ON DELETE CASCADE,
     FOREIGN KEY (exerciseID) REFERENCES exercises(exerciseID)
 );
 

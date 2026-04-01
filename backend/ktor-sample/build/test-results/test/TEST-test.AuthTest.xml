@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="test.AuthTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-04-01T14:04:46.617Z" hostname="codespaces-64c3ff" time="0.266">
+<testsuite name="test.AuthTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-04-01T18:26:38.712Z" hostname="codespaces-64c3ff" time="0.256">
   <properties/>
-  <testcase name="testSignupAndLogin" classname="test.AuthTest" time="0.261"/>
+  <testcase name="testSignupAndLogin" classname="test.AuthTest" time="0.248"/>
   <system-out><![CDATA[User created: false
 ]]></system-out>
   <system-err><![CDATA[]]></system-err>

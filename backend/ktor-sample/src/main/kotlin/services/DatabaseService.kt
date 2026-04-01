@@ -85,8 +85,16 @@ data class CalendarEvent(
 )
 
 // Connect to DB
-private val connection: Connection = DriverManager.getConnection("jdbc:sqlite:${System.getProperty("user.dir")}/src/main/resources/users.db")
+class DatabaseService {
+    //open connection to database
+    val connection: Connection = DriverManager.getConnection("jdbc:sqlite:${System.getProperty("user.dir")}/src/main/resources/users.db")
 
+    // Runs automatically on creation
+    init {
+        connection.createStatement().execute("PRAGMA foreign_keys = ON") // Enable deletion cascading
+    }
+}
+val db = DatabaseService()
 // User db
 
 fun createUser(user: User): Boolean {
@@ -94,7 +102,7 @@ fun createUser(user: User): Boolean {
         // Connect to db, pepare query struct, use object that allows updating
         // and prevent SQL injection, store to set values and exec
         // SQL INSERT statement with "?"" as a placeholder
-        val stmt: PreparedStatement = connection.prepareStatement(
+        val stmt: PreparedStatement = db.connection.prepareStatement(
             """
             INSERT INTO users(name, email, passwordHash, passwordKey, gender, age, height, weight, accountType)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -124,7 +132,7 @@ fun createUser(user: User): Boolean {
 fun findUser(email: String): User? {
     // Connect to db, pepare query struct, use object that allows updating
     // and prevent SQL injection, store to set values and exec
-    val stmt: PreparedStatement = connection.prepareStatement(
+    val stmt: PreparedStatement = db.connection.prepareStatement(
         "SELECT * FROM users WHERE email = ?"
     )
 
@@ -165,7 +173,7 @@ fun updateAccount(
 
     // Connect to db, pepare query struct, use object that allows updating
     // and prevent SQL injection, store to set values and exec
-    val stmt: PreparedStatement = connection.prepareStatement(
+    val stmt: PreparedStatement = db.connection.prepareStatement(
         """
         UPDATE users
         SET gender = ?, age = ?, height = ?, weight = ?
@@ -186,12 +194,26 @@ fun updateAccount(
     return rowsUpdated > 0 // Returns True is rowsUpdated == 1
 }
 
+fun deleteUser(email: String): Boolean {
+
+    val stmt: PreparedStatement = db.connection.prepareStatement(
+        "DELETE FROM users WHERE email = ?"
+    )
+
+    stmt.setString(1, email)
+
+    val rowsDeleted = stmt.executeUpdate()
+    stmt.close()
+
+    return rowsDeleted > 0
+}
+
 // Exercise db
 
 fun createExercise(exercise: Exercise): Boolean {
     if (findExercise(exercise.name) == null) {
 
-        val stmt: PreparedStatement = connection.prepareStatement(
+        val stmt: PreparedStatement = db.connection.prepareStatement(
             """
             INSERT INTO exercises(name, category, description)
             VALUES (?, ?, ?)
@@ -212,7 +234,7 @@ fun createExercise(exercise: Exercise): Boolean {
 
 fun findExercise(name: String): Exercise? {
 
-    val stmt: PreparedStatement = connection.prepareStatement(
+    val stmt: PreparedStatement = db.connection.prepareStatement(
         "SELECT * FROM exercises WHERE name = ?"
     )
 
@@ -237,10 +259,74 @@ fun findExercise(name: String): Exercise? {
     return exercise
 }
 
+fun findAllExercises(name: String): List<Exercise> {
+
+    val stmt: PreparedStatement = db.connection.prepareStatement(
+        "SELECT * FROM exercises WHERE name = ?"
+    )
+
+    stmt.setString(1, name)
+
+    val rs: ResultSet = stmt.executeQuery()
+    val exercises = mutableListOf<Exercise>()
+    while (rs.next()) {
+        val exercise = Exercise(
+            exerciseID = rs.getInt("exerciseID"),
+            name = rs.getString("name"),
+            category = rs.getString("category"),
+            description = rs.getString("description")
+        )
+        exercises.add(exercise)
+    } 
+
+    rs.close()
+    stmt.close()
+
+    return exercises
+}
+
+fun updateExercise(
+    name: String,
+    category: String,
+    description: String?
+): Boolean {
+
+    val stmt: PreparedStatement = db.connection.prepareStatement(
+        """
+        UPDATE exercises
+        SET category = ?, description = ?
+        WHERE name = ?
+        """.trimIndent()
+    )
+
+    stmt.setString(1, category)
+    stmt.setString(2, description)
+    stmt.setString(3, name)
+
+    val rowsUpdated = stmt.executeUpdate()
+    stmt.close()
+
+    return rowsUpdated > 0
+}
+
+fun deleteExercise(name: String): Boolean {
+
+    val stmt: PreparedStatement = db.connection.prepareStatement(
+        "DELETE FROM exercises WHERE name = ?"
+    )
+
+    stmt.setString(1, name)
+
+    val rowsDeleted = stmt.executeUpdate()
+    stmt.close()
+
+    return rowsDeleted > 0
+}
+
 // Workout to DB
 fun createWorkout(workout : Workout): Boolean {
 
-    val stmt: PreparedStatement = connection.prepareStatement(
+    val stmt: PreparedStatement = db.connection.prepareStatement(
         """
         INSERT INTO workouts(createdBy, assignedTo, date, duration)
         VALUES (?, ?, ?, ?)
@@ -258,19 +344,82 @@ fun createWorkout(workout : Workout): Boolean {
     return rowsInserted > 0
 }
 
+fun findWorkout(userID: Int): List<Workout> {
+
+    val stmt: PreparedStatement = db.connection.prepareStatement(
+        "SELECT * FROM workouts WHERE assignedTo = ?"
+    )
+
+    stmt.setInt(1, userID)
+
+    val rs: ResultSet = stmt.executeQuery()
+    val workouts = mutableListOf<Workout>()
+
+    while (rs.next()) {
+        val workout = Workout(
+            createdBy = rs.getInt("createdBy"),
+            assignedTo = rs.getInt("assignedTo"),
+            date = rs.getString("date"),
+            duration = rs.getObject("duration") as Int?
+        )
+        workouts.add(workout)
+    }
+
+    rs.close()
+    stmt.close()
+    return workouts
+}
+
+fun updateWorkout(
+    workoutID: Int,
+    date: String,
+    duration: Int?
+): Boolean {
+
+    val stmt: PreparedStatement = db.connection.prepareStatement(
+        """
+        UPDATE workouts
+        SET date = ?, duration = ?
+        WHERE workoutID = ?
+        """.trimIndent()
+    )
+
+    stmt.setString(1, date)
+    stmt.setObject(2, duration)
+    stmt.setInt(3, workoutID)
+
+    val rowsUpdated = stmt.executeUpdate()
+    stmt.close()
+
+    return rowsUpdated > 0
+}
+
+fun deleteWorkout(workoutID: Int): Boolean {
+
+    val stmt: PreparedStatement = db.connection.prepareStatement(
+        "DELETE FROM workouts WHERE workoutID = ?"
+    )
+
+    stmt.setInt(1, workoutID)
+
+    val rowsDeleted = stmt.executeUpdate()
+    stmt.close()
+
+    return rowsDeleted > 0
+}
+
 // Workout_exercise join table
 
 fun addExerciseToWorkout(workout_exercise : WorkoutExercise
 ): Boolean {
 
-    val stmt: PreparedStatement = connection.prepareStatement(
+    val stmt: PreparedStatement = db.connection.prepareStatement(
         """
         INSERT INTO workout_exercises(workoutID, exerciseID, sets, reps, weight)
-        VALUES (?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?)
         """.trimIndent()
     )
 
-    stmt.setInt(1, workout_exercise.id)
     stmt.setInt(2, workout_exercise.workoutID)
     stmt.setInt(3, workout_exercise.exerciseID)
     stmt.setObject(4, workout_exercise.sets)
@@ -283,10 +432,77 @@ fun addExerciseToWorkout(workout_exercise : WorkoutExercise
     return rowsInserted > 0
 }
 
+fun findWorkoutExercise(workoutID: Int): List<WorkoutExercise> {
+
+    val stmt: PreparedStatement = db.connection.prepareStatement(
+        "SELECT * FROM workout_exercises WHERE workoutID = ?"
+    )
+
+    stmt.setInt(1, workoutID)
+
+    val rs: ResultSet = stmt.executeQuery()
+    val workoutExs = mutableListOf<WorkoutExercise>()
+    while (rs.next()) {
+        val we = WorkoutExercise(
+            id = rs.getInt("id"),
+            workoutID = rs.getInt("workoutID"),
+            exerciseID = rs.getInt("exerciseID"),
+            sets = rs.getObject("sets") as Int?,
+            reps = rs.getObject("reps") as Int?,
+            weight = rs.getObject("weight") as Double?
+        )
+        workoutExs.add(we)
+    }
+
+    rs.close()
+    stmt.close()
+    return workoutExs
+}
+
+fun updateWorkoutExercise(
+    id: Int,
+    sets: Int?,
+    reps: Int?,
+    weight: Double?
+): Boolean {
+
+    val stmt: PreparedStatement = db.connection.prepareStatement(
+        """
+        UPDATE workout_exercises
+        SET sets = ?, reps = ?, weight = ?
+        WHERE id = ?
+        """.trimIndent()
+    )
+
+    stmt.setObject(1, sets)
+    stmt.setObject(2, reps)
+    stmt.setObject(3, weight)
+    stmt.setInt(4, id)
+
+    val rowsUpdated = stmt.executeUpdate()
+    stmt.close()
+
+    return rowsUpdated > 0
+}
+
+fun deleteWorkoutExercise(workoutID: Int): Boolean {
+
+    val stmt: PreparedStatement = db.connection.prepareStatement(
+        "DELETE FROM workout_exercises WHERE workoutID = ?"
+    )
+
+    stmt.setInt(1, workoutID)
+
+    val rowsDeleted = stmt.executeUpdate()
+    stmt.close()
+
+    return rowsDeleted > 0
+}
+
 // Statistics DB
 fun addStatistic(stat: Statistic): Boolean {
 
-    val stmt = connection.prepareStatement(
+    val stmt = db.connection.prepareStatement(
         """
         INSERT INTO statistics(userID, exerciseID, scoreValue, date)
         VALUES (?, ?, ?, ?)
@@ -304,20 +520,46 @@ fun addStatistic(stat: Statistic): Boolean {
     return rowsInserted > 0
 }
 
-fun getBestStat(userID: Int, exerciseID: Int, type: String): Statistic? {
+fun findStatistic(userID: Int, exerciseID: Int): List<Statistic> {
 
-    val stmt = connection.prepareStatement(
+    val stmt: PreparedStatement = db.connection.prepareStatement(
+        "SELECT * FROM statistics WHERE userID = ? AND exerciseID = ?"
+    )
+
+    stmt.setInt(1, userID)
+    stmt.setInt(2, exerciseID)
+
+    val rs: ResultSet = stmt.executeQuery()
+    val stats = mutableListOf<Statistic>()
+    while (rs.next()) {
+        val stat = Statistic(
+            statisticsID = rs.getInt("statisticsID"),
+            userID = rs.getInt("userID"),
+            exerciseID = rs.getInt("exerciseID"),
+            scoreValue = rs.getDouble("scorevalue"),
+            date = rs.getString("date")
+        )
+        stats.add(stat)
+    }
+
+    rs.close()
+    stmt.close()
+    return stats
+}
+
+fun getBestStat(userID: Int, exerciseID: Int): Statistic? {
+
+    val stmt = db.connection.prepareStatement(
         """
         SELECT * FROM statistics
-        WHERE userID = ? AND exerciseID = ? AND type = ?
-        ORDER BY value DESC
+        WHERE userID = ? AND exerciseID = ?
+        ORDER BY scorevalue DESC
         LIMIT 1
         """.trimIndent()
     )
 
     stmt.setInt(1, userID)
     stmt.setInt(2, exerciseID)
-    stmt.setString(3, type)
 
     val rs = stmt.executeQuery()
 
@@ -337,10 +579,48 @@ fun getBestStat(userID: Int, exerciseID: Int, type: String): Statistic? {
     return stat
 }
 
+fun updateStatistic(
+    statisticsID: Int,
+    scoreValue: Double,
+    date: String
+): Boolean {
+
+    val stmt: PreparedStatement = db.connection.prepareStatement(
+        """
+        UPDATE statistics
+        SET scorevalue = ?, date = ?
+        WHERE statisticsID = ?
+        """.trimIndent()
+    )
+
+    stmt.setDouble(1, scoreValue)
+    stmt.setString(2, date)
+    stmt.setInt(3, statisticsID)
+
+    val rowsUpdated = stmt.executeUpdate()
+    stmt.close()
+
+    return rowsUpdated > 0
+}
+
+fun deleteStatistic(statisticsID: Int): Boolean {
+
+    val stmt: PreparedStatement = db.connection.prepareStatement(
+        "DELETE FROM statistics WHERE statisticsID = ?"
+    )
+
+    stmt.setInt(1, statisticsID)
+
+    val rowsDeleted = stmt.executeUpdate()
+    stmt.close()
+
+    return rowsDeleted > 0
+}
+
 // Competitions DB
 fun addComp(comp: Competition): Boolean {
 
-    val stmt = connection.prepareStatement(
+    val stmt = db.connection.prepareStatement(
         """
         INSERT INTO competitions(competitionID, userID, name, date, rank)
         VALUES (?, ?, ?, ?, ?)
@@ -359,20 +639,85 @@ fun addComp(comp: Competition): Boolean {
     return rowsInserted > 0
 }
 
+fun findCompetition(userID: Int): List<Competition> {
+
+    val stmt: PreparedStatement = db.connection.prepareStatement(
+        "SELECT * FROM competitions WHERE userID = ?"
+    )
+
+    stmt.setInt(1, userID)
+
+    val rs: ResultSet = stmt.executeQuery()
+    val comps = mutableListOf<Competition>()
+    while (rs.next()) {
+        val comp = Competition(
+            competitionID = rs.getInt("competitionID"),
+            userID = rs.getInt("userID"),
+            name = rs.getString("name"),
+            date = rs.getString("date"),
+            rank = rs.getObject("rank") as Int?
+        )
+        comps.add(comp)
+    }
+
+    rs.close()
+    stmt.close()
+    return comps
+}
+
+fun updateCompetition(
+    competitionID: Int,
+    name: String,
+    date: String,
+    rank: Int?
+): Boolean {
+
+    val stmt: PreparedStatement = db.connection.prepareStatement(
+        """
+        UPDATE competitions
+        SET name = ?, date = ?, rank = ?
+        WHERE competitionID = ?
+        """.trimIndent()
+    )
+
+    stmt.setString(1, name)
+    stmt.setString(2, date)
+    stmt.setObject(3, rank)
+    stmt.setInt(4, competitionID)
+
+    val rowsUpdated = stmt.executeUpdate()
+    stmt.close()
+
+    return rowsUpdated > 0
+}
+
+fun deleteCompetition(competitionID: Int): Boolean {
+
+    val stmt: PreparedStatement = db.connection.prepareStatement(
+        "DELETE FROM competitions WHERE competitionID = ?"
+    )
+
+    stmt.setInt(1, competitionID)
+
+    val rowsDeleted = stmt.executeUpdate()
+    stmt.close()
+
+    return rowsDeleted > 0
+}
+
 // CompetitionsAndExercise DB
 fun addCompExercise(compEx: CompetitionExercise): Boolean {
 
-    val stmt = connection.prepareStatement(
+    val stmt = db.connection.prepareStatement(
         """
         INSERT INTO competition_exercises(competitionID, exerciseID, performance)
         VALUES (?, ?, ?)
         """.trimIndent()
     )
 
-    stmt.setInt(1, compEx.id)
-    stmt.setInt(2, compEx.competitionID)
-    stmt.setInt(3, compEx.exerciseID)
-    stmt.setObject(4, compEx.performance)
+    stmt.setInt(1, compEx.competitionID)
+    stmt.setInt(2, compEx.exerciseID)
+    stmt.setObject(3, compEx.performance)
 
     val rowsInserted = stmt.executeUpdate()
     stmt.close()
@@ -380,11 +725,72 @@ fun addCompExercise(compEx: CompetitionExercise): Boolean {
     return rowsInserted > 0
 }
 
+fun findCompetitionExercise(competitionID: Int): List<CompetitionExercise> {
+
+    val stmt: PreparedStatement = db.connection.prepareStatement(
+        "SELECT * FROM competition_exercises WHERE competitionID = ?"
+    )
+
+    stmt.setInt(1, competitionID)
+
+    val rs: ResultSet = stmt.executeQuery()
+    val compExs = mutableListOf<CompetitionExercise>()
+    while (rs.next()) {
+        val compEx = CompetitionExercise(
+            id = rs.getInt("id"),
+            competitionID = rs.getInt("competitionID"),
+            exerciseID = rs.getInt("exerciseID"),
+            performance = rs.getObject("performance") as Double?
+        )
+        compExs.add(compEx)
+    }
+
+    rs.close()
+    stmt.close()
+    return compExs
+}
+
+fun updateCompetitionExercise(
+    id: Int,
+    performance: Double?
+): Boolean {
+
+    val stmt: PreparedStatement = db.connection.prepareStatement(
+        """
+        UPDATE competition_exercises
+        SET performance = ?
+        WHERE id = ?
+        """.trimIndent()
+    )
+
+    stmt.setObject(1, performance)
+    stmt.setInt(2, id)
+
+    val rowsUpdated = stmt.executeUpdate()
+    stmt.close()
+
+    return rowsUpdated > 0
+}
+
+fun deleteCompetitionExercise(id: Int): Boolean {
+
+    val stmt: PreparedStatement = db.connection.prepareStatement(
+        "DELETE FROM competition_exercises WHERE id = ?"
+    )
+
+    stmt.setInt(1, id)
+
+    val rowsDeleted = stmt.executeUpdate()
+    stmt.close()
+
+    return rowsDeleted > 0
+}
+
 // Routes DB
 
 fun addRoute(route: Route): Boolean {
 
-    val stmt = connection.prepareStatement(
+    val stmt = db.connection.prepareStatement(
         """
         INSERT INTO routes(routeID, userID, name, distance, estimatedTime, date)
         VALUES (?, ?, ?, ?, ?, ?)
@@ -404,11 +810,80 @@ fun addRoute(route: Route): Boolean {
     return rowsInserted > 0
 }
 
+fun findRoute(userID: Int): List<Route> {
+
+    val stmt: PreparedStatement = db.connection.prepareStatement(
+        "SELECT * FROM routes WHERE userID = ?"
+    )
+
+    stmt.setInt(1, userID)
+
+    val rs: ResultSet = stmt.executeQuery()
+    val routes = mutableListOf<Route>()
+    while (rs.next()) {
+        val route = Route(
+            routeID = rs.getInt("routeID"),
+            userID = rs.getInt("userID"),
+            name = rs.getString("name"),
+            distance = rs.getDouble("distance"),
+            estimatedTime = rs.getObject("estimatedTime") as Double?,
+            date = rs.getString("date")
+        )
+        routes.add(route)
+    }
+
+    rs.close()
+    stmt.close()
+    return routes
+}
+
+fun updateRoute(
+    routeID: Int,
+    name: String,
+    distance: Double,
+    estimatedTime: Double?,
+    date: String?
+): Boolean {
+
+    val stmt: PreparedStatement = db.connection.prepareStatement(
+        """
+        UPDATE routes
+        SET name = ?, distance = ?, estimatedTime = ?, date = ?
+        WHERE routeID = ?
+        """.trimIndent()
+    )
+
+    stmt.setString(1, name)
+    stmt.setDouble(2, distance)
+    stmt.setObject(3, estimatedTime)
+    stmt.setString(4, date)
+    stmt.setInt(5, routeID)
+
+    val rowsUpdated = stmt.executeUpdate()
+    stmt.close()
+
+    return rowsUpdated > 0
+}
+
+fun deleteRoute(routeID: Int): Boolean {
+
+    val stmt: PreparedStatement = db.connection.prepareStatement(
+        "DELETE FROM routes WHERE routeID = ?"
+    )
+
+    stmt.setInt(1, routeID)
+
+    val rowsDeleted = stmt.executeUpdate()
+    stmt.close()
+
+    return rowsDeleted > 0
+}
+
 // Calendar DB
 
 fun addCalendarEvent(event: CalendarEvent): Boolean {
 
-    val stmt = connection.prepareStatement(
+    val stmt = db.connection.prepareStatement(
         """
         INSERT INTO calendar_events(userID,eventType,eventID,status,scheduledDate,name)
         VALUES (?, ?, ?, ?, ?, ?)
@@ -416,7 +891,7 @@ fun addCalendarEvent(event: CalendarEvent): Boolean {
     )
 
     stmt.setInt(1, event.userID)
-    stmt.setString(2, event.eventType) // Converts enum to string for storage
+    stmt.setString(2, event.eventType)
     stmt.setInt(3, event.eventID)
     stmt.setString(4, event.status)
     stmt.setString(5, event.scheduledDate)
@@ -426,4 +901,73 @@ fun addCalendarEvent(event: CalendarEvent): Boolean {
     stmt.close()
 
     return rowsInserted > 0
+}
+
+fun findCalendarEvent(userID: Int, scheduledDate: String): List<CalendarEvent> {
+
+    val stmt: PreparedStatement = db.connection.prepareStatement(
+        "SELECT * FROM calendar_events WHERE userID = ? AND scheduledDate = ?"
+    )
+
+    stmt.setInt(1, userID)
+    stmt.setString(2, scheduledDate)
+
+    val rs: ResultSet = stmt.executeQuery()
+    val events = mutableListOf<CalendarEvent>()
+    while (rs.next()) {
+        val event = CalendarEvent(
+            calendarID = rs.getInt("calendarID"),
+            userID = rs.getInt("userID"),
+            eventType = rs.getString("eventType"),
+            eventID = rs.getInt("eventID"),
+            status = rs.getString("status"),
+            scheduledDate = rs.getString("scheduledDate"),
+            name = rs.getString("name")
+        )
+        events.add(event)
+    }
+
+    rs.close()
+    stmt.close()
+    return events
+}
+
+fun updateCalendarEvent(
+    calendarID: Int,
+    status: String,
+    scheduledDate: String,
+    name: String
+): Boolean {
+
+    val stmt: PreparedStatement = db.connection.prepareStatement(
+        """
+        UPDATE calendar_events
+        SET status = ?, scheduledDate = ?, name = ?
+        WHERE calendarID = ?
+        """.trimIndent()
+    )
+
+    stmt.setString(1, status)
+    stmt.setString(2, scheduledDate)
+    stmt.setString(3, name)
+    stmt.setInt(4, calendarID)
+
+    val rowsUpdated = stmt.executeUpdate()
+    stmt.close()
+
+    return rowsUpdated > 0
+}
+
+fun deleteCalendarEvent(calendarID: Int): Boolean {
+
+    val stmt: PreparedStatement = db.connection.prepareStatement(
+        "DELETE FROM calendar_events WHERE calendarID = ?"
+    )
+
+    stmt.setInt(1, calendarID)
+
+    val rowsDeleted = stmt.executeUpdate()
+    stmt.close()
+
+    return rowsDeleted > 0
 }
