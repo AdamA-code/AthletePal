@@ -6,19 +6,13 @@ import java.sql.ResultSet // Represents results of SQL queries
 
 // data classes to finitely store inputs (and potentially outputs) to database
 
-enum class GenderType {
-    MALE,
-    FEMALE,
-    OTHER
-}
-
 data class User(
     val userID: Int,
     val name: String,
     val email: String,
     val passwordHash: String,
     val passwordKey: String,
-    val gender: GenderType?,
+    val gender: String?,
     val age: Int?,
     val height: Double?,
     val weight: Double?,
@@ -80,24 +74,12 @@ data class Route(
     val date: String?
 )
 
-enum class EventType {
-    WORKOUT,
-    ROUTE,
-    COMPETITION
-}
-
-enum class EventStatus {
-    UPCOMING,
-    COMPLETED,
-    TODAY,
-}
-
 data class CalendarEvent(
     val calendarID: Int,
     val userID: Int,
-    val eventType: EventType,
+    val eventType: String,
     val eventID: Int,
-    val status: EventStatus,
+    val status: String,
     val scheduledDate: String,
     val name: String
 )
@@ -124,7 +106,7 @@ fun createUser(user: User): Boolean {
         stmt.setString(2, user.email)
         stmt.setString(3, user.passwordHash)
         stmt.setString(4, user.passwordKey)
-        stmt.setString(5, user.gender?.name)
+        stmt.setString(5, user.gender)
         stmt.setObject(6, user.age)
         stmt.setObject(7, user.height)
         stmt.setObject(8, user.weight)
@@ -152,18 +134,13 @@ fun findUser(email: String): User? {
 
     // If query returns a row, create a User object
     if (rs.next()) {
-        val genderStr = rs.getString("gender") // If inside it breaks as could be a null or enum, db stores string, kotlin wants enum
         val user = User(
             userID = rs.getInt("userID"),
             name = rs.getString("name"),
             email = rs.getString("email"),
             passwordHash = rs.getString("passwordHash"),
             passwordKey = rs.getString("passwordKey"),
-            gender = if (genderStr != null) {
-                GenderType.valueOf(genderStr)
-            } else {
-                null
-            },
+            gender = rs.getObject("gender") as String?,
             age = rs.getObject("age") as Int?,
             height = rs.getObject("height") as Double?,
             weight = rs.getObject("weight") as Double?,
@@ -439,9 +416,9 @@ fun addCalendarEvent(event: CalendarEvent): Boolean {
     )
 
     stmt.setInt(1, event.userID)
-    stmt.setString(2, event.eventType.name) // Converts enum to string for storage
+    stmt.setString(2, event.eventType) // Converts enum to string for storage
     stmt.setInt(3, event.eventID)
-    stmt.setString(4, event.status.name)
+    stmt.setString(4, event.status)
     stmt.setString(5, event.scheduledDate)
     stmt.setString(6, event.name)
 
