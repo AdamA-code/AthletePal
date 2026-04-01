@@ -259,13 +259,11 @@ fun findExercise(name: String): Exercise? {
     return exercise
 }
 
-fun findAllExercises(name: String): List<Exercise> {
+fun findAllExercises(): List<Exercise> {
 
     val stmt: PreparedStatement = db.connection.prepareStatement(
-        "SELECT * FROM exercises WHERE name = ?"
+        "SELECT * FROM exercises"
     )
-
-    stmt.setString(1, name)
 
     val rs: ResultSet = stmt.executeQuery()
     val exercises = mutableListOf<Exercise>()
