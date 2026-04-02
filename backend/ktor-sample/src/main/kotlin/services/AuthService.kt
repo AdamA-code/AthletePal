@@ -11,7 +11,7 @@ class AuthService {
     fun validateLogin(email: String, password: String): Boolean {
         val user = findUser(email) // Load user from databsed
 
-        if (user != null && verifyPassword(password, user.passwordKey, user.passwordHash)) {
+        if (user > 0 && verifyPassword(password, user.passwordKey, user.passwordHash)) {
             return true
         }
         return false

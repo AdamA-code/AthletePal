@@ -20,7 +20,7 @@ CREATE TABLE routes (
 );
 
 CREATE TABLE competition_exercises (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    competitionExercisesID INTEGER PRIMARY KEY AUTOINCREMENT,
     competitionID INTEGER NOT NULL,
     exerciseID INTEGER NOT NULL,
     performance REAL,
@@ -41,7 +41,7 @@ CREATE TABLE statistics (
     statisticID INTEGER PRIMARY KEY AUTOINCREMENT,
     userID INTEGER NOT NULL,
     exerciseID INTEGER NOT NULL,
-    value REAL NOT NULL,
+    scoreValue REAL NOT NULL,
     date TEXT NOT NULL,
     FOREIGN KEY(userID) REFERENCES users(userID) ON DELETE CASCADE,
     FOREIGN KEY(exerciseID) REFERENCES exercises(exerciseID)
@@ -59,7 +59,7 @@ CREATE TABLE workouts (
 );
 
 CREATE TABLE workout_exercises (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workoutExercisesID INTEGER PRIMARY KEY AUTOINCREMENT,
     workoutID INTEGER NOT NULL,
     exerciseID INTEGER NOT NULL,
     sets INTEGER,
@@ -86,6 +86,5 @@ CREATE TABLE exercises (
     exerciseID INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     category TEXT NOT NULL,
-    type TEXT NOT NULL,
     description TEXT
 );
