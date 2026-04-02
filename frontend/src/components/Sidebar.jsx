@@ -29,7 +29,7 @@ function Sidebar() {
                     Activity History
                 </Link>
 
-                <Link to="/competitions" className={linkClass("/comptetions")}>
+                <Link to="/competitions" className={linkClass("/competitions")}>
                     Competitions
                 </Link>
 
