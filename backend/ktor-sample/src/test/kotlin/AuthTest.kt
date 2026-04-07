@@ -2,6 +2,7 @@ package test
 
 import java.sql.SQLException
 import services.AuthService
+import services.*
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.test.assertNotNull
@@ -38,5 +39,8 @@ class AuthTest {
             password = "wrongpassword"
         )
         assertTrue(!loginFail, "Login with wrong password should fail")
+
+        // Remove from DB
+        assertTrue(deleteUser("Finn@outlook.com"))
     }
 }

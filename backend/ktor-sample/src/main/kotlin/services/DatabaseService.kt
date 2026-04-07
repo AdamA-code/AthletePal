@@ -28,6 +28,7 @@ data class Exercise(
 )
 
 data class Workout(
+    val workoutID: Int,
     val createdBy: Int,
     val assignedTo: Int,
     val date: String,
@@ -35,7 +36,7 @@ data class Workout(
 )
 
 data class WorkoutExercise(
-    val workoutExerciseID: Int,
+    val workoutExercisesID: Int,
     val workoutID: Int,
     val exerciseID: Int,
     val sets: Int?,
@@ -44,7 +45,7 @@ data class WorkoutExercise(
 )
 
 data class Statistic(
-    val statisticsID: Int,
+    val statisticID: Int,
     val userID: Int,
     val exerciseID: Int,
     val scoreValue: Double,
@@ -325,13 +326,13 @@ fun updateExercise(
     return rowsUpdated > 0
 }
 
-fun deleteExercise(name: String): Boolean {
+fun deleteExercise(exerciseID: Int): Boolean {
 
     val stmt: PreparedStatement = db.connection.prepareStatement(
-        "DELETE FROM exercises WHERE name = ?"
+        "DELETE FROM exercises WHERE exerciseID = ?"
     )
 
-    stmt.setString(1, name)
+    stmt.setInt(1, exerciseID)
 
     val rowsDeleted = stmt.executeUpdate()
     stmt.close()
@@ -384,6 +385,7 @@ fun findAllWorkouts(userID: Int): List<Workout> {
 
     while (rs.next()) {
         val workout = Workout(
+            workoutID = rs.getInt("workoutID"),
             createdBy = rs.getInt("createdBy"),
             assignedTo = rs.getInt("assignedTo"),
             date = rs.getString("date"),
@@ -481,7 +483,7 @@ fun findAllWorkoutExercises(workoutID: Int): List<WorkoutExercise> {
     val workoutExs = mutableListOf<WorkoutExercise>()
     while (rs.next()) {
         val we = WorkoutExercise(
-            workoutExerciseID = rs.getInt("workoutExerciseID"),
+            workoutExercisesID = rs.getInt("workoutExercisesID"),
             workoutID = rs.getInt("workoutID"),
             exerciseID = rs.getInt("exerciseID"),
             sets = rs.getObject("sets") as Int?,
@@ -497,7 +499,7 @@ fun findAllWorkoutExercises(workoutID: Int): List<WorkoutExercise> {
 }
 
 fun updateWorkoutExercise(
-    workoutExerciseID: Int,
+    workoutExercisesID: Int,
     sets: Int?,
     reps: Int?,
     weight: Double?
@@ -507,14 +509,14 @@ fun updateWorkoutExercise(
         """
         UPDATE workout_exercises
         SET sets = ?, reps = ?, weight = ?
-        WHERE workoutExerciseID = ?
+        WHERE workoutExercisesID = ?
         """.trimIndent()
     )
 
     stmt.setObject(1, sets)
     stmt.setObject(2, reps)
     stmt.setObject(3, weight)
-    stmt.setInt(4, workoutExerciseID)
+    stmt.setInt(4, workoutExercisesID)
 
     val rowsUpdated = stmt.executeUpdate()
     stmt.close()
@@ -581,7 +583,7 @@ fun findAllStatistics(userID: Int, exerciseID: Int): List<Statistic> {
     val stats = mutableListOf<Statistic>()
     while (rs.next()) {
         val stat = Statistic(
-            statisticsID = rs.getInt("statisticsID"),
+            statisticID = rs.getInt("statisticID"),
             userID = rs.getInt("userID"),
             exerciseID = rs.getInt("exerciseID"),
             scoreValue = rs.getDouble("scoreValue"),
@@ -613,7 +615,7 @@ fun getBestStat(userID: Int, exerciseID: Int): Statistic? {
 
     val stat = if (rs.next()) {
         Statistic(
-            rs.getInt("statisticsID"),
+            rs.getInt("statisticID"),
             rs.getInt("userID"),
             rs.getInt("exerciseID"),
             rs.getDouble("scoreValue"),
@@ -628,7 +630,7 @@ fun getBestStat(userID: Int, exerciseID: Int): Statistic? {
 }
 
 fun updateStatistic(
-    statisticsID: Int,
+    statisticID: Int,
     scoreValue: Double,
     date: String
 ): Boolean {
@@ -637,13 +639,13 @@ fun updateStatistic(
         """
         UPDATE statistics
         SET scoreValue = ?, date = ?
-        WHERE statisticsID = ?
+        WHERE statisticID = ?
         """.trimIndent()
     )
 
     stmt.setDouble(1, scoreValue)
     stmt.setString(2, date)
-    stmt.setInt(3, statisticsID)
+    stmt.setInt(3, statisticID)
 
     val rowsUpdated = stmt.executeUpdate()
     stmt.close()
@@ -651,13 +653,13 @@ fun updateStatistic(
     return rowsUpdated > 0
 }
 
-fun deleteStatistic(statisticsID: Int): Boolean {
+fun deleteStatistic(statisticID: Int): Boolean {
 
     val stmt: PreparedStatement = db.connection.prepareStatement(
-        "DELETE FROM statistics WHERE statisticsID = ?"
+        "DELETE FROM statistics WHERE statisticID = ?"
     )
 
-    stmt.setInt(1, statisticsID)
+    stmt.setInt(1, statisticID)
 
     val rowsDeleted = stmt.executeUpdate()
     stmt.close()
@@ -861,18 +863,17 @@ fun addRoute(route: Route): Int {
 
     val stmt = db.connection.prepareStatement(
         """
-        INSERT INTO routes(routeID, userID, name, distance, estimatedTime, date)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO routes(userID, name, distance, estimatedTime, date)
+        VALUES (?, ?, ?, ?, ?)
         """.trimIndent(),
         Statement.RETURN_GENERATED_KEYS
     )
 
-    stmt.setInt(1, route.routeID)
-    stmt.setInt(2, route.userID)
-    stmt.setString(3, route.name)
-    stmt.setDouble(4, route.distance)
-    stmt.setObject(5, route.estimatedTime)
-    stmt.setString(6, route.date)
+    stmt.setInt(1, route.userID)
+    stmt.setString(2, route.name)
+    stmt.setDouble(3, route.distance)
+    stmt.setObject(4, route.estimatedTime)
+    stmt.setString(5, route.date)
 
     val rowsInserted = stmt.executeUpdate()
 
@@ -1133,6 +1134,7 @@ fun findWorkout(workoutID: Int): Workout? {
 
     if (rs.next()) {
         val workout = Workout(
+            workoutID = rs.getInt("workoutID"),
             createdBy = rs.getInt("createdBy"),
             assignedTo = rs.getInt("assignedTo"),
             date = rs.getString("date"),
@@ -1148,18 +1150,18 @@ fun findWorkout(workoutID: Int): Workout? {
     return null
 }
 
-fun findWorkoutExercise(workoutExerciseID: Int): WorkoutExercise? {
+fun findWorkoutExercise(workoutExercisesID: Int): WorkoutExercise? {
 
     val stmt: PreparedStatement = db.connection.prepareStatement(
-        "SELECT * FROM workout_exercises WHERE workoutExerciseID = ?"
+        "SELECT * FROM workout_exercises WHERE workoutExercisesID = ?"
     )
 
-    stmt.setInt(1, workoutExerciseID)
+    stmt.setInt(1, workoutExercisesID)
 
     val rs: ResultSet = stmt.executeQuery()
     if (rs.next()) {
         val we = WorkoutExercise(
-            workoutExerciseID = rs.getInt("workoutExerciseID"),
+            workoutExercisesID = rs.getInt("workoutExercisesID"),
             workoutID = rs.getInt("workoutID"),
             exerciseID = rs.getInt("exerciseID"),
             sets = rs.getObject("sets") as Int?,
@@ -1176,19 +1178,19 @@ fun findWorkoutExercise(workoutExerciseID: Int): WorkoutExercise? {
     return null
 }
 
-fun findStatistic(statisticsID: Int): Statistic? {
+fun findStatistic(statisticID: Int): Statistic? {
 
     val stmt: PreparedStatement = db.connection.prepareStatement(
-        "SELECT * FROM statistics WHERE statisticsID = ?"
+        "SELECT * FROM statistics WHERE statisticID = ?"
     )
 
-    stmt.setInt(1, statisticsID)
+    stmt.setInt(1, statisticID)
 
     val rs: ResultSet = stmt.executeQuery()
 
     if (rs.next()) {
         val stat = Statistic(
-            statisticsID = rs.getInt("statisticsID"),
+            statisticID = rs.getInt("statisticID"),
             userID = rs.getInt("userID"),
             exerciseID = rs.getInt("exerciseID"),
             scoreValue = rs.getDouble("scoreValue"),

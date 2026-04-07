@@ -11,7 +11,7 @@ class AuthService {
     fun validateLogin(email: String, password: String): Boolean {
         val user = findUser(email) // Load user from databsed
 
-        if (user > 0 && verifyPassword(password, user.passwordKey, user.passwordHash)) {
+        if (user != null && verifyPassword(password, user.passwordKey, user.passwordHash)) {
             return true
         }
         return false
@@ -49,7 +49,7 @@ class AuthService {
         email: String,
         password: String,
         accountType: Boolean
-    ): Boolean {
+    ): Int {
 
         val key = generateSalt()
         val hash = hashPassword(password, key)
