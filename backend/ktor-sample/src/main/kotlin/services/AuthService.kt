@@ -51,12 +51,12 @@ class AuthService {
         email: String,
         password: String,
         accountType: Boolean
-    ): Boolean {
+    ): Int {
 
         val key = generateSalt()
         val hash = hashPassword(password, key)
 
-        val user = User(
+        val user = DatabaseService.User(
             0,
             name,
             email,
@@ -71,5 +71,4 @@ class AuthService {
 
         return databaseService.createUser(user)
     }
-
 }

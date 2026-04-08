@@ -35,16 +35,16 @@ fun Route.authRoutes() {
 
             val accountCreated = databaseService.createUser(createAccountRequest) // Call function for account creation in authService, retrieve boolean confirmation
 
-            if (accountCreated) {
+            if (accountCreated > 0) {
                 call.respond(mapOf("message" to "Account created!")) // Success message if account successfully created
-            } else if (!accountCreated) {
+            } else {
                 call.respond(mapOf("message" to "User already exists!")) // Fail message if account not created (as user already exists)
             }
         }
 
 
-        /* 
-        post("/forgot-password") {
+         
+        /*post("/forgot-password") {
             val targetUser = call.receive<ForgotPasswordRequest>() // Retrieve data from request
 
             val verificationSent: Boolean = databaseService.PasswordReset(targetUser.email) // Call password reset function
@@ -54,8 +54,7 @@ fun Route.authRoutes() {
             } else {
                 call.respond(mapOf("message" to "Account does not exist!"))
             }
-        } */
-
+        } 
+*/
     }
-
 }
