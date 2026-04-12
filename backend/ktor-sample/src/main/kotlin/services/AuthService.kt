@@ -1,14 +1,17 @@
 package services
-import services.createUser
-import services.findUser
+import services.DatabaseService
 import java.security.MessageDigest // Provides hashing algorithms
 import java.security.SecureRandom // Used for generating random salt
 import java.util.Base64 // Converts binary data into readable strings
 
+import services.DatabaseService.User as User
+
 class AuthService {
 
+    val databaseService = DatabaseService()
+
     fun validateLogin(email: String, password: String): Boolean {
-        val user = findUser(email) // Load user from databsed
+        val user = databaseService.findUser(email) // Load user from databsed
 
         if (user != null && verifyPassword(password, user.passwordKey, user.passwordHash)) {
             return true
@@ -48,12 +51,12 @@ class AuthService {
         email: String,
         password: String,
         accountType: Boolean
-    ): Boolean {
+    ): Int {
 
         val key = generateSalt()
         val hash = hashPassword(password, key)
 
-        val user = User(
+        val user = DatabaseService.User(
             0,
             name,
             email,
@@ -66,7 +69,6 @@ class AuthService {
             accountType
         )
 
-        return createUser(user)
+        return databaseService.createUser(user)
     }
-
 }
