@@ -5,9 +5,6 @@ import java.sql.PreparedStatement // Precompiled SQL statement
 import java.sql.ResultSet // Represents results of SQL queries
 import java.sql.Statement
 
-import models.Activity as Activity
-import models.Competitions as Competitions
-
 // data classes to finitely store inputs (and potentially outputs) to database
 
 class DatabaseService{
@@ -1261,19 +1258,159 @@ class DatabaseService{
         return null
     }
 
-        fun getRecentActivity(email: String?, username: String?): List<Activity>{
-        val RecentActivity = listOf<Activity>()
-        return RecentActivity
+    fun getRecentWorkouts(email: String): List<Workout>{
+
+        val user = findUser(email) ?: return emptyList()
+        val results = mutableListOf<Workout>()
+
+        val query = """
+            SELECT * FROM Workout
+            WHERE assignedTo = ?
+            ORDER BY date DESC
+            LIMIT 5
+        """
+
+        val stmt = db.connection.prepareStatement(query)
+        stmt.setInt(1, user.userID)
+
+        val rs = stmt.executeQuery()
+
+        while (rs.next()) {
+            results.add(
+                Workout(
+                    workoutID = rs.getInt("workoutID"),
+                    createdBy = rs.getInt("createdBy"),
+                    assignedTo = rs.getInt("assignedTo"),
+                    date = rs.getString("date"),
+                    duration = rs.getInt("duration")
+                )
+            )
+        }
+        return results
     }
 
-    fun getTodaysWorkout(email: String?, username: String?): List<Activity>{
-        val TodaysWorkout = listOf<Activity>()
-        return TodaysWorkout 
+    fun getTodaysWorkout(email: String): List<Workout>{
+
+        val user = findUser(email) ?: return emptyList()
+        val results = mutableListOf<Workout>()
+
+        val query = """
+            SELECT * FROM Workout
+            WHERE assignedTo = ? AND date = DATE('now')
+        """
+
+        val stmt = db.connection.prepareStatement(query)
+        stmt.setInt(1, user.userID)
+
+        val rs = stmt.executeQuery()
+
+        while (rs.next()) {
+            results.add(
+                Workout(
+                    workoutID = rs.getInt("workoutID"),
+                    createdBy = rs.getInt("createdBy"),
+                    assignedTo = rs.getInt("assignedTo"),
+                    date = rs.getString("date"),
+                    duration = rs.getInt("duration")
+                )
+            )
+        }
+        return results
     }
     
-    fun getUpcomingCompetitions(email: String?, username: String?): List<Competitions>{
-        val UpcomingCompetitions = listOf<Competitions>()
-        return UpcomingCompetitions
+    fun getUpcomingCompetitions(email: String): List<Competition>{
+        
+        val user = findUser(email) ?: return emptyList()
+
+        val results = mutableListOf<Competition>()
+
+        val query = """
+            SELECT * FROM Competition
+            WHERE userID = ? AND date >= DATE('now')
+            ORDER BY date ASC
+        """
+
+        val stmt = db.connection.prepareStatement(query)
+        stmt.setInt(1, user.userID)
+
+        val rs = stmt.executeQuery()
+
+        while (rs.next()) {
+            results.add(
+                Competition(
+                    competitionID = rs.getInt("competitionID"),
+                    userID = rs.getInt("userID"),
+                    name = rs.getString("name"),
+                    date = rs.getString("date"),
+                    rank = rs.getInt("rank")
+                )
+            )
+        }
+        return results
     }
 
+    fun getRecentRoutes(email: String): List<Route> {
+
+        val user = findUser(email) ?: return emptyList()
+
+        val results = mutableListOf<Route>()
+
+        val query = """
+            SELECT * FROM Route
+            WHERE userID = ?
+            ORDER BY date DESC
+            LIMIT 5
+        """
+
+        val stmt = db.connection.prepareStatement(query)
+        stmt.setInt(1, user.userID)
+
+        val rs = stmt.executeQuery()
+
+        while (rs.next()) {
+            results.add(
+                Route(
+                    routeID = rs.getInt("routeID"),
+                    userID = rs.getInt("userID"),
+                    name = rs.getString("name"),
+                    distance = rs.getDouble("distance"),
+                    estimatedTime = rs.getDouble("estimatedTime"),
+                    date = rs.getString("date")
+                )
+            )
+        }
+        return results
+    }
+
+    fun getRecentCompetitions(email: String): List<Competition> {
+
+        val user = findUser(email) ?: return emptyList()
+
+        val results = mutableListOf<Competition>()
+
+        val query = """
+            SELECT * FROM Competition
+            WHERE userID = ?
+            ORDER BY date DESC
+            LIMIT 5
+        """
+
+        val stmt = db.connection.prepareStatement(query)
+        stmt.setInt(1, user.userID)
+
+        val rs = stmt.executeQuery()
+
+        while (rs.next()) {
+            results.add(
+                Competition(
+                    competitionID = rs.getInt("competitionID"),
+                    userID = rs.getInt("userID"),
+                    name = rs.getString("name"),
+                    date = rs.getString("date"),
+                    rank = rs.getInt("rank")
+                )
+            )
+        }
+        return results
+    }
 }
