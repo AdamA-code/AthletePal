@@ -9,8 +9,8 @@ import models.TodayWorkoutsRequest
 import models.UpcomingCompetitionsRequest
 import models.RecentActivityRequest
 import models.Activity
-import models.Competitions
-import mmodels.Workout
+import services.DatabaseService.Competition as Competition
+import services.DatabaseService.Workout as Workout
 
 import services.DatabaseService
 

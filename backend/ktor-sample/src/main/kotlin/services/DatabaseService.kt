@@ -4,11 +4,13 @@ import java.sql.DriverManager // To connect to the DB
 import java.sql.PreparedStatement // Precompiled SQL statement
 import java.sql.ResultSet // Represents results of SQL queries
 import java.sql.Statement
+import kotlinx.serialization.Serializable
 
 // data classes to finitely store inputs (and potentially outputs) to database
 
 class DatabaseService{
     
+    @Serializable
     data class User(
         val userID: Int,
         val name: String,
@@ -22,6 +24,7 @@ class DatabaseService{
         val accountType: Boolean
     )
 
+    @Serializable
     data class Exercise(
         val exerciseID: Int,
         val name: String,
@@ -29,6 +32,7 @@ class DatabaseService{
         val description: String?
     )
 
+    @Serializable
     data class Workout(
         val workoutID: Int,
         val createdBy: Int,
@@ -37,6 +41,7 @@ class DatabaseService{
         val duration: Int?
     )
 
+    @Serializable
     data class WorkoutExercise(
         val workoutExercisesID: Int,
         val workoutID: Int,
@@ -46,6 +51,7 @@ class DatabaseService{
         val weight: Double?,
     )
 
+    @Serializable
     data class Statistic(
         val statisticID: Int,
         val userID: Int,
@@ -54,6 +60,7 @@ class DatabaseService{
         val date: String,
     )
 
+    @Serializable
     data class Competition(
         val competitionID: Int,
         val userID: Int,
@@ -62,6 +69,7 @@ class DatabaseService{
         val rank: Int?
     )
 
+    @Serializable
     data class CompetitionExercise(
         val competitionExerciseID: Int,
         val competitionID: Int,
@@ -69,6 +77,7 @@ class DatabaseService{
         val performance: Double?
     )
 
+    @Serializable
     data class Route(
         val routeID: Int,
         val userID: Int,
@@ -78,6 +87,7 @@ class DatabaseService{
         val date: String?
     )
 
+    @Serializable
     data class CalendarEvent(
         val calendarID: Int,
         val userID: Int,
