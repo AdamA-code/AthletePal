@@ -84,14 +84,22 @@ function TrainingGroupsPage() {
                         </div>
 
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <h3 className="font-medium text-blue-800">
-                                How It Works
-                            </h3>
-                            <ul className="list-disc list-inside text-gray-600 space-y-2">
-                                <li>Find a group that fits your schedule and fitness level</li>
-                                <li>Join the group and participate in virtual sessions</li>
-                                <li>Track your progress and celebrate achievements</li>
-                            </ul>
+                            <p className="font-medium text-blue-800">
+                                Complete 20 total group workouts this week
+                            </p>
+                        </div>
+                        <div className="bg-white rounded-x1 shadow-md p-6">
+                            <h2 className="text-x1 font-semibold text-gray-800 mb-4">
+                                Create a Group
+                            </h2>
+
+                            <p className="text-gray-600 mb-4">
+                                Start your own training group, set goals, and invite friends to join you on your fitness journey.
+                            </p>
+
+                            <button className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">
+                                Create Group
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -99,3 +107,6 @@ function TrainingGroupsPage() {
         </div>
     )
 }
+
+export default TrainingGroupsPage
+

@@ -8,6 +8,7 @@ import ActivityHistoryPage from "./pages/ActivityHistory"
 import ProfilePage from "./pages/Profile"
 import StatisticsPage from "./pages/StatisticsPage"
 import CompetitionPage from "./pages/CompetitionPage"
+import TrainingGroupsPage from "./pages/TrainingGroupsPage"
 
 function App() {
   return (
@@ -33,6 +34,8 @@ function App() {
 
         {/* Add more routes as needed */}
         <Route path="/competitions" element={<CompetitionPage />} />
+
+        <Route path="/training-groups" element={<TrainingGroupsPage />} />
       </Routes>
 
     </BrowserRouter>
