@@ -262,4 +262,94 @@ class DatabaseServiceTest {
         assertTrue(ds.deleteUser(email))
         assertTrue(ds.deleteExercise(exerciseId))
     }
+
+    @Test
+    fun testDashboardFunctions() {
+
+        val ds = DatabaseService()
+
+        val email = "dashboard@test.com"
+
+        val userId = ds.createUser(
+            ds.User(
+                userID = 0,
+                name = "Dashboard User",
+                email = email,
+                passwordHash = "hash",
+                passwordKey = "key",
+                gender = "Male",
+                age = 25,
+                height = 180.0,
+                weight = 75.0,
+                accountType = false
+            )
+        )
+
+        assertTrue(userId > 0)
+
+        // =========================
+        // SETUP DATA
+        // =========================
+
+        val today = "2026-01-01"
+        val future = "2026-12-01"
+        val past = "2025-01-01"
+
+        // Workout (today)
+        val workoutId = ds.createWorkout(
+            ds.Workout(0, userId, userId, today, 60)
+        )
+
+        // Workout (past)
+        ds.createWorkout(
+            ds.Workout(0, userId, userId, past, 45)
+        )
+
+        // Competition (future)
+        ds.addComp(
+            ds.Competition(0, userId, "Future Comp", future, 0)
+        )
+
+        // Competition (past)
+        ds.addComp(
+            ds.Competition(0, userId, "Past Comp", past, 1)
+        )
+
+        // Routes
+        ds.addRoute(
+            ds.Route(0, userId, "Route 1", 5.0, 30.0, today)
+        )
+
+        ds.addRoute(
+            ds.Route(0, userId, "Route 2", 6.0, 35.0, past)
+        )
+
+        // =========================
+        // TESTS
+        // =========================
+
+        // 1. Today's workouts
+        val todays = ds.getTodaysWorkouts(email)
+        assertTrue(todays.any { it.date == today })
+
+        // 2. Upcoming competitions
+        val upcoming = ds.getUpcomingCompetitions(email)
+        assertTrue(upcoming.any { it.date == future })
+        assertTrue(upcoming.none { it.date == past })
+
+        // 3. Recent routes
+        val routes = ds.getRecentRoutes(email)
+        assertTrue(routes.isNotEmpty())
+
+        // 4. Recent competitions
+        val recentComps = ds.getRecentCompetitions(email)
+        assertTrue(recentComps.isNotEmpty())
+
+        // 5. (Optional) recent activity if you still have it
+        // val activity = ds.getRecentActivity(email)
+        // assertTrue(activity.isNotEmpty())
+
+        // Cleanup
+        assertTrue(ds.deleteUser(email))
+    }
 }

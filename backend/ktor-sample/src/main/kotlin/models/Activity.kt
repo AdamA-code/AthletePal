@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Activity(
-    val date: String,
-    val workoutType: String,
-    val duration: String,
+    val workouts: List<Workout>,
+    val competitions: List<Competitions>,
+    val routes: List<Route>
 )
