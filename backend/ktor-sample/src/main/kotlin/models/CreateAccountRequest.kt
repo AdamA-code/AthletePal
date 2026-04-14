@@ -3,14 +3,14 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class CreateAccountRequest(
-    val username: String,
+    val name: String,
     val email: String,
     val password: String,
 
-    val gender: String?,
-    val age: Int,
-    val height: Int?,
-    val weight: Float?,
+    val gender: String? = null,
+    val age: Int? = 0,
+    val height: Int? = 0,
+    val weight: Double? = 0.0,
 
     val accountType: Boolean
 
