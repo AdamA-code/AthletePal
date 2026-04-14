@@ -1309,6 +1309,11 @@ class DatabaseService{
         return results
     }
 
+    // Frontend potentially want to split it into 3 most recent of each
+    fun getRecentWorkoutsByType(userID: Int): Map<String, List<Workout>> {
+        return findAllWorkouts(userID).filter { it.workoutType != null }.sortedByDescending { it.date }.groupBy { it.workoutType!! }.mapValues { (_, workouts) -> workouts.take(3) }
+    }
+
     fun getTodaysWorkout(email: String, today: LocalDate = LocalDate.now()): List<Workout>{
 
         val user = findUser(email) ?: return emptyList()

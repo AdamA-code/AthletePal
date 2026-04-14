@@ -348,6 +348,54 @@ class DatabaseServiceTest {
     }
 
     @Test
+    fun testGetRecentWorkoutsByType() {
+        val ds = DatabaseService()
+        val email = "recenttype@test.com"
+
+        ds.deleteUser(email)
+
+        val userId = ds.createUser(
+            User(
+                userID = 0,
+                name = "Recent By Type User",
+                email = email,
+                passwordHash = "hash",
+                passwordKey = "key",
+                gender = "Male",
+                age = 25,
+                height = 180.0,
+                weight = 75.0,
+                accountType = false
+            )
+        )
+        assertTrue(userId > 0)
+
+        // Need at least 4 to test cutoff is 3
+        ds.createWorkout(Workout(0, userId, userId, "2025-01-01", 30, "cardio"))
+        ds.createWorkout(Workout(0, userId, userId, "2025-02-01", 35, "cardio"))
+        ds.createWorkout(Workout(0, userId, userId, "2025-03-01", 40, "cardio"))
+        ds.createWorkout(Workout(0, userId, userId, "2025-04-01", 45, "cardio"))
+
+        ds.createWorkout(Workout(0, userId, userId, "2025-01-01", 60, "weights"))
+        ds.createWorkout(Workout(0, userId, userId, "2025-02-01", 65, "weights"))
+        ds.createWorkout(Workout(0, userId, userId, "2025-03-01", 70, "weights"))
+        ds.createWorkout(Workout(0, userId, userId, "2025-04-01", 75, "weights"))
+
+        val recent = ds.getRecentWorkoutsByType(userId)
+
+        // Only 3 of each returned
+        assertEquals(3, recent["cardio"]?.size)
+        assertEquals(3, recent["weights"]?.size)
+
+        // Most recent first
+        val cardio = recent["cardio"]!!
+        assertTrue(cardio[0].date > cardio[1].date)
+        assertTrue(cardio[1].date > cardio[2].date)
+
+        assertTrue(ds.deleteUser(email))
+    }
+
+    @Test
     fun testStatsFunctions() {
         val ds = DatabaseService()
         val email = "stats@test.com"
