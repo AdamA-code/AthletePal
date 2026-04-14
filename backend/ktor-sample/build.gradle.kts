@@ -26,7 +26,7 @@ dependencies {
     testImplementation(libs.kotlin.test.junit)
 
     testImplementation(kotlin("test"))
-    
+    testImplementation("io.mockk:mockk:1.13.10")
 }
 
 application {
