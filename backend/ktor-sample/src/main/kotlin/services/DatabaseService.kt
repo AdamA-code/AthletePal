@@ -4,6 +4,7 @@ import java.sql.DriverManager // To connect to the DB
 import java.sql.PreparedStatement // Precompiled SQL statement
 import java.sql.ResultSet // Represents results of SQL queries
 import java.sql.Statement
+import java.time.LocalDate
 import kotlinx.serialization.Serializable
 
 // data classes to finitely store inputs (and potentially outputs) to database
@@ -1274,7 +1275,7 @@ class DatabaseService{
         val results = mutableListOf<Workout>()
 
         val query = """
-            SELECT * FROM Workout
+            SELECT * FROM workouts
             WHERE assignedTo = ?
             ORDER BY date DESC
             LIMIT 5
@@ -1299,18 +1300,19 @@ class DatabaseService{
         return results
     }
 
-    fun getTodaysWorkout(email: String): List<Workout>{
+    fun getTodaysWorkout(email: String, today: LocalDate = LocalDate.now()): List<Workout>{
 
         val user = findUser(email) ?: return emptyList()
         val results = mutableListOf<Workout>()
 
         val query = """
-            SELECT * FROM Workout
-            WHERE assignedTo = ? AND date = DATE('now')
+            SELECT * FROM workouts
+            WHERE assignedTo = ? AND date = ?
         """
 
         val stmt = db.connection.prepareStatement(query)
         stmt.setInt(1, user.userID)
+        stmt.setString(2, today.toString()) // Passes date as "YYYY-MM-DD"
 
         val rs = stmt.executeQuery()
 
@@ -1335,13 +1337,14 @@ class DatabaseService{
         val results = mutableListOf<Competition>()
 
         val query = """
-            SELECT * FROM Competition
-            WHERE userID = ? AND date >= DATE('now')
+            SELECT * FROM competitions
+            WHERE userID = ? AND date >= ?
             ORDER BY date ASC
         """
 
         val stmt = db.connection.prepareStatement(query)
         stmt.setInt(1, user.userID)
+        stmt.setString(2, LocalDate.now().toString())
 
         val rs = stmt.executeQuery()
 
@@ -1366,7 +1369,7 @@ class DatabaseService{
         val results = mutableListOf<Route>()
 
         val query = """
-            SELECT * FROM Route
+            SELECT * FROM routes
             WHERE userID = ?
             ORDER BY date DESC
             LIMIT 5
@@ -1399,7 +1402,7 @@ class DatabaseService{
         val results = mutableListOf<Competition>()
 
         val query = """
-            SELECT * FROM Competition
+            SELECT * FROM competitions
             WHERE userID = ?
             ORDER BY date DESC
             LIMIT 5
