@@ -40,7 +40,7 @@ function LoginPage () {
             }
         } catch (error) { 
             console.error("Error during login:", error)
-            setError("An error occurred. Please try again later.")
+            setError("Could not connect to server.")
         } // Above used to make sure that the user doesn't get an error code which doesn't look good on the UI and instead gets a user-friendly message.
     }
 
