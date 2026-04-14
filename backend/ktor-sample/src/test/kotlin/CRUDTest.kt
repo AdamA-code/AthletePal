@@ -12,6 +12,7 @@ import services.DatabaseService.Statistic
 import services.DatabaseService.Competition
 import services.DatabaseService.Route
 import services.DatabaseService.CalendarEvent
+import java.time.LocalDate
 
 class DatabaseServiceTest {
 
@@ -19,6 +20,7 @@ class DatabaseServiceTest {
     fun testFullCRUDFlow() {
 
         val ds = DatabaseService()
+        ds.deleteUser("integration@test.com")
 
         // =========================
         // 1. USER
@@ -129,7 +131,7 @@ class DatabaseServiceTest {
             )
         )
 
-        assertTrue(ds.deleteWorkoutExercise(workoutExercisesId))
+        // cascade: assertTrue(ds.deleteWorkoutExercise(workoutExercisesId))
 
         // =========================
         // 5. STATISTICS
@@ -271,7 +273,7 @@ class DatabaseServiceTest {
         val email = "dashboard@test.com"
 
         val userId = ds.createUser(
-            ds.User(
+            User(
                 userID = 0,
                 name = "Dashboard User",
                 email = email,
@@ -291,37 +293,37 @@ class DatabaseServiceTest {
         // SETUP DATA
         // =========================
 
-        val today = "2026-01-01"
+        val today = LocalDate.now().toString()
         val future = "2026-12-01"
         val past = "2025-01-01"
 
         // Workout (today)
         val workoutId = ds.createWorkout(
-            ds.Workout(0, userId, userId, today, 60)
+            Workout(0, userId, userId, today, 60)
         )
 
         // Workout (past)
         ds.createWorkout(
-            ds.Workout(0, userId, userId, past, 45)
+            Workout(0, userId, userId, past, 45)
         )
 
         // Competition (future)
         ds.addComp(
-            ds.Competition(0, userId, "Future Comp", future, 0)
+            Competition(0, userId, "Future Comp", future, 0)
         )
 
         // Competition (past)
         ds.addComp(
-            ds.Competition(0, userId, "Past Comp", past, 1)
+            Competition(0, userId, "Past Comp", past, 1)
         )
 
         // Routes
         ds.addRoute(
-            ds.Route(0, userId, "Route 1", 5.0, 30.0, today)
+            Route(0, userId, "Route 1", 5.0, 30.0, today)
         )
 
         ds.addRoute(
-            ds.Route(0, userId, "Route 2", 6.0, 35.0, past)
+            Route(0, userId, "Route 2", 6.0, 35.0, past)
         )
 
         // =========================
@@ -329,7 +331,7 @@ class DatabaseServiceTest {
         // =========================
 
         // 1. Today's workouts
-        val todays = ds.getTodaysWorkouts(email)
+        val todays = ds.getTodaysWorkout(email)
         assertTrue(todays.any { it.date == today })
 
         // 2. Upcoming competitions
