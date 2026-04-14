@@ -1338,12 +1338,13 @@ class DatabaseService{
 
         val query = """
             SELECT * FROM competitions
-            WHERE userID = ? AND date >= DATE('now')
+            WHERE userID = ? AND date >= ?
             ORDER BY date ASC
         """
 
         val stmt = db.connection.prepareStatement(query)
         stmt.setInt(1, user.userID)
+        stmt.setString(2, LocalDate.now().toString())
 
         val rs = stmt.executeQuery()
 
