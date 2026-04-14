@@ -1,7 +1,8 @@
+import { useState } from "react"
 import Sidebar from "../components/Sidebar"
 
 function TrainingGroupsPage() {
-    const groups = [
+    const [groups, setGroups] = useState([
         {
             id: 1,
             name: "Leeds 10K Prep Group",
@@ -9,6 +10,7 @@ function TrainingGroupsPage() {
             members: 18,
             goal: "Complete Leeds 10K in under 55 minutes",
             nextSession: "Tuesday, 7:00 AM",
+            joined: false // added this in for validationa and so that changes can be seen on the button of the group from Join -> Joined
         },
         {
             id: 2,
@@ -17,6 +19,7 @@ function TrainingGroupsPage() {
             members: 24,
             goal: "Train at least 3 per week consistently",
             nextSession: "Wednesday, 5:00 PM",
+            joined: false
         },
         {
             id: 3,
@@ -25,8 +28,24 @@ function TrainingGroupsPage() {
             members: 31,
             goal: "Complete 3 workouts per week",
             nextSession: "Thursday, 6:30 PM",
+            joined: false
         }
-    ]
+    ])
+
+    const handleJoinGroup = (groupId) => {
+        setGroups((prevGroups) => 
+            prevGroups.map((group) =>
+                group.id === group.id && !group.joined
+                    ? {
+                        ...group,
+                        members: group.members + 1,
+                        joined: true
+                    }
+                : group
+                )
+        )
+    
+    }
 
     return (
         <div className="flex-1 min-h-screen bg-gray-100 flex">
@@ -59,13 +78,31 @@ function TrainingGroupsPage() {
                                         </p>
 
                                         <div className="space-y-2 text-sm text-gray-700">
-                                            <p><span className="font-medium">Members:</span> {group.members}</p>
-                                            <p><span className="font-medium">Goal:</span> {group.goal}</p>
-                                            <p><span className="font-medium">Next Session:</span> {group.nextSession}</p>
+                                            <p>
+                                                <span className="font-medium">Members:</span>{" "}
+                                                {group.members}
+                                            </p>
+                                            <p>
+                                                <span className="font-medium">Goal:</span>{" "}
+                                                {group.goal}
+                                            </p>
+                                            <p>
+                                                <span className="font-medium">Next Session:</span>{" "}
+                                                {group.nextSession}
+                                            </p>
                                         </div>
                                     </div>
-                                    <button className="bg-blue-700 text-white px-5 py-2 rounded-lg hover:bg-blue-800 whitespace-nowrap">
-                                        Join Group
+
+                                    <button
+                                        onClick={() => handleJoinGroup(group.id)}
+                                        disabled={group.joined}
+                                        className={`px-5 py-2 rounded-lg whitespace-nowrap text-white ${
+                                            group.joined
+                                                ? "bg-green-600 cursor-default"
+                                                : "bg-blue-700 hover:bg-blue-800"
+                                        }`}
+                                    >
+                                        {group.joined ? "Joined" : "Join Group"}
                                     </button>
                                 </div>
                             </div>
@@ -97,7 +134,10 @@ function TrainingGroupsPage() {
                                 Start your own training group, set goals, and invite friends to join you on your fitness journey.
                             </p>
 
-                            <button className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">
+                            <button 
+                                onClick={() => alert("Create group feature coming soon")}
+                                className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
+                            >
                                 Create Group
                             </button>
                         </div>
