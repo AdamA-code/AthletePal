@@ -48,9 +48,7 @@ class DatabaseServiceTest {
         assertNotNull(user)
         assertEquals(email, user.email)
 
-        assertTrue(
-            ds.updateAccount(email, "Female", 26, 181.0, 76.0)
-        )
+        assertTrue(ds.updateAccount(email, "Female", 26, 181.0, 76.0))
 
         // =========================
         // 2. EXERCISE
@@ -72,7 +70,7 @@ class DatabaseServiceTest {
         assertTrue(
             ds.updateExercise(
                 name = "Bench Press",
-                category = "Back",
+                category = "Weights",
                 description = "Updated"
             )
         )
@@ -86,7 +84,8 @@ class DatabaseServiceTest {
                 createdBy = userId,
                 assignedTo = userId,
                 date = "2026-01-01",
-                duration = 60
+                duration = 60,
+                workoutType = null
             )
         )
 
@@ -99,12 +98,13 @@ class DatabaseServiceTest {
             ds.updateWorkout(
                 workoutID = workoutId,
                 date = "2026-01-02",
-                duration = 75
+                duration = 75,
+                workoutType = null
             )
         )
 
         // =========================
-        // 4. WORKOUT EXERCISE (FK SAFE)
+        // 4. WORKOUT EXERCISE
         // =========================
         val workoutExercisesId = ds.addExerciseToWorkout(
             WorkoutExercise(
@@ -275,7 +275,7 @@ class DatabaseServiceTest {
         val userId = ds.createUser(
             User(
                 userID = 0,
-                name = "Dashboard User",
+                name = "Dashboard Test",
                 email = email,
                 passwordHash = "hash",
                 passwordKey = "key",
@@ -289,25 +289,23 @@ class DatabaseServiceTest {
 
         assertTrue(userId > 0)
 
-        // =========================
-        // SETUP DATA
-        // =========================
+        // Set up
 
         val today = LocalDate.now().toString()
-        val future = "2026-12-01"
+        val future = "2050-12-01"
         val past = "2025-01-01"
 
-        // Workout (today)
+        // Today
         val workoutId = ds.createWorkout(
-            Workout(0, userId, userId, today, 60)
+            Workout(0, userId, userId, today, 60, null)
         )
 
-        // Workout (past)
+        // Past
         ds.createWorkout(
-            Workout(0, userId, userId, past, 45)
+            Workout(0, userId, userId, past, 45, null)
         )
 
-        // Competition (future)
+        // Future
         ds.addComp(
             Competition(0, userId, "Future Comp", future, 0)
         )
@@ -326,30 +324,135 @@ class DatabaseServiceTest {
             Route(0, userId, "Route 2", 6.0, 35.0, past)
         )
 
-        // =========================
-        // TESTS
-        // =========================
+        // Tests
 
-        // 1. Today's workouts
+        // Today test
         val todays = ds.getTodaysWorkout(email)
         assertTrue(todays.any { it.date == today })
 
-        // 2. Upcoming competitions
+        // Future Test
         val upcoming = ds.getUpcomingCompetitions(email)
         assertTrue(upcoming.any { it.date == future })
         assertTrue(upcoming.none { it.date == past })
 
-        // 3. Recent routes
+        // Recent Routes
         val routes = ds.getRecentRoutes(email)
         assertTrue(routes.isNotEmpty())
 
-        // 4. Recent competitions
+        // Recent Comps
         val recentComps = ds.getRecentCompetitions(email)
         assertTrue(recentComps.isNotEmpty())
 
-        // 5. (Optional) recent activity if you still have it
-        // val activity = ds.getRecentActivity(email)
-        // assertTrue(activity.isNotEmpty())
+        // Cleanup
+        assertTrue(ds.deleteUser(email))
+    }
+
+    @Test
+    fun testGetRecentWorkoutsByType() {
+        val ds = DatabaseService()
+        val email = "recenttype@test.com"
+
+        ds.deleteUser(email)
+
+        val userId = ds.createUser(
+            User(
+                userID = 0,
+                name = "Recent By Type User",
+                email = email,
+                passwordHash = "hash",
+                passwordKey = "key",
+                gender = "Male",
+                age = 25,
+                height = 180.0,
+                weight = 75.0,
+                accountType = false
+            )
+        )
+        assertTrue(userId > 0)
+
+        // Need at least 4 to test cutoff is 3
+        ds.createWorkout(Workout(0, userId, userId, "2025-01-01", 30, "cardio"))
+        ds.createWorkout(Workout(0, userId, userId, "2025-02-01", 35, "cardio"))
+        ds.createWorkout(Workout(0, userId, userId, "2025-03-01", 40, "cardio"))
+        ds.createWorkout(Workout(0, userId, userId, "2025-04-01", 45, "cardio"))
+
+        ds.createWorkout(Workout(0, userId, userId, "2025-01-01", 60, "weights"))
+        ds.createWorkout(Workout(0, userId, userId, "2025-02-01", 65, "weights"))
+        ds.createWorkout(Workout(0, userId, userId, "2025-03-01", 70, "weights"))
+        ds.createWorkout(Workout(0, userId, userId, "2025-04-01", 75, "weights"))
+
+        val recent = ds.getRecentWorkoutsByType(userId)
+
+        // Only 3 of each returned
+        assertEquals(3, recent["cardio"]?.size)
+        assertEquals(3, recent["weights"]?.size)
+
+        // Most recent first
+        val cardio = recent["cardio"]!!
+        assertTrue(cardio[0].date > cardio[1].date)
+        assertTrue(cardio[1].date > cardio[2].date)
+
+        assertTrue(ds.deleteUser(email))
+    }
+
+    @Test
+    fun testStatsFunctions() {
+        val ds = DatabaseService()
+        val email = "stats@test.com"
+
+
+        val userId = ds.createUser(
+            User(
+                userID = 0,
+                name = "Stats Test",
+                email = email,
+                passwordHash = "hash",
+                passwordKey = "key",
+                gender = "Male",
+                age = 25,
+                height = 180.0,
+                weight = 75.0,
+                accountType = false
+            )
+        )
+        assertTrue(userId > 0)
+
+        val past1 = "2025-01-01"
+        val past2 = "2025-06-15"
+        val future = "2050-12-01"
+
+        // Past cardio workouts
+        ds.createWorkout(Workout(0, userId, userId, past1, 30, "cardio"))
+        ds.createWorkout(Workout(0, userId, userId, past2, 45, "cardio"))
+
+        // Past weights workout
+        ds.createWorkout(Workout(0, userId, userId, past1, 60, "weights"))
+
+        // Future workout (should not appear)
+        ds.createWorkout(Workout(0, userId, userId, future, 50, "cardio"))
+
+        // Workout with no type (should be excluded from progression but not workout Count)
+        ds.createWorkout(Workout(0, userId, userId, past1, 20, null))
+
+
+        // Test it splits the types
+        val progression = ds.getWorkoutProgression(userId)
+
+        assertTrue(progression.containsKey("cardio"))
+        assertTrue(progression.containsKey("weights"))
+        assertEquals(2, progression["cardio"]?.size)
+        assertEquals(1, progression["weights"]?.size)
+
+        // Check assends right way
+        val cardio = progression["cardio"]!!
+        assertTrue(cardio[0].date < cardio[1].date)
+
+        // Didn't include future
+        assertTrue(progression["cardio"]!!.none { it.date >= LocalDate.now().toString() })
+
+        // Only counts completed
+        val total = ds.getTotalWorkoutsCompleted(userId)
+        assertEquals(4, total) // 2 cardio + 1 weights + 1 null
 
         // Cleanup
         assertTrue(ds.deleteUser(email))
