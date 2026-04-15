@@ -6,6 +6,7 @@ import java.sql.ResultSet // Represents results of SQL queries
 import java.sql.Statement
 import java.time.LocalDate
 import kotlinx.serialization.Serializable
+import java.time.DayOfWeek
 
 // data classes to finitely store inputs (and potentially outputs) to database
 
@@ -1452,4 +1453,87 @@ class DatabaseService{
         val today = LocalDate.now().toString()
         return findAllWorkouts(userID).count { it.date < today }
     }
+
+    // Hours trained
+    fun getHoursTrained(userID: Int): Double {
+        return findAllWorkouts(userID).filter { it.date < LocalDate.now().toString() && it.duration != null }.sumOf { it.duration ?: 0 }.div(60.0)
+    }
+
+    // Workout Streak
+    fun getCurrentStreak(userID: Int): Int {
+        val today = LocalDate.now()
+        val completed = findAllWorkouts(userID).filter { it.date < today.toString() }.map { LocalDate.parse(it.date) }.toSortedSet().reversed()
+
+        var streak = 0
+        var current = today.minusDays(1)
+
+        for (date in completed) {
+            if (date == current) {
+                streak++
+                current = current.minusDays(1)
+            } else {
+                break
+            }
+        }
+        return streak
+    }
+
+    // Weekly training history
+    fun getWeeklyTrainingHistory(userID: Int): Map<String, Map<String, Any>> {
+        val today = LocalDate.now()
+        return findAllWorkouts(userID).filter { it.date < today.toString() && it.duration != null }
+            .groupBy { workout ->
+                val date = LocalDate.parse(workout.date)
+                val weekStart = date.with(DayOfWeek.MONDAY).toString()
+                weekStart
+            }
+            .mapValues { (_, workouts) ->
+                mapOf(
+                    "sessions" to workouts.size,
+                    "totalDuration" to workouts.sumOf { it.duration ?: 0 }.div(60.0)
+                )
+            }
+            .toSortedMap()
+    }
+
+    // Exercise by category
+    fun getExerciseBreakdown(userID: Int): Map<String, Map<String, Any>> {
+        val workouts = findAllWorkouts(userID).filter { it.date < LocalDate.now().toString() }
+        val workoutIDs = workouts.map { it.workoutID }
+        
+        if (workoutIDs.isEmpty()) return emptyMap()
+
+        val categoryCounts = mutableMapOf<String, Int>()
+        
+        workoutIDs.forEach { workoutID ->
+            val stmt = db.connection.prepareStatement("""
+                SELECT exercises.category FROM workout_exercises
+                JOIN exercises ON workout_exercises.exerciseID = exercises.exerciseID
+                WHERE workout_exercises.workoutID = ?
+            """)
+
+            // Joins tables (above)
+            stmt.setInt(1, workoutID)
+            val rs = stmt.executeQuery()
+            // Determines how many categories there are and which fall into which category
+            while (rs.next()) {
+                val category = rs.getString("category")
+                categoryCounts[category] = (categoryCounts[category] ?: 0) + 1
+            }
+            rs.close()
+            stmt.close()
+        }
+
+        //Total number
+        val total = categoryCounts.values.sum().toDouble()
+
+        //Returns counts and percentage for each category
+        return categoryCounts.mapValues { (_, count) ->
+            mapOf(
+                "sessions" to count,
+                "percentage" to ((count / total) * 100).toInt()
+            )
+        }
+    }
+
 }
