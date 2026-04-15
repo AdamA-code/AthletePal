@@ -398,7 +398,7 @@ class DatabaseServiceTest {
     @Test
     fun testStatsFunctions() {
         val ds = DatabaseService()
-        val email = "stats@test.com"
+        val email = "statspage@test.com"
 
 
         val userId = ds.createUser(
