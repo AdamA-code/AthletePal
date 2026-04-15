@@ -4,18 +4,11 @@ function StatisticsPage() {
     const summaryStats = [
         { label: "Total Workouts", value: 48 },
         { label: "Hours Trained", value: 72 },
-        { label: "Calories Burned", value: 18450 }, 
-        { label: "Current Streak", value: "6 days"}
+        { label: "Competitions Completed", value: 6 }, 
+        { label: "Personal Bests", value: 5}
     ]
 
-    const exerciseBreakdown = [
-        { type: "Running", sessions: 14, percentage: "29%" },
-        { type: "Cycling", sessions: 8, percentage: "17%" },
-        { type: "Swimming", sessions: 5, percentage: "10%" },
-        { type: "Weight Training", sessions: 21, percentage: "44%" }
-    ]
-
-    const weeklyHistory = [
+    const progressionData = [
         { week: "Week 1", workouts: 4, hours: 6 },
         { week: "Week 2", workouts: 5, hours: 8 },
         { week: "Week 3", workouts: 3, hours: 5 },
@@ -54,28 +47,28 @@ function StatisticsPage() {
                     ))}
                 </div>
 
-                {/* Main Section */}
+                {/* Main graphs and progression area */}
                 <div className="grid grid-cols-1 x1:grid-cols-2 gap-8 mb-8">
                     {/* Exercise breakdown */}
                     <div className="bg-white rounded-x1 shadow-md p-6">
                         <h2 className="text-2x1 font-semibold text-gray-800 mb-4">
-                            Exercise Breakdown
+                            Workout Progression Over Time
                         </h2>
 
                         <div className="space-y-4">
-                            {exerciseBreakdown.map((item, index) => (
-                                <div key={index}>
-                                    <div className="flex justify-between text-sm mb-1">
-                                        <span className="font-medium text-gray-700">{item.type}</span>
+                            {progressionData.map((week, index) => (
+                                <div key={index} className="border border-gray-200 rounded-lg p-4">
+                                    <div className="flex justify-between mb-2">
+                                        <span className="font-semibold text-gray-800">{week.week}</span>
                                         <span className="text-gray-500">
-                                            {item.sessions} sessions • {item.percentage}
+                                            {week.workouts} workouts
                                         </span>
                                     </div>
 
                                     <div className="w-full bg-gray-200 rounded-full h-3">
                                         <div
                                             className="bg-blue-600 h-3 rounded-full"
-                                            style={{ width: item.percentage }}
+                                            style={{ width: `${week.workouts * 15}%` }}
                                         ></div>
                                     </div>
                                 </div>
@@ -86,23 +79,29 @@ function StatisticsPage() {
                     {/* History */}
                     <div className="bg-white rounded-x1 shadow-md p-6">
                         <h2 className="text-2x1 font-semibold text-gray-800 mb-4">
-                            Weekly Training History
+                            Hours Trained Over Time
                         </h2>
 
                         <div className="space-y-4">
-                            {weeklyHistory.map((week, index) => (
+                            {progressionData.map((week, index) => (
                                 <div key={index} className="border border-gray-200 rounded-lg p-4">
                                     <div className="flex justify-between mb-2">
-                                        <span className="font-semibold text-gray-800">{week.week}</span>
-                                        <span className="text-sm text-gray-500">{week.hours} hrs</span>
+                                        <span className="font-semibold text-gray-800">
+                                            {week.week}
+                                        </span>
+                                        <span className="text-sm text-gray-500">
+                                            {week.hours} hrs
+                                        </span>
                                     </div>
 
-                                    <p className="text-gray-700 mb-2">{week.workouts} Workouts Completed</p>
+                                    <p className="text-gray-700 mb-2">
+                                        {week.workouts} Workouts Completed
+                                    </p>
 
                                     <div className="w-full bg-gray-200 rounded-full h-3">
                                         <div
                                             className="bg-green-500 h-3 rounded-full"
-                                            style={{ width: `${week.workouts * 15}%` }}
+                                            style={{ width: `${week.hours * 10}%` }}
                                         ></div>
                                     </div>
                                 </div>
@@ -128,6 +127,15 @@ function StatisticsPage() {
                                         <p className="font-semibold text-gray-800">{competition.event}</p>
                                         <p className="text-sm text-gray-500">{competition.date}</p>
                                     </div>
+
+                                    <div className="text-right">
+                                        <p className="text-sm text-gray-500">
+                                            {competition.status}
+                                        </p>
+                                        <p className="font-medium text-gray-800">
+                                            {competition.result}
+                                        </p>
+                                    </div>
                                 </div>                      
                             ))}
                         </div>
@@ -144,8 +152,12 @@ function StatisticsPage() {
                                     key={index}
                                     className="border border-gray-200 rounded-lg p-4 flex justify-between"
                                 >
-                                    <span className="font-medium text-gray-700">{pb.activity}</span>
-                                    <span className="font-bold text-gray-800">{pb.best}</span>
+                                    <span className="font-medium text-gray-700">
+                                        {pb.activity}
+                                    </span>
+                                    <span className="font-bold text-gray-800">
+                                        {pb.best}
+                                    </span>
                                 </div>
                             ))}
                         </div>

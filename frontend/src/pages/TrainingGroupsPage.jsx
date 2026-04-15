@@ -1,5 +1,6 @@
 import { useState } from "react"
 import Sidebar from "../components/Sidebar"
+import { useState } from "react"
 
 function TrainingGroupsPage() {
     const [groups, setGroups] = useState([
@@ -10,7 +11,7 @@ function TrainingGroupsPage() {
             members: 18,
             goal: "Complete Leeds 10K in under 55 minutes",
             nextSession: "Tuesday, 7:00 AM",
-            joined: false // added this in for validationa and so that changes can be seen on the button of the group from Join -> Joined
+            joined: false
         },
         {
             id: 2,
@@ -33,18 +34,17 @@ function TrainingGroupsPage() {
     ])
 
     const handleJoinGroup = (groupId) => {
-        setGroups((prevGroups) => 
+        setGroups((prevGroups) =>
             prevGroups.map((group) =>
-                group.id === group.id && !group.joined
-                    ? {
-                        ...group,
-                        members: group.members + 1,
-                        joined: true
+                groupId === group.id && !group.joined
+                    ? { 
+                        ...group, 
+                        joined: true, 
+                        members: group.members + 1 
                     }
-                : group
-                )
+                    : group
+            )
         )
-    
     }
 
     return (
@@ -79,20 +79,25 @@ function TrainingGroupsPage() {
 
                                         <div className="space-y-2 text-sm text-gray-700">
                                             <p>
-                                                <span className="font-medium">Members:</span>{" "}
+                                                <span className="font-medium">
+                                                    Members:
+                                                </span> 
                                                 {group.members}
                                             </p>
                                             <p>
-                                                <span className="font-medium">Goal:</span>{" "}
+                                                <span className="font-medium">
+                                                    Goal:
+                                                </span> 
                                                 {group.goal}
                                             </p>
                                             <p>
-                                                <span className="font-medium">Next Session:</span>{" "}
+                                                <span className="font-medium">
+                                                    Next Session:
+                                                </span> 
                                                 {group.nextSession}
                                             </p>
                                         </div>
                                     </div>
-
                                     <button
                                         onClick={() => handleJoinGroup(group.id)}
                                         disabled={group.joined}
@@ -134,7 +139,7 @@ function TrainingGroupsPage() {
                                 Start your own training group, set goals, and invite friends to join you on your fitness journey.
                             </p>
 
-                            <button 
+                            <button
                                 onClick={() => alert("Create group feature coming soon")}
                                 className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
                             >
