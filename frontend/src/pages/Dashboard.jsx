@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom"
+
 import Sidebar from "../components/Sidebar"
 
 function DashboardPage() {
@@ -24,18 +24,11 @@ function DashboardPage() {
                     </div>
 
                     <div className="bg-white rounded-x1 shadow p-6">
-                        <h3 className="text-x1 font-semibold mb-3">Recent Activity</h3>
-                        <p className="text-gray-600">
-                            Your recent activity will appear here.
-                        </p>
-                    </div>
-
-                    <div className="bg-white rounded-x1 shadow p-6">
                         <h3 className="text-x1 font-semibold mb-3">
-                            Upcoming Completions / Cancels
+                            Upcoming Competitions
                         </h3>
                         <p className="text-gray-600">
-                            Upcoming updates will appear here.
+                            Upcoming competitions will appear here.
                         </p>
                     </div>
                 </div>
