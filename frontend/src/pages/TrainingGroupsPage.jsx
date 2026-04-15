@@ -1,6 +1,5 @@
 import { useState } from "react"
 import Sidebar from "../components/Sidebar"
-import { useState } from "react"
 
 function TrainingGroupsPage() {
     const [groups, setGroups] = useState([
