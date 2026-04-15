@@ -1,10 +1,13 @@
 package models
 
 import kotlinx.serialization.Serializable
+import services.DatabaseService.Workout as Workout
+import services.DatabaseService.Competition as Competition
+import services.DatabaseService.Route as Route
 
 @Serializable
 data class Activity(
-    val date: String,
-    val workoutType: String,
-    val duration: String,
+    val workouts: List<Workout>,
+    val competitions: List<Competition>,
+    val routes: List<Route>
 )

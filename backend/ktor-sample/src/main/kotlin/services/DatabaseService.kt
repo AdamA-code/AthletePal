@@ -4,14 +4,15 @@ import java.sql.DriverManager // To connect to the DB
 import java.sql.PreparedStatement // Precompiled SQL statement
 import java.sql.ResultSet // Represents results of SQL queries
 import java.sql.Statement
-
-import models.Activity as Activity
-import models.Competitions as Competitions
+import java.time.LocalDate
+import kotlinx.serialization.Serializable
+import java.time.DayOfWeek
 
 // data classes to finitely store inputs (and potentially outputs) to database
 
 class DatabaseService{
     
+    @Serializable
     data class User(
         val userID: Int,
         val name: String,
@@ -25,6 +26,7 @@ class DatabaseService{
         val accountType: Boolean
     )
 
+    @Serializable
     data class Exercise(
         val exerciseID: Int,
         val name: String,
@@ -32,14 +34,17 @@ class DatabaseService{
         val description: String?
     )
 
+    @Serializable
     data class Workout(
         val workoutID: Int,
         val createdBy: Int,
         val assignedTo: Int,
         val date: String,
-        val duration: Int?
+        val duration: Int?,
+        val workoutType: String?
     )
 
+    @Serializable
     data class WorkoutExercise(
         val workoutExercisesID: Int,
         val workoutID: Int,
@@ -49,6 +54,7 @@ class DatabaseService{
         val weight: Double?,
     )
 
+    @Serializable
     data class Statistic(
         val statisticID: Int,
         val userID: Int,
@@ -57,6 +63,7 @@ class DatabaseService{
         val date: String,
     )
 
+    @Serializable
     data class Competition(
         val competitionID: Int,
         val userID: Int,
@@ -65,6 +72,7 @@ class DatabaseService{
         val rank: Int?
     )
 
+    @Serializable
     data class CompetitionExercise(
         val competitionExerciseID: Int,
         val competitionID: Int,
@@ -72,6 +80,7 @@ class DatabaseService{
         val performance: Double?
     )
 
+    @Serializable
     data class Route(
         val routeID: Int,
         val userID: Int,
@@ -81,6 +90,7 @@ class DatabaseService{
         val date: String?
     )
 
+    @Serializable
     data class CalendarEvent(
         val calendarID: Int,
         val userID: Int,
@@ -347,8 +357,8 @@ class DatabaseService{
 
         val stmt: PreparedStatement = db.connection.prepareStatement(
             """
-            INSERT INTO workouts(createdBy, assignedTo, date, duration)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO workouts(createdBy, assignedTo, date, duration, workoutType)
+            VALUES (?, ?, ?, ?, ?)
             """.trimIndent(),
             Statement.RETURN_GENERATED_KEYS
         )
@@ -357,6 +367,7 @@ class DatabaseService{
         stmt.setObject(2, workout.assignedTo)
         stmt.setString(3, workout.date)
         stmt.setObject(4, workout.duration)
+        stmt.setObject(5, workout.workoutType)
 
         val rowsInserted = stmt.executeUpdate()
 
@@ -391,7 +402,8 @@ class DatabaseService{
                 createdBy = rs.getInt("createdBy"),
                 assignedTo = rs.getInt("assignedTo"),
                 date = rs.getString("date"),
-                duration = rs.getObject("duration") as Int?
+                duration = rs.getObject("duration") as Int?,
+                workoutType = rs.getObject("workoutType") as String?
             )
             workouts.add(workout)
         }
@@ -404,20 +416,22 @@ class DatabaseService{
     fun updateWorkout(
         workoutID: Int,
         date: String,
-        duration: Int?
+        duration: Int?,
+        workoutType: String?
     ): Boolean {
 
         val stmt: PreparedStatement = db.connection.prepareStatement(
             """
             UPDATE workouts
-            SET date = ?, duration = ?
+            SET date = ?, duration = ?, workoutType = ?
             WHERE workoutID = ?
             """.trimIndent()
         )
 
         stmt.setString(1, date)
         stmt.setObject(2, duration)
-        stmt.setInt(3, workoutID)
+        stmt.setObject(3, workoutType)
+        stmt.setInt(4, workoutID)
 
         val rowsUpdated = stmt.executeUpdate()
         stmt.close()
@@ -1140,7 +1154,8 @@ class DatabaseService{
                 createdBy = rs.getInt("createdBy"),
                 assignedTo = rs.getInt("assignedTo"),
                 date = rs.getString("date"),
-                duration = rs.getObject("duration") as Int?
+                duration = rs.getObject("duration") as Int?,
+                workoutType = rs.getObject("workoutType") as String?
             )
             rs.close()
             stmt.close()
@@ -1261,19 +1276,264 @@ class DatabaseService{
         return null
     }
 
-        fun getRecentActivity(email: String?, username: String?): List<Activity>{
-        val RecentActivity = listOf<Activity>()
-        return RecentActivity
+    //Functions for the dashboard of the frontend
+
+    fun getRecentWorkouts(email: String): List<Workout>{
+
+        val user = findUser(email) ?: return emptyList()
+        val results = mutableListOf<Workout>()
+
+        val query = """
+            SELECT * FROM workouts
+            WHERE assignedTo = ?
+            ORDER BY date DESC
+            LIMIT 5
+        """
+
+        val stmt = db.connection.prepareStatement(query)
+        stmt.setInt(1, user.userID)
+
+        val rs = stmt.executeQuery()
+
+        while (rs.next()) {
+            results.add(
+                Workout(
+                    workoutID = rs.getInt("workoutID"),
+                    createdBy = rs.getInt("createdBy"),
+                    assignedTo = rs.getInt("assignedTo"),
+                    date = rs.getString("date"),
+                    duration = rs.getObject("duration") as Int?,
+                    workoutType = rs.getObject("workoutType") as String?
+                )
+            )
+        }
+        return results
     }
 
-    fun getTodaysWorkout(email: String?, username: String?): List<Activity>{
-        val TodaysWorkout = listOf<Activity>()
-        return TodaysWorkout 
+    // Frontend potentially want to split it into 3 most recent of each
+    fun getRecentWorkoutsByType(userID: Int): Map<String, List<Workout>> {
+        return findAllWorkouts(userID).filter { it.workoutType != null }.sortedByDescending { it.date }.groupBy { it.workoutType!! }.mapValues { (_, workouts) -> workouts.take(3) }
+    }
+
+    fun getTodaysWorkout(email: String, today: LocalDate = LocalDate.now()): List<Workout>{
+
+        val user = findUser(email) ?: return emptyList()
+        val results = mutableListOf<Workout>()
+
+        val query = """
+            SELECT * FROM workouts
+            WHERE assignedTo = ? AND date = ?
+        """
+
+        val stmt = db.connection.prepareStatement(query)
+        stmt.setInt(1, user.userID)
+        stmt.setString(2, today.toString()) // Local date finds the dates and to string makes it able to be stored in YYYY-MM-DD
+
+        val rs = stmt.executeQuery()
+
+        while (rs.next()) {
+            results.add(
+                Workout(
+                    workoutID = rs.getInt("workoutID"),
+                    createdBy = rs.getInt("createdBy"),
+                    assignedTo = rs.getInt("assignedTo"),
+                    date = rs.getString("date"),
+                    duration = rs.getObject("duration") as Int?,
+                    workoutType = rs.getObject("workoutType") as String?
+                )
+            )
+        }
+        return results
     }
     
-    fun getUpcomingCompetitions(email: String?, username: String?): List<Competitions>{
-        val UpcomingCompetitions = listOf<Competitions>()
-        return UpcomingCompetitions
+    fun getUpcomingCompetitions(email: String): List<Competition>{
+        
+        val user = findUser(email) ?: return emptyList()
+
+        val results = mutableListOf<Competition>()
+
+        val query = """
+            SELECT * FROM competitions
+            WHERE userID = ? AND date >= ?
+            ORDER BY date ASC
+        """
+
+        val stmt = db.connection.prepareStatement(query)
+        stmt.setInt(1, user.userID)
+        stmt.setString(2, LocalDate.now().toString())
+
+        val rs = stmt.executeQuery()
+
+        while (rs.next()) {
+            results.add(
+                Competition(
+                    competitionID = rs.getInt("competitionID"),
+                    userID = rs.getInt("userID"),
+                    name = rs.getString("name"),
+                    date = rs.getString("date"),
+                    rank = rs.getObject("rank") as Int?
+                )
+            )
+        }
+        return results
+    }
+
+    fun getRecentRoutes(email: String): List<Route> {
+
+        val user = findUser(email) ?: return emptyList()
+
+        val results = mutableListOf<Route>()
+
+        val query = """
+            SELECT * FROM routes
+            WHERE userID = ?
+            ORDER BY date DESC
+            LIMIT 5
+        """
+
+        val stmt = db.connection.prepareStatement(query)
+        stmt.setInt(1, user.userID)
+
+        val rs = stmt.executeQuery()
+
+        while (rs.next()) {
+            results.add(
+                Route(
+                    routeID = rs.getInt("routeID"),
+                    userID = rs.getInt("userID"),
+                    name = rs.getString("name"),
+                    distance = rs.getDouble("distance"),
+                    estimatedTime = rs.getObject("estimatedTime") as Double?,
+                    date = rs.getString("date")
+                )
+            )
+        }
+        return results
+    }
+
+    fun getRecentCompetitions(email: String): List<Competition> {
+
+        val user = findUser(email) ?: return emptyList()
+
+        val results = mutableListOf<Competition>()
+
+        val query = """
+            SELECT * FROM competitions
+            WHERE userID = ?
+            ORDER BY date DESC
+            LIMIT 5
+        """
+
+        val stmt = db.connection.prepareStatement(query)
+        stmt.setInt(1, user.userID)
+
+        val rs = stmt.executeQuery()
+
+        while (rs.next()) {
+            results.add(
+                Competition(
+                    competitionID = rs.getInt("competitionID"),
+                    userID = rs.getInt("userID"),
+                    name = rs.getString("name"),
+                    date = rs.getString("date"),
+                    rank = rs.getObject("rank") as Int?
+                )
+            )
+        }
+        return results
+    }
+
+    // Functions for the stats page
+    fun getWorkoutProgression(userID: Int): Map<String, List<Workout>> {
+        val today = LocalDate.now().toString()
+        return findAllWorkouts(userID).filter { it.workoutType != null && it.date < today}.sortedBy { it.date }.groupBy { it.workoutType!! }
+    }
+
+    fun getTotalWorkoutsCompleted(userID: Int): Int {
+        val today = LocalDate.now().toString()
+        return findAllWorkouts(userID).count { it.date < today }
+    }
+
+    // Hours trained
+    fun getHoursTrained(userID: Int): Double {
+        return findAllWorkouts(userID).filter { it.date < LocalDate.now().toString() && it.duration != null }.sumOf { it.duration ?: 0 }.div(60.0)
+    }
+
+    // Workout Streak
+    fun getCurrentStreak(userID: Int): Int {
+        val today = LocalDate.now()
+        val completed = findAllWorkouts(userID).filter { it.date < today.toString() }.map { LocalDate.parse(it.date) }.toSortedSet().reversed()
+
+        var streak = 0
+        var current = today.minusDays(1)
+
+        for (date in completed) {
+            if (date == current) {
+                streak++
+                current = current.minusDays(1)
+            } else {
+                break
+            }
+        }
+        return streak
+    }
+
+    // Weekly training history
+    fun getWeeklyTrainingHistory(userID: Int): Map<String, Map<String, Any>> {
+        val today = LocalDate.now()
+        return findAllWorkouts(userID).filter { it.date < today.toString() && it.duration != null }
+            .groupBy { workout ->
+                val date = LocalDate.parse(workout.date)
+                val weekStart = date.with(DayOfWeek.MONDAY).toString()
+                weekStart
+            }
+            .mapValues { (_, workouts) ->
+                mapOf(
+                    "sessions" to workouts.size,
+                    "totalDuration" to workouts.sumOf { it.duration ?: 0 }.div(60.0)
+                )
+            }
+            .toSortedMap()
+    }
+
+    // Exercise by category
+    fun getExerciseBreakdown(userID: Int): Map<String, Map<String, Any>> {
+        val workouts = findAllWorkouts(userID).filter { it.date < LocalDate.now().toString() }
+        val workoutIDs = workouts.map { it.workoutID }
+        
+        if (workoutIDs.isEmpty()) return emptyMap()
+
+        val categoryCounts = mutableMapOf<String, Int>()
+        
+        workoutIDs.forEach { workoutID ->
+            val stmt = db.connection.prepareStatement("""
+                SELECT exercises.category FROM workout_exercises
+                JOIN exercises ON workout_exercises.exerciseID = exercises.exerciseID
+                WHERE workout_exercises.workoutID = ?
+            """)
+
+            // Joins tables (above)
+            stmt.setInt(1, workoutID)
+            val rs = stmt.executeQuery()
+            // Determines how many categories there are and which fall into which category
+            while (rs.next()) {
+                val category = rs.getString("category")
+                categoryCounts[category] = (categoryCounts[category] ?: 0) + 1
+            }
+            rs.close()
+            stmt.close()
+        }
+
+        //Total number
+        val total = categoryCounts.values.sum().toDouble()
+
+        //Returns counts and percentage for each category
+        return categoryCounts.mapValues { (_, count) ->
+            mapOf(
+                "sessions" to count,
+                "percentage" to ((count / total) * 100).toInt()
+            )
+        }
     }
 
 }

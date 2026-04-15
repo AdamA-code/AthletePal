@@ -6,7 +6,8 @@ import io.ktor.server.request.* // Import functionalityy to read JSON requests
 import io.ktor.server.response.* // Import functionality to send responses to frontend
 
 import models.LoginRequest // Import the model for a login request (i.e. formatting of HTTP request)
-import services.DatabaseService.User as User // Import the model for account creation data
+import models.CreateAccountRequest as CreateAccountRequest
+import models.User as User // Import the model for account creation data
 import models.ForgotPasswordRequest
 
 import services.AuthService // Import service (logic) for validating a login
@@ -20,7 +21,7 @@ fun Route.authRoutes() {
         post("/login") { // If HTTP request is a POST of '/login'...
             val loginRequest = call.receive<LoginRequest>() // Break down the request into usable data, as outlined in LoginRequest
 
-            val isValid = authService.validateLogin(loginRequest.username, loginRequest.password) // If authService deems the password acceptable
+            val isValid = authService.validateLogin(loginRequest.email, loginRequest.password) // If authService deems the password acceptable
 
             if (isValid) {
                 call.respond(mapOf("message" to "Login Successful")) // Response for valid login
@@ -31,9 +32,9 @@ fun Route.authRoutes() {
         }
 
         post("/create-account") { // If HTTP request is post of account creation
-            val createAccountRequest = call.receive<User>() // Retrieve data from POST, and store in a class 'createAccountRequest'
+            val createAccountRequest = call.receive<CreateAccountRequest>() // Retrieve data from POST, and store in a class 'createAccountRequest'
 
-            val accountCreated = databaseService.createUser(createAccountRequest) // Call function for account creation in authService, retrieve boolean confirmation
+            val accountCreated = authService.registerUser(createAccountRequest.name, createAccountRequest.email, createAccountRequest.password, createAccountRequest.accountType) // Call function for account creation in authService, retrieve boolean confirmation
 
             if (accountCreated > 0) {
                 call.respond(mapOf("message" to "Account created!")) // Success message if account successfully created

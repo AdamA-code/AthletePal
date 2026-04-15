@@ -4,43 +4,43 @@ import { useState } from "react";
 function LoginPage () {
     const navigate = useNavigate()
 
-    const [username, setUsername] = useState("")
+    const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [error, setError] = useState("")
 
     const handleSubmit = async (event) => {
         event.preventDefault();
-        if (!username || !password) {
-            setError("Please enter both username and password")
+        if (!email || !password) {
+            setError("Please enter both email and password")
             return
         }
 
         // Implemented logic to communicate with backend for fethcing the username and password and validating the user.
         try {
-            const response = await fetch("http://localhost:8080/auth/login", {
+            const response = await fetch("http://localhost:3000/auth/login", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({ 
-                    username, 
+                    email, 
                     password 
                 })
             })
 
             const data = await response.json()
 
-            if (data.message === "Login successful") {
-                // Store the username in localStorage or context for future authenticated requests
-                localStorage.setItem("username", username)
+            if (data.message === "Login Successful") {
+                // Store the email in localStorage or context for future authenticated requests
+                localStorage.setItem("email", email)
                 setError("")
                 navigate("/dashboard")
             } else {
-                setError("Invalid username or password") // validation failed, show user-friendly error message
+                setError("Invalid email or password") // validation failed, show user-friendly error message
             }
         } catch (error) { 
             console.error("Error during login:", error)
-            setError("An error occurred. Please try again later.")
+            setError("Could not connect to server.")
         } // Above used to make sure that the user doesn't get an error code which doesn't look good on the UI and instead gets a user-friendly message.
     }
 
@@ -58,15 +58,15 @@ function LoginPage () {
                 )}
                 <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
                     <div className="flex flex-col">
-                        <label htmlFor="username" className="text-sm font-semibold mb-1">
-                            Username
+                        <label htmlFor="email" className="text-sm font-semibold mb-1">
+                            Email
                         </label>
                         <input 
-                            id="username"
-                            type="text"
-                            placeholder="Enter username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
+                            id="email"
+                            type="email"
+                            placeholder="Enter email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                             className="border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                     </div>
