@@ -38,8 +38,8 @@ class DatabaseService{
         val workoutID: Int,
         val createdBy: Int,
         val assignedTo: Int,
-        val date: String,
-        val duration: Int?
+        val date: String? = null,
+        val duration: Int? = null
     )
 
     @Serializable
