@@ -73,7 +73,7 @@ fun Route.activityRoutes(){
         // =====================
 
         // Get recent workouts for a given user
-        get("/workouts/recent/{email}") {
+        get("/workouts/recent/{email}") { //FLAG -> {"message":"Invalid request"}
             try {
                 val email = call.parameters["email"]!!
                 val workouts = db.getRecentWorkouts(email)
@@ -90,7 +90,7 @@ fun Route.activityRoutes(){
             }
         }
 
-        get("/workouts/today/{email}") {
+        get("/workouts/today/{email}") { // FLAG
             try {
                 val email = call.parameters["email"]!!
                 val workouts = db.getTodaysWorkout(email)
