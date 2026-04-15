@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 
 function WorkoutLogPage() {
+    const navigate = useNavigate()
     return (
         <div className="min-h-screen bg-gray-100 flex">
 
@@ -52,7 +54,11 @@ function WorkoutLogPage() {
                 <h2 className="text-3xl font-bold mb-6">Workouts</h2>
 
                 {/* Start Empty Workout */}
-                <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 mb-8">
+                
+                <button 
+                onClick={() => navigate("/start-workout")} 
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 mb-8"
+                >
                     + Start Empty Workout
                 </button>
 
