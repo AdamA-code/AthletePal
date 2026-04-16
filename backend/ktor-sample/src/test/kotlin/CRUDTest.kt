@@ -13,6 +13,7 @@ import services.DatabaseService.Competition
 import services.DatabaseService.Route
 import services.DatabaseService.CalendarEvent
 import java.time.LocalDate
+import services.AuthService
 
 class DatabaseServiceTest {
 
@@ -49,6 +50,41 @@ class DatabaseServiceTest {
         assertEquals(email, user.email)
 
         assertTrue(ds.updateAccount(email, "Female", 26, 181.0, 76.0))
+
+        // Update password test (voluntary)
+
+        val authService = AuthService()
+        val oldPassword = "hash"
+        val newPassword = "newPassword"
+
+        // Set a proper hashed password first
+        val key = authService.generateSalt()
+        val hash = authService.hashPassword(oldPassword, key)
+        ds.updatePassword(email, oldPassword, newPassword)
+
+        // Update user with proper hash directly so we have a known state
+        val stmt = ds.db.connection.prepareStatement(
+            "UPDATE users SET passwordHash = ?, passwordKey = ? WHERE email = ?"
+        )
+        stmt.setString(1, hash)
+        stmt.setString(2, key)
+        stmt.setString(3, email)
+        stmt.executeUpdate()
+        stmt.close()
+
+        // Wrong old password
+        val fail = ds.updatePassword(email, "wrongPassword", newPassword)
+        assertFalse(fail)
+
+        // Correct password
+        val success = ds.updatePassword(email, oldPassword, newPassword)
+        assertTrue(success)
+
+        // New password should now work
+        assertTrue(authService.verifyPassword(newPassword, ds.findUser(email)!!.passwordKey, ds.findUser(email)!!.passwordHash))
+
+        // Old password shouldn't work
+        assertFalse(authService.verifyPassword(oldPassword, ds.findUser(email)!!.passwordKey, ds.findUser(email)!!.passwordHash))
 
         // =========================
         // 2. EXERCISE
@@ -453,6 +489,50 @@ class DatabaseServiceTest {
         // Only counts completed
         val total = ds.getTotalWorkoutsCompleted(userId)
         assertEquals(4, total) // 2 cardio + 1 weights + 1 null
+
+        // Cleanup
+        assertTrue(ds.deleteUser(email))
+    }
+
+    @Test
+    fun testPasswordReset() {
+        val ds = DatabaseService()
+        val email = "reset@test.com"
+
+        ds.deleteUser(email)
+
+        val authService = AuthService()
+        val oldPassword = "oldPassword"
+
+        val userId = authService.registerUser("Reset User", email, oldPassword, false)
+        assertTrue(userId > 0)
+
+        // Gen token doesn't work as no user
+        assertNull(ds.generatePasswordResetToken("fakeUser@test.com"))
+
+        // Gen token valid user
+        val token = ds.generatePasswordResetToken(email)
+        assertNotNull(token)
+
+        // Wrong token
+        val fail = ds.resetPasswordWithToken(email, "wrongtoken", "newPassword")
+        assertFalse(fail)
+
+        // Correct token
+        val newPassword = "newPassword"
+        val success = ds.resetPasswordWithToken(email, token!!, newPassword)
+        assertTrue(success)
+
+        // New password should work
+        val user = ds.findUser(email)!!
+        assertTrue(authService.verifyPassword(newPassword, user.passwordKey, user.passwordHash))
+
+        // Old password
+        assertFalse(authService.verifyPassword(oldPassword, user.passwordKey, user.passwordHash))
+
+        // Token should be used
+        val reusedToken = ds.resetPasswordWithToken(email, token, "password")
+        assertFalse(reusedToken)
 
         // Cleanup
         assertTrue(ds.deleteUser(email))

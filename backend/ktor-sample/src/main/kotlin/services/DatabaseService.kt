@@ -5,8 +5,10 @@ import java.sql.PreparedStatement // Precompiled SQL statement
 import java.sql.ResultSet // Represents results of SQL queries
 import java.sql.Statement
 import java.time.LocalDate
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.Serializable // Helps routes
 import java.time.DayOfWeek
+import java.time.LocalDateTime
+import java.util.UUID // Univversal unique identifier for reset tokens
 
 // data classes to finitely store inputs (and potentially outputs) to database
 
@@ -218,10 +220,125 @@ class DatabaseService{
         return rowsUpdated > 0 // Returns True is rowsUpdated == 1
     }
 
+    // Voluntary change, not forgot password
+    fun updatePassword(email: String, oldPassword: String, newPassword: String): Boolean {
+        val user = findUser(email) ?: return false
+
+        val authService = AuthService()
+
+        // Verify old password is correct via reverse of func
+        if (!authService.verifyPassword(oldPassword, user.passwordKey, user.passwordHash)) {
+            return false
+        }
+
+        // Generate new salt and hash
+        val newSalt = authService.generateSalt()
+        val newHash = authService.hashPassword(newPassword, newSalt)
+
+        val stmt = db.connection.prepareStatement("""
+            UPDATE users
+            SET passwordHash = ?, passwordKey = ?
+            WHERE email = ?
+        """.trimIndent()
+        )
+        stmt.setString(1, newHash)
+        stmt.setString(2, newSalt)
+        stmt.setString(3, email)
+
+        val rowsUpdated = stmt.executeUpdate()
+        stmt.close()
+
+        return rowsUpdated > 0
+    }
+
+    // Forgot password (email token)
+    fun generatePasswordResetToken(email: String): String? {
+        val user = findUser(email) ?: return null
+
+        // Generate a random unique token
+        val token = UUID.randomUUID().toString()
+        
+        // Set expiry to 1 hour from now
+        val expiry = LocalDateTime.now().plusHours(1).toString()
+
+        // Store token in DB
+        val stmt = db.connection.prepareStatement("""
+            INSERT INTO password_reset_tokens (userID, token, expiry, used)
+            VALUES (?, ?, ?, 0)
+        """.trimIndent()
+        )
+        stmt.setInt(1, user.userID)
+        stmt.setString(2, token)
+        stmt.setString(3, expiry)
+
+        val rows = stmt.executeUpdate()
+        stmt.close()
+
+        return token
+    }
+
+    fun resetPasswordWithToken(email: String, token: String, newPassword: String): Boolean {
+        // FInd unused token
+        val stmt = db.connection.prepareStatement("""
+            SELECT * FROM password_reset_tokens
+            WHERE token = ? AND used = 0
+        """.trimIndent()
+        )
+        stmt.setString(1, token)
+        val rs = stmt.executeQuery()
+
+        // If no matching token found return false
+        if (!rs.next()) return false
+
+        // Get expiry and userID
+        val expiry = LocalDateTime.parse(rs.getString("expiry")) // Set to parse object
+        val userID = rs.getInt("userID")
+
+        rs.close()
+        stmt.close()
+
+        if (LocalDateTime.now().isAfter(expiry)) return false
+        val user = findUser(email) ?: return false
+
+        // Generate new salt and hash for new password
+        val authService = AuthService()
+        val newKey = authService.generateSalt()
+        val newHash = authService.hashPassword(newPassword, newKey)
+
+        // Update password in db
+        val updateStmt = db.connection.prepareStatement("""
+            UPDATE users
+            SET passwordHash = ?, passwordKey = ?
+            WHERE userID = ?
+        """.trimIndent()
+        )
+        updateStmt.setString(1, newHash)
+        updateStmt.setString(2, newKey)
+        updateStmt.setInt(3, userID)
+
+        val updatedPassword = updateStmt.executeUpdate()
+        updateStmt.close()
+
+        // Mark token as used (cant be used again)
+        val usedTokenStmt = db.connection.prepareStatement("""
+            UPDATE password_reset_tokens
+            SET used = 1 WHERE token = ?
+        """.trimIndent()
+        )
+        usedTokenStmt.setString(1, token)
+
+        val tokenUsed = usedTokenStmt.executeUpdate()
+        usedTokenStmt.close()
+
+        return updatedPassword > 0 && tokenUsed > 0
+    }
+
     fun deleteUser(email: String): Boolean {
 
         val stmt: PreparedStatement = db.connection.prepareStatement(
-            "DELETE FROM users WHERE email = ?"
+            """DELETE FROM users
+            WHERE email = ?
+            """.trimIndent()
         )
 
         stmt.setString(1, email)
