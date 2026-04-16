@@ -71,7 +71,8 @@ class DatabaseService{
         val userID: Int,
         val name: String,
         val date: String,
-        val rank: Int?
+        val rank: Int?,
+        val result: Int?
     )
 
     @Serializable
@@ -805,8 +806,8 @@ class DatabaseService{
 
         val stmt = db.connection.prepareStatement(
             """
-            INSERT INTO competitions(userID, name, date, rank)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO competitions(userID, name, date, rank, result)
+            VALUES (?, ?, ?, ?, ?)
             """.trimIndent(),
             Statement.RETURN_GENERATED_KEYS
         )
@@ -815,6 +816,7 @@ class DatabaseService{
         stmt.setString(2, comp.name)
         stmt.setString(3, comp.date)
         stmt.setObject(4, comp.rank)
+        stmt.setObject(5, comp.result)
 
         val rowsInserted = stmt.executeUpdate()
 
@@ -848,7 +850,8 @@ class DatabaseService{
                 userID = rs.getInt("userID"),
                 name = rs.getString("name"),
                 date = rs.getString("date"),
-                rank = rs.getObject("rank") as Int?
+                rank = rs.getObject("rank") as Int?,
+                result = rs.getObject("result") as Int?
             )
             comps.add(comp)
         }
@@ -862,13 +865,14 @@ class DatabaseService{
         competitionID: Int,
         name: String,
         date: String,
-        rank: Int?
+        rank: Int?,
+        result: Int?
     ): Boolean {
 
         val stmt: PreparedStatement = db.connection.prepareStatement(
             """
             UPDATE competitions
-            SET name = ?, date = ?, rank = ?
+            SET name = ?, date = ?, rank = ?, result = ?
             WHERE competitionID = ?
             """.trimIndent()
         )
@@ -876,7 +880,8 @@ class DatabaseService{
         stmt.setString(1, name)
         stmt.setString(2, date)
         stmt.setObject(3, rank)
-        stmt.setInt(4, competitionID)
+        stmt.setObject(4, result)
+        stmt.setInt(5, competitionID)
 
         val rowsUpdated = stmt.executeUpdate()
         stmt.close()
@@ -1355,7 +1360,8 @@ class DatabaseService{
                 userID = rs.getInt("userID"),
                 name = rs.getString("name"),
                 date = rs.getString("date"),
-                rank = rs.getObject("rank") as Int?
+                rank = rs.getObject("rank") as Int?,
+                result = rs.getObject("result") as Int?
             )
             rs.close()
             stmt.close()
@@ -1488,7 +1494,8 @@ class DatabaseService{
                     userID = rs.getInt("userID"),
                     name = rs.getString("name"),
                     date = rs.getString("date"),
-                    rank = rs.getObject("rank") as Int?
+                    rank = rs.getObject("rank") as Int?,
+                    result = rs.getObject("result") as Int?
                 )
             )
         }
@@ -1553,7 +1560,8 @@ class DatabaseService{
                     userID = rs.getInt("userID"),
                     name = rs.getString("name"),
                     date = rs.getString("date"),
-                    rank = rs.getObject("rank") as Int?
+                    rank = rs.getObject("rank") as Int?,
+                    result = rs.getObject("result") as Int?
                 )
             )
         }
@@ -1653,4 +1661,46 @@ class DatabaseService{
         }
     }
 
+    // For personal bests
+    fun getPersonalBests(userID: Int): List<Statistic> {
+        return findAllExercises().mapNotNull { exercise ->getBestStat(userID, exercise.exerciseID)}
+    }
+
+    // Log workout for workout logs page
+    fun logWorkout(
+        workout: Workout,
+        exercises: List<WorkoutExercise>
+    ): Int {
+        // Create workout
+        val workoutID = createWorkout(workout)
+        if (workoutID == -1) return -1
+
+        // Link each exercise to the workout
+        exercises.forEach { exercise ->
+            val we = WorkoutExercise(
+                workoutExercisesID = 0,
+                workoutID = workoutID,
+                exerciseID = exercise.exerciseID,
+                sets = exercise.sets,
+                reps = exercise.reps,
+                weight = exercise.weight
+            )
+            addExerciseToWorkout(we)
+        }
+
+        return workoutID
+    }
+
+    // Update a logged workout (in case of a changed exercise or another detail)
+    fun updateLoggedWorkout(workout: Workout, exercises: List<WorkoutExercise>): Boolean {
+
+        updateWorkout(workout.workoutID, workout.date, workout.duration, workout.workoutType)
+
+        // Delete all exercise links
+        deleteWorkoutExercise(workout.workoutID)
+
+        // Add new exercise list
+        exercises.forEach { exercise ->addExerciseToWorkout(exercise.copy(workoutID = workout.workoutID))}
+        return true
+    }
 }
