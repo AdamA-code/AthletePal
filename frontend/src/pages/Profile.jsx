@@ -109,6 +109,13 @@ function ProfilePage() {
                     >
                         Edit Profile
                     </button>
+
+                    <button 
+                        onClick={() => alert("Change password coming soon")}
+                        className="mt-4 bg-gray-700 text-white px-6 py-2 rounded-lg hover:bg-gray-800"
+                    >
+                        Change Password
+                    </button>
                 </div>
             </main>
         </div>

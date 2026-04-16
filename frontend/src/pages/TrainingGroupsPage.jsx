@@ -35,7 +35,7 @@ function TrainingGroupsPage() {
     const handleJoinGroup = (groupId) => {
         setGroups((prevGroups) =>
             prevGroups.map((group) =>
-                groupId === group.id && !group.joined
+                group.id === groupId && !group.joined
                     ? { 
                         ...group, 
                         joined: true, 
