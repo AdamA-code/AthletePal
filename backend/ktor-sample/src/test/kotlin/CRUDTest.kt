@@ -222,7 +222,7 @@ class DatabaseServiceTest {
 
         assertTrue(
             ds.updateCompetition(
-                competitionID = comp.competitionID,
+                competitionID = comp.competitionID!!,
                 name = "Updated Comp",
                 date = "2026-01-02",
                 rank = 2,
@@ -230,7 +230,7 @@ class DatabaseServiceTest {
             )
         )
 
-        assertTrue(ds.deleteCompetition(comp.competitionID))
+        assertTrue(ds.deleteCompetition(comp.competitionID!!))
 
         // =========================
         // 7. ROUTE
@@ -255,7 +255,7 @@ class DatabaseServiceTest {
 
         assertTrue(
             ds.updateRoute(
-                routeID = route.routeID,
+                routeID = route.routeID!!,
                 name = "Updated Route",
                 distance = 6.0,
                 estimatedTime = 32.0,
@@ -263,7 +263,7 @@ class DatabaseServiceTest {
             )
         )
 
-        assertTrue(ds.deleteRoute(route.routeID))
+        assertTrue(ds.deleteRoute(route.routeID!!))
 
         // =========================
         // 8. CALENDAR

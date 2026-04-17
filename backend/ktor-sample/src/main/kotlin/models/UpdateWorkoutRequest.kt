@@ -1,0 +1,9 @@
+package models
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class UpdateWorkoutRequest(
+    val date: String,
+    val duration: Int
+)
