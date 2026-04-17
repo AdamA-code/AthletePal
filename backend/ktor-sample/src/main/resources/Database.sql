@@ -1,4 +1,13 @@
-CREATE TABLE calendar_events (
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    tokenID INTEGER PRIMARY KEY AUTOINCREMENT,
+    userID INTEGER NOT NULL,
+    token TEXT NOT NULL,
+    expiry TEXT NOT NULL, -- datetime the token expires after 1 hour
+    used INTEGER DEFAULT 0, -- 0 = not used, 1 = already used, prevents reuse
+    FOREIGN KEY (userID) REFERENCES users(userID) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS calendar_events (
     calendarID INTEGER PRIMARY KEY AUTOINCREMENT,
     userID INTEGER NOT NULL,
     eventType TEXT NOT NULL, 
@@ -9,7 +18,7 @@ CREATE TABLE calendar_events (
     FOREIGN KEY(userID) REFERENCES users(userID) ON DELETE CASCADE
 );
 
-CREATE TABLE routes (
+CREATE TABLE IF NOT EXISTS routes (
     routeID INTEGER PRIMARY KEY AUTOINCREMENT,
     userID INTEGER NOT NULL,
     name TEXT NOT NULL,
@@ -19,7 +28,7 @@ CREATE TABLE routes (
     FOREIGN KEY(userID) REFERENCES users(userID) ON DELETE CASCADE
 );
 
-CREATE TABLE competition_exercises (
+CREATE TABLE IF NOT EXISTS competition_exercises (
     competitionExercisesID INTEGER PRIMARY KEY AUTOINCREMENT,
     competitionID INTEGER NOT NULL,
     exerciseID INTEGER NOT NULL,
@@ -28,16 +37,17 @@ CREATE TABLE competition_exercises (
     FOREIGN KEY(exerciseID) REFERENCES exercises(exerciseID)
 );
 
-CREATE TABLE competitions (
+CREATE TABLE IF NOT EXISTS competitions (
     competitionID INTEGER PRIMARY KEY AUTOINCREMENT,
     userID INTEGER NOT NULL,
     name TEXT NOT NULL,
     date TEXT NOT NULL,
     rank INTEGER,
+    result Integer,
     FOREIGN KEY(userID) REFERENCES users(userID) ON DELETE CASCADE
 );
 
-CREATE TABLE statistics (
+CREATE TABLE IF NOT EXISTS statistics (
     statisticID INTEGER PRIMARY KEY AUTOINCREMENT,
     userID INTEGER NOT NULL,
     exerciseID INTEGER NOT NULL,
@@ -47,7 +57,7 @@ CREATE TABLE statistics (
     FOREIGN KEY(exerciseID) REFERENCES exercises(exerciseID)
 );
 
-CREATE TABLE workouts (
+CREATE TABLE IF NOT EXISTS workouts (
     workoutID INTEGER PRIMARY KEY AUTOINCREMENT,
     createdBy INTEGER NOT NULL,
     assignedTo INTEGER NOT NULL,
@@ -58,7 +68,7 @@ CREATE TABLE workouts (
     FOREIGN KEY (assignedTo) REFERENCES users(userID) ON DELETE CASCADE
 );
 
-CREATE TABLE workout_exercises (
+CREATE TABLE IF NOT EXISTS workout_exercises (
     workoutExercisesID INTEGER PRIMARY KEY AUTOINCREMENT,
     workoutID INTEGER NOT NULL,
     exerciseID INTEGER NOT NULL,
@@ -69,7 +79,7 @@ CREATE TABLE workout_exercises (
     FOREIGN KEY (exerciseID) REFERENCES exercises(exerciseID)
 );
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     userID INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NUll,
     email TEXT NOT NULL UNIQUE,
@@ -82,7 +92,7 @@ CREATE TABLE users (
     accountType BOOLEAN
     );
 
-CREATE TABLE exercises (
+CREATE TABLE IF NOT EXISTS exercises (
     exerciseID INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     category TEXT NOT NULL,

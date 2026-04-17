@@ -5,7 +5,10 @@ import java.sql.PreparedStatement // Precompiled SQL statement
 import java.sql.ResultSet // Represents results of SQL queries
 import java.sql.Statement
 import java.time.LocalDate
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.Serializable // Helps routes
+import java.time.DayOfWeek
+import java.time.LocalDateTime
+import java.util.UUID // Univversal unique identifier for reset tokens
 
 // data classes to finitely store inputs (and potentially outputs) to database
 
@@ -40,6 +43,7 @@ class DatabaseService{
         val assignedTo: Int,
         val date: String,
         val duration: Int? = null
+        val workoutType: String?
     )
 
     @Serializable
@@ -67,7 +71,8 @@ class DatabaseService{
         val userID: Int,
         val name: String,
         val date: String,
-        val rank: Int? = null
+        val rank: Int? = null,
+        val result: Int?
     )
 
     @Serializable
@@ -216,10 +221,125 @@ class DatabaseService{
         return rowsUpdated > 0 // Returns True is rowsUpdated == 1
     }
 
+    // Voluntary change, not forgot password
+    fun updatePassword(email: String, oldPassword: String, newPassword: String): Boolean {
+        val user = findUser(email) ?: return false
+
+        val authService = AuthService()
+
+        // Verify old password is correct via reverse of func
+        if (!authService.verifyPassword(oldPassword, user.passwordKey, user.passwordHash)) {
+            return false
+        }
+
+        // Generate new salt and hash
+        val newSalt = authService.generateSalt()
+        val newHash = authService.hashPassword(newPassword, newSalt)
+
+        val stmt = db.connection.prepareStatement("""
+            UPDATE users
+            SET passwordHash = ?, passwordKey = ?
+            WHERE email = ?
+        """.trimIndent()
+        )
+        stmt.setString(1, newHash)
+        stmt.setString(2, newSalt)
+        stmt.setString(3, email)
+
+        val rowsUpdated = stmt.executeUpdate()
+        stmt.close()
+
+        return rowsUpdated > 0
+    }
+
+    // Forgot password (email token)
+    fun generatePasswordResetToken(email: String): String? {
+        val user = findUser(email) ?: return null
+
+        // Generate a random unique token
+        val token = UUID.randomUUID().toString()
+        
+        // Set expiry to 1 hour from now
+        val expiry = LocalDateTime.now().plusHours(1).toString()
+
+        // Store token in DB
+        val stmt = db.connection.prepareStatement("""
+            INSERT INTO password_reset_tokens (userID, token, expiry, used)
+            VALUES (?, ?, ?, 0)
+        """.trimIndent()
+        )
+        stmt.setInt(1, user.userID)
+        stmt.setString(2, token)
+        stmt.setString(3, expiry)
+
+        val rows = stmt.executeUpdate()
+        stmt.close()
+
+        return token
+    }
+
+    fun resetPasswordWithToken(email: String, token: String, newPassword: String): Boolean {
+        // FInd unused token
+        val stmt = db.connection.prepareStatement("""
+            SELECT * FROM password_reset_tokens
+            WHERE token = ? AND used = 0
+        """.trimIndent()
+        )
+        stmt.setString(1, token)
+        val rs = stmt.executeQuery()
+
+        // If no matching token found return false
+        if (!rs.next()) return false
+
+        // Get expiry and userID
+        val expiry = LocalDateTime.parse(rs.getString("expiry")) // Set to parse object
+        val userID = rs.getInt("userID")
+
+        rs.close()
+        stmt.close()
+
+        if (LocalDateTime.now().isAfter(expiry)) return false
+        val user = findUser(email) ?: return false
+
+        // Generate new salt and hash for new password
+        val authService = AuthService()
+        val newKey = authService.generateSalt()
+        val newHash = authService.hashPassword(newPassword, newKey)
+
+        // Update password in db
+        val updateStmt = db.connection.prepareStatement("""
+            UPDATE users
+            SET passwordHash = ?, passwordKey = ?
+            WHERE userID = ?
+        """.trimIndent()
+        )
+        updateStmt.setString(1, newHash)
+        updateStmt.setString(2, newKey)
+        updateStmt.setInt(3, userID)
+
+        val updatedPassword = updateStmt.executeUpdate()
+        updateStmt.close()
+
+        // Mark token as used (cant be used again)
+        val usedTokenStmt = db.connection.prepareStatement("""
+            UPDATE password_reset_tokens
+            SET used = 1 WHERE token = ?
+        """.trimIndent()
+        )
+        usedTokenStmt.setString(1, token)
+
+        val tokenUsed = usedTokenStmt.executeUpdate()
+        usedTokenStmt.close()
+
+        return updatedPassword > 0 && tokenUsed > 0
+    }
+
     fun deleteUser(email: String): Boolean {
 
         val stmt: PreparedStatement = db.connection.prepareStatement(
-            "DELETE FROM users WHERE email = ?"
+            """DELETE FROM users
+            WHERE email = ?
+            """.trimIndent()
         )
 
         stmt.setString(1, email)
@@ -355,8 +475,8 @@ class DatabaseService{
 
         val stmt: PreparedStatement = db.connection.prepareStatement(
             """
-            INSERT INTO workouts(createdBy, assignedTo, date, duration)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO workouts(createdBy, assignedTo, date, duration, workoutType)
+            VALUES (?, ?, ?, ?, ?)
             """.trimIndent(),
             Statement.RETURN_GENERATED_KEYS
         )
@@ -365,6 +485,7 @@ class DatabaseService{
         stmt.setObject(2, workout.assignedTo)
         stmt.setString(3, workout.date)
         stmt.setObject(4, workout.duration)
+        stmt.setObject(5, workout.workoutType)
 
         val rowsInserted = stmt.executeUpdate()
 
@@ -399,7 +520,8 @@ class DatabaseService{
                 createdBy = rs.getInt("createdBy"),
                 assignedTo = rs.getInt("assignedTo"),
                 date = rs.getString("date"),
-                duration = rs.getObject("duration") as Int?
+                duration = rs.getObject("duration") as Int?,
+                workoutType = rs.getObject("workoutType") as String?
             )
             workouts.add(workout)
         }
@@ -412,20 +534,22 @@ class DatabaseService{
     fun updateWorkout(
         workoutID: Int,
         date: String,
-        duration: Int?
+        duration: Int?,
+        workoutType: String?
     ): Boolean {
 
         val stmt: PreparedStatement = db.connection.prepareStatement(
             """
             UPDATE workouts
-            SET date = ?, duration = ?
+            SET date = ?, duration = ?, workoutType = ?
             WHERE workoutID = ?
             """.trimIndent()
         )
 
         stmt.setString(1, date)
         stmt.setObject(2, duration)
-        stmt.setInt(3, workoutID)
+        stmt.setObject(3, workoutType)
+        stmt.setInt(4, workoutID)
 
         val rowsUpdated = stmt.executeUpdate()
         stmt.close()
@@ -682,8 +806,8 @@ class DatabaseService{
 
         val stmt = db.connection.prepareStatement(
             """
-            INSERT INTO competitions(userID, name, date, rank)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO competitions(userID, name, date, rank, result)
+            VALUES (?, ?, ?, ?, ?)
             """.trimIndent(),
             Statement.RETURN_GENERATED_KEYS
         )
@@ -692,6 +816,7 @@ class DatabaseService{
         stmt.setString(2, comp.name)
         stmt.setString(3, comp.date)
         stmt.setObject(4, comp.rank)
+        stmt.setObject(5, comp.result)
 
         val rowsInserted = stmt.executeUpdate()
 
@@ -725,7 +850,8 @@ class DatabaseService{
                 userID = rs.getInt("userID"),
                 name = rs.getString("name"),
                 date = rs.getString("date"),
-                rank = rs.getObject("rank") as Int?
+                rank = rs.getObject("rank") as Int?,
+                result = rs.getObject("result") as Int?
             )
             comps.add(comp)
         }
@@ -739,13 +865,14 @@ class DatabaseService{
         competitionID: Int,
         name: String,
         date: String,
-        rank: Int?
+        rank: Int?,
+        result: Int?
     ): Boolean {
 
         val stmt: PreparedStatement = db.connection.prepareStatement(
             """
             UPDATE competitions
-            SET name = ?, date = ?, rank = ?
+            SET name = ?, date = ?, rank = ?, result = ?
             WHERE competitionID = ?
             """.trimIndent()
         )
@@ -753,7 +880,8 @@ class DatabaseService{
         stmt.setString(1, name)
         stmt.setString(2, date)
         stmt.setObject(3, rank)
-        stmt.setInt(4, competitionID)
+        stmt.setObject(4, result)
+        stmt.setInt(5, competitionID)
 
         val rowsUpdated = stmt.executeUpdate()
         stmt.close()
@@ -1148,7 +1276,8 @@ class DatabaseService{
                 createdBy = rs.getInt("createdBy"),
                 assignedTo = rs.getInt("assignedTo"),
                 date = rs.getString("date"),
-                duration = rs.getObject("duration") as Int?
+                duration = rs.getObject("duration") as Int?,
+                workoutType = rs.getObject("workoutType") as String?
             )
             rs.close()
             stmt.close()
@@ -1231,7 +1360,8 @@ class DatabaseService{
                 userID = rs.getInt("userID"),
                 name = rs.getString("name"),
                 date = rs.getString("date"),
-                rank = rs.getObject("rank") as Int?
+                rank = rs.getObject("rank") as Int?,
+                result = rs.getObject("result") as Int?
             )
             rs.close()
             stmt.close()
@@ -1269,6 +1399,8 @@ class DatabaseService{
         return null
     }
 
+    //Functions for the dashboard of the frontend
+
     fun getRecentWorkouts(email: String): List<Workout>{
 
         val user = findUser(email) ?: return emptyList()
@@ -1293,11 +1425,17 @@ class DatabaseService{
                     createdBy = rs.getInt("createdBy"),
                     assignedTo = rs.getInt("assignedTo"),
                     date = rs.getString("date"),
-                    duration = rs.getInt("duration")
+                    duration = rs.getObject("duration") as Int?,
+                    workoutType = rs.getObject("workoutType") as String?
                 )
             )
         }
         return results
+    }
+
+    // Frontend potentially want to split it into 3 most recent of each
+    fun getRecentWorkoutsByType(userID: Int): Map<String, List<Workout>> {
+        return findAllWorkouts(userID).filter { it.workoutType != null }.sortedByDescending { it.date }.groupBy { it.workoutType!! }.mapValues { (_, workouts) -> workouts.take(3) }
     }
 
     fun getTodaysWorkout(email: String, today: LocalDate = LocalDate.now()): List<Workout>{
@@ -1312,7 +1450,7 @@ class DatabaseService{
 
         val stmt = db.connection.prepareStatement(query)
         stmt.setInt(1, user.userID)
-        stmt.setString(2, today.toString()) // Passes date as "YYYY-MM-DD"
+        stmt.setString(2, today.toString()) // Local date finds the dates and to string makes it able to be stored in YYYY-MM-DD
 
         val rs = stmt.executeQuery()
 
@@ -1323,7 +1461,8 @@ class DatabaseService{
                     createdBy = rs.getInt("createdBy"),
                     assignedTo = rs.getInt("assignedTo"),
                     date = rs.getString("date"),
-                    duration = rs.getInt("duration")
+                    duration = rs.getObject("duration") as Int?,
+                    workoutType = rs.getObject("workoutType") as String?
                 )
             )
         }
@@ -1355,7 +1494,8 @@ class DatabaseService{
                     userID = rs.getInt("userID"),
                     name = rs.getString("name"),
                     date = rs.getString("date"),
-                    rank = rs.getInt("rank")
+                    rank = rs.getObject("rank") as Int?,
+                    result = rs.getObject("result") as Int?
                 )
             )
         }
@@ -1387,7 +1527,7 @@ class DatabaseService{
                     userID = rs.getInt("userID"),
                     name = rs.getString("name"),
                     distance = rs.getDouble("distance"),
-                    estimatedTime = rs.getDouble("estimatedTime"),
+                    estimatedTime = rs.getObject("estimatedTime") as Double?,
                     date = rs.getString("date")
                 )
             )
@@ -1420,10 +1560,147 @@ class DatabaseService{
                     userID = rs.getInt("userID"),
                     name = rs.getString("name"),
                     date = rs.getString("date"),
-                    rank = rs.getInt("rank")
+                    rank = rs.getObject("rank") as Int?,
+                    result = rs.getObject("result") as Int?
                 )
             )
         }
         return results
+    }
+
+    // Functions for the stats page
+    fun getWorkoutProgression(userID: Int): Map<String, List<Workout>> {
+        val today = LocalDate.now().toString()
+        return findAllWorkouts(userID).filter { it.workoutType != null && it.date < today}.sortedBy { it.date }.groupBy { it.workoutType!! }
+    }
+
+    fun getTotalWorkoutsCompleted(userID: Int): Int {
+        val today = LocalDate.now().toString()
+        return findAllWorkouts(userID).count { it.date < today }
+    }
+
+    // Hours trained
+    fun getHoursTrained(userID: Int): Double {
+        return findAllWorkouts(userID).filter { it.date < LocalDate.now().toString() && it.duration != null }.sumOf { it.duration ?: 0 }.div(60.0)
+    }
+
+    // Workout Streak
+    fun getCurrentStreak(userID: Int): Int {
+        val today = LocalDate.now()
+        val completed = findAllWorkouts(userID).filter { it.date < today.toString() }.map { LocalDate.parse(it.date) }.toSortedSet().reversed()
+
+        var streak = 0
+        var current = today.minusDays(1)
+
+        for (date in completed) {
+            if (date == current) {
+                streak++
+                current = current.minusDays(1)
+            } else {
+                break
+            }
+        }
+        return streak
+    }
+
+    // Weekly training history
+    fun getWeeklyTrainingHistory(userID: Int): Map<String, Map<String, Any>> {
+        val today = LocalDate.now()
+        return findAllWorkouts(userID).filter { it.date < today.toString() && it.duration != null }
+            .groupBy { workout ->
+                val date = LocalDate.parse(workout.date)
+                val weekStart = date.with(DayOfWeek.MONDAY).toString()
+                weekStart
+            }
+            .mapValues { (_, workouts) ->
+                mapOf(
+                    "sessions" to workouts.size,
+                    "totalDuration" to workouts.sumOf { it.duration ?: 0 }.div(60.0)
+                )
+            }
+            .toSortedMap()
+    }
+
+    // Exercise by category
+    fun getExerciseBreakdown(userID: Int): Map<String, Map<String, Any>> {
+        val workouts = findAllWorkouts(userID).filter { it.date < LocalDate.now().toString() }
+        val workoutIDs = workouts.map { it.workoutID }
+        
+        if (workoutIDs.isEmpty()) return emptyMap()
+
+        val categoryCounts = mutableMapOf<String, Int>()
+        
+        workoutIDs.forEach { workoutID ->
+            val stmt = db.connection.prepareStatement("""
+                SELECT exercises.category FROM workout_exercises
+                JOIN exercises ON workout_exercises.exerciseID = exercises.exerciseID
+                WHERE workout_exercises.workoutID = ?
+            """)
+
+            // Joins tables (above)
+            stmt.setInt(1, workoutID)
+            val rs = stmt.executeQuery()
+            // Determines how many categories there are and which fall into which category
+            while (rs.next()) {
+                val category = rs.getString("category")
+                categoryCounts[category] = (categoryCounts[category] ?: 0) + 1
+            }
+            rs.close()
+            stmt.close()
+        }
+
+        //Total number
+        val total = categoryCounts.values.sum().toDouble()
+
+        //Returns counts and percentage for each category
+        return categoryCounts.mapValues { (_, count) ->
+            mapOf(
+                "sessions" to count,
+                "percentage" to ((count / total) * 100).toInt()
+            )
+        }
+    }
+
+    // For personal bests
+    fun getPersonalBests(userID: Int): List<Statistic> {
+        return findAllExercises().mapNotNull { exercise ->getBestStat(userID, exercise.exerciseID)}
+    }
+
+    // Log workout for workout logs page
+    fun logWorkout(
+        workout: Workout,
+        exercises: List<WorkoutExercise>
+    ): Int {
+        // Create workout
+        val workoutID = createWorkout(workout)
+        if (workoutID == -1) return -1
+
+        // Link each exercise to the workout
+        exercises.forEach { exercise ->
+            val we = WorkoutExercise(
+                workoutExercisesID = 0,
+                workoutID = workoutID,
+                exerciseID = exercise.exerciseID,
+                sets = exercise.sets,
+                reps = exercise.reps,
+                weight = exercise.weight
+            )
+            addExerciseToWorkout(we)
+        }
+
+        return workoutID
+    }
+
+    // Update a logged workout (in case of a changed exercise or another detail)
+    fun updateLoggedWorkout(workout: Workout, exercises: List<WorkoutExercise>): Boolean {
+
+        updateWorkout(workout.workoutID, workout.date, workout.duration, workout.workoutType)
+
+        // Delete all exercise links
+        deleteWorkoutExercise(workout.workoutID)
+
+        // Add new exercise list
+        exercises.forEach { exercise ->addExerciseToWorkout(exercise.copy(workoutID = workout.workoutID))}
+        return true
     }
 }
