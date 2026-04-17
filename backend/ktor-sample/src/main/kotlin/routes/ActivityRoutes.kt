@@ -9,6 +9,7 @@ import io.ktor.http.*
 import models.TodayWorkoutsRequest
 import models.UpcomingCompetitionsRequest
 import models.RecentActivityRequest
+import models.UpdateWorkoutRequest
 
 import models.Activity
 import services.DatabaseService.Competition as Competition
@@ -73,30 +74,31 @@ fun Route.activityRoutes(){
         // =====================
 
         // Get recent workouts for a given user
-        get("/workouts/recent/{email}") { //FLAG -> {"message":"Invalid request"}
+        get("/workouts/recent/{email}") {
             try {
                 val email = call.parameters["email"]!!
                 val workouts = db.getRecentWorkouts(email)
 
                 if (workouts != null) {
-                    call.respond(HttpStatusCode.OK, mapOf("message" to "Recent workouts found", "Workouts" to workouts))
+                    call.respond(HttpStatusCode.OK, mapOf("Workouts" to workouts))
                 }
                 else {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "No recent workouts found"))
                 }
             }
             catch (e: Exception) {
+                e.printStackTrace()
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid request"))
             }
         }
 
-        get("/workouts/today/{email}") { // FLAG
+        get("/workouts/today/{email}") {
             try {
                 val email = call.parameters["email"]!!
                 val workouts = db.getTodaysWorkout(email)
 
                 if (workouts != null) {
-                    call.respond(HttpStatusCode.OK, mapOf("message" to "Todays workouts found", "Workouts" to workouts))
+                    call.respond(HttpStatusCode.OK, mapOf("Workouts" to workouts))
                 }
                 else {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "No workouts found for today"))
@@ -115,7 +117,7 @@ fun Route.activityRoutes(){
                 val workouts = db.findAllWorkouts(userId)
 
                 if (workouts != null) {
-                    call.respond(HttpStatusCode.OK, mapOf("message" to "Workouts found", "Workouts" to workouts))
+                    call.respond(HttpStatusCode.OK, mapOf("Workouts" to workouts))
                 }
                 else {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "Could not find workouts"))
@@ -133,7 +135,7 @@ fun Route.activityRoutes(){
                 val workout = db.findWorkout(id)
 
                 if (workout != null) {
-                    call.respond(HttpStatusCode.OK, mapOf("message" to "Workout found", "Workout" to workout))
+                    call.respond(HttpStatusCode.OK, mapOf("Workout" to workout))
                 }
                 else {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "Workout not found"))
@@ -151,13 +153,14 @@ fun Route.activityRoutes(){
                 val id = db.createWorkout(workout)
 
                 if (id > 0){
-                    call.respond(HttpStatusCode.OK, mapOf("message" to "Workout Created", "ID" to id))
+                    call.respond(HttpStatusCode.OK, mapOf("ID" to id))
                 }
                 else {
                     call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Failed to create workout"))
                 }
             }
             catch (e: Exception){
+                e.printStackTrace()
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
         }
@@ -166,7 +169,7 @@ fun Route.activityRoutes(){
         put("/workouts/{id}"){
             try {
                 val id = call.parameters["id"]!!.toInt()
-                val body = call.receive<Workout>()
+                val body = call.receive<UpdateWorkoutRequest>()
 
                 val updated = db.updateWorkout(id, body.date ?: "", body.duration)
 
@@ -212,7 +215,7 @@ fun Route.activityRoutes(){
                 val comps = db.getUpcomingCompetitions(email)
 
                 if (comps != null) {
-                    call.respond(HttpStatusCode.OK, mapOf("message" to "Upcoming competition(s) found", "Competitions" to comps))
+                    call.respond(HttpStatusCode.OK, mapOf("Competitions" to comps))
                 }
                 else {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "No upcoming competitions found"))
@@ -230,7 +233,7 @@ fun Route.activityRoutes(){
                 val comps = db.findAllCompetitions(userId)
 
                 if (comps != null) {
-                    call.respond(HttpStatusCode.OK, mapOf("message" to "Competitions found", "Competitions" to comps))
+                    call.respond(HttpStatusCode.OK, mapOf("Competitions" to comps))
                 }
                 else {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "No competitions found for user ID"))
@@ -248,7 +251,7 @@ fun Route.activityRoutes(){
                 val comp = db.findCompetition(id)
 
                 if (comp != null) {
-                    call.respond(HttpStatusCode.OK, mapOf("message" to "Competition found", "Competition" to comp))
+                    call.respond(HttpStatusCode.OK, mapOf("Competition" to comp))
                 }
                 else {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "Competition not found"))
@@ -266,13 +269,14 @@ fun Route.activityRoutes(){
                 val id = db.addComp(comp)
 
                 if (id > 0) {
-                    call.respond(HttpStatusCode.OK, mapOf("message" to "Competition created", "ID" to id))
+                    call.respond(HttpStatusCode.OK, mapOf("ID" to id))
                 }
                 else {
                     call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Failed to create competition"))
                 }
             }
             catch (e: Exception){
+                e.printStackTrace()
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid request"))
             }
         }
@@ -327,7 +331,7 @@ fun Route.activityRoutes(){
                 val routes = db.getRecentRoutes(email)
 
                 if (routes != null) {
-                    call.respond(HttpStatusCode.OK, mapOf("message" to "Recent routes found", "Routes" to routes))
+                    call.respond(HttpStatusCode.OK, mapOf("Routes" to routes))
                 }
                 else {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "No recent routes found"))
@@ -345,7 +349,7 @@ fun Route.activityRoutes(){
                 val routes = db.findAllRoutes(userId)
 
                 if (routes != null) {
-                    call.respond(HttpStatusCode.OK, mapOf("message" to "Routes found", "Routes" to routes))
+                    call.respond(HttpStatusCode.OK, mapOf("Routes" to routes))
                 }
                 else {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "No routes found"))
@@ -363,7 +367,7 @@ fun Route.activityRoutes(){
                 val route = db.findRoute(id)
 
                 if (route != null) {
-                    call.respond(HttpStatusCode.OK, mapOf("message" to "Route found", "Route" to route))
+                    call.respond(HttpStatusCode.OK, mapOf("Route" to route))
                 }
                 else {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "Route not found"))
@@ -381,13 +385,14 @@ fun Route.activityRoutes(){
                 val id = db.addRoute(route)
 
                 if (id > 0) {
-                    call.respond(HttpStatusCode.OK, mapOf("message" to "Route created", "ID" to id))
+                    call.respond(HttpStatusCode.OK, mapOf("ID" to id))
                 }
                 else {
                     call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Failed to create route"))
                 }
             }
             catch (e: Exception) {
+                e.printStackTrace()
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid request"))
             }
         }

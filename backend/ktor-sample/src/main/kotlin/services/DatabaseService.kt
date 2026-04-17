@@ -38,7 +38,7 @@ class DatabaseService{
         val workoutID: Int? = null,
         val createdBy: Int,
         val assignedTo: Int,
-        val date: String? = null,
+        val date: String,
         val duration: Int? = null
     )
 
@@ -63,11 +63,11 @@ class DatabaseService{
 
     @Serializable
     data class Competition(
-        val competitionID: Int,
+        val competitionID: Int? = null,
         val userID: Int,
         val name: String,
         val date: String,
-        val rank: Int?
+        val rank: Int? = null
     )
 
     @Serializable
@@ -80,12 +80,12 @@ class DatabaseService{
 
     @Serializable
     data class Route(
-        val routeID: Int,
+        val routeID: Int? = null,
         val userID: Int,
         val name: String,
         val distance: Double,
-        val estimatedTime: Double?,
-        val date: String?
+        val estimatedTime: Double? = null,
+        val date: String
     )
 
     @Serializable
