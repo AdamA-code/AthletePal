@@ -6,8 +6,21 @@ import Sidebar from "../components/Sidebar"
 function WorkoutLogPage() {
     const navigate = useNavigate()
     
-    const [routines, setRoutine] = useState([])
-    
+    const [routines, setRoutines] = useState([])
+
+    useEffect(() => {
+        const fetchRoutines = async () => {
+            try {
+                const res = await fetch("/api/routines")
+                const data = await res.json()
+                setRoutines()
+            } catch (err) {
+                console.error("Error fetching routines:", err)
+            }
+        }
+        fetchRoutines()
+    })
+
     return (
         <div className="min-h-screen bg-gray-100 flex">
 
@@ -45,9 +58,26 @@ function WorkoutLogPage() {
                         My Routines
                     </h3>
 
-                    <p className="text-gray-500">
-                        No routines created yet.
-                    </p>
+                    {routines.length === 0 && (
+                        <p className="text-gray-500">
+                            No routines created yet.
+                        </p>
+                    )}
+
+                    {routines.map(routine => (
+                        <div key={routine.id} className="bg-white p-4 rounded shadow mb-4">
+                            <h4 className="font-semibold">
+                                {routine.name}
+                            </h4>
+
+                            <button
+                            onClick={() => navigate("/start-workout", {state: routine})}
+                            className="mt-2 bg-blue-500 text-white px-3 py-1 rounded"
+                            >
+                                Start Routine
+                            </button>
+                        </div>
+                    ))}
 
                 </div>
 
