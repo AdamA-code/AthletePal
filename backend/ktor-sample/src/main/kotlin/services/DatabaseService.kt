@@ -104,6 +104,30 @@ class DatabaseService{
         val name: String
     )
 
+    @Serializable
+    data class TrainingGroup(
+        val groupID: Int,
+        val createdBy: Int,
+        val name: String,
+        val description: String?,
+        val goal: String?
+    )
+
+    @Serializable
+    data class GroupMember(
+        val memberID: Int,
+        val groupID: Int,
+        val userID: Int
+    )
+
+    @Serializable
+    data class GroupSession(
+        val sessionID: Int,
+        val groupID: Int,
+        val workoutID: Int,
+        val scheduledDate: String
+    )
+
     // Connect to DB
     class DatabaseConnection {
         //open connection to database
@@ -275,10 +299,10 @@ class DatabaseService{
         val rows = stmt.executeUpdate()
         stmt.close()
 
-        return token
+        return if (rows > 0) {token} else null
     }
 
-    fun resetPasswordWithToken(email: String, token: String, newPassword: String): Boolean {
+    fun resetPasswordWithToken(token: String, newPassword: String): Boolean {
         // FInd unused token
         val stmt = db.connection.prepareStatement("""
             SELECT * FROM password_reset_tokens
@@ -286,10 +310,15 @@ class DatabaseService{
         """.trimIndent()
         )
         stmt.setString(1, token)
+        
         val rs = stmt.executeQuery()
 
         // If no matching token found return false
-        if (!rs.next()) return false
+        if (!rs.next()) {
+            rs.close()
+            stmt.close()
+            return false
+        }
 
         // Get expiry and userID
         val expiry = LocalDateTime.parse(rs.getString("expiry")) // Set to parse object
@@ -299,7 +328,6 @@ class DatabaseService{
         stmt.close()
 
         if (LocalDateTime.now().isAfter(expiry)) return false
-        val user = findUser(email) ?: return false
 
         // Generate new salt and hash for new password
         val authService = AuthService()
@@ -1399,6 +1427,297 @@ class DatabaseService{
         return null
     }
 
+    
+    // Training groups
+
+    fun createGroup(group: TrainingGroup): Int {
+        val stmt = db.connection.prepareStatement(
+            """
+            INSERT INTO training_groups(createdBy, name, description, goal)
+            VALUES (?, ?, ?, ?)
+            """.trimIndent(),
+            Statement.RETURN_GENERATED_KEYS
+        )
+        stmt.setInt(1, group.createdBy)
+        stmt.setString(2, group.name)
+        stmt.setObject(3, group.description)
+        stmt.setObject(4, group.goal)
+
+        val rowsInserted = stmt.executeUpdate()
+        if (rowsInserted == 0) { 
+            stmt.close() 
+            return -1 
+        }
+
+        val rs = stmt.generatedKeys
+        val groupID = if (rs.next()) rs.getInt(1) else -1
+
+        rs.close()
+        stmt.close()
+
+        // Automatically add creator as first member
+        if (groupID != -1) {
+            joinGroup(groupID, group.createdBy)
+        }
+
+        return groupID
+    }
+
+    fun deleteGroup(groupID: Int): Boolean {
+        val stmt = db.connection.prepareStatement(
+            "DELETE FROM training_groups WHERE groupID = ?"
+        )
+        stmt.setInt(1, groupID)
+
+        val rows = stmt.executeUpdate()
+        stmt.close()
+
+        return rows > 0
+    }
+
+    fun findGroup(groupID: Int): TrainingGroup? {
+        val stmt = db.connection.prepareStatement(
+            "SELECT * FROM training_groups WHERE groupID = ?"
+        )
+        stmt.setInt(1, groupID)
+
+        val rs = stmt.executeQuery()
+
+        val group = if (rs.next()) {
+            TrainingGroup(
+                groupID = rs.getInt("groupID"),
+                createdBy = rs.getInt("createdBy"),
+                name = rs.getString("name"),
+                description = rs.getObject("description") as String?,
+                goal = rs.getObject("goal") as String?
+            )
+        } else null
+
+        rs.close()
+        stmt.close()
+
+        return group
+    }
+
+    fun findAllGroups(userID: Int): List<TrainingGroup> {
+        val stmt = db.connection.prepareStatement(
+            """
+            SELECT training_groups.* FROM training_groups
+            JOIN group_members ON training_groups.groupID = group_members.groupID
+            WHERE group_members.userID = ?
+            """.trimIndent()
+        )
+        stmt.setInt(1, userID)
+
+        val rs = stmt.executeQuery()
+        val groups = mutableListOf<TrainingGroup>()
+
+        while (rs.next()) {
+            groups.add(
+                TrainingGroup(
+                    groupID = rs.getInt("groupID"),
+                    createdBy = rs.getInt("createdBy"),
+                    name = rs.getString("name"),
+                    description = rs.getObject("description") as String?,
+                    goal = rs.getObject("goal") as String?
+                )
+            )
+        }
+        rs.close()
+        stmt.close()
+
+        return groups
+    }
+
+    fun updateGroup(groupID: Int, name: String, description: String?, goal: String?): Boolean {
+        val stmt = db.connection.prepareStatement(
+            """
+            UPDATE training_groups SET name = ?, description = ?, goal = ?
+            WHERE groupID = ?
+            """.trimIndent()
+        )
+        stmt.setString(1, name)
+        stmt.setString(2, description)
+        stmt.setObject(3, goal)
+        stmt.setObject(4, groupID)
+
+        val rows = stmt.executeUpdate()
+        stmt.close()
+
+        return rows > 0
+    }
+
+    // Group members
+
+    fun joinGroup(groupID: Int, userID: Int): Boolean {
+        val stmt = db.connection.prepareStatement(
+            "INSERT INTO group_members(groupID, userID) VALUES (?, ?)"
+        )
+
+        stmt.setInt(1, groupID)
+        stmt.setInt(2, userID)
+
+        val rows = stmt.executeUpdate()
+        stmt.close()
+        
+        return rows > 0
+    }
+
+    fun leaveGroup(groupID: Int, userID: Int): Boolean {
+        val stmt = db.connection.prepareStatement(
+            "DELETE FROM group_members WHERE groupID = ? AND userID = ?"
+        )
+        stmt.setInt(1, groupID)
+        stmt.setInt(2, userID)
+
+        val rows = stmt.executeUpdate()
+        stmt.close()
+
+        return rows > 0
+    }
+
+    fun getGroupMembers(groupID: Int): List<User> {
+        val stmt = db.connection.prepareStatement(
+            """
+            SELECT users.* FROM users
+            JOIN group_members ON users.userID = group_members.userID
+            WHERE group_members.groupID = ?
+            """.trimIndent()
+        )
+        stmt.setInt(1, groupID)
+
+        val rs = stmt.executeQuery()
+        val members = mutableListOf<User>()
+
+        while (rs.next()) {
+            members.add(
+                User(
+                    userID = rs.getInt("userID"),
+                    name = rs.getString("name"),
+                    email = rs.getString("email"),
+                    passwordHash = rs.getString("passwordHash"),
+                    passwordKey = rs.getString("passwordKey"),
+                    gender = rs.getObject("gender") as String?,
+                    age = rs.getObject("age") as Int?,
+                    height = rs.getObject("height") as Double?,
+                    weight = rs.getObject("weight") as Double?,
+                    accountType = rs.getBoolean("accountType")
+                )
+            )
+        }
+
+        rs.close()
+        stmt.close()
+
+        return members
+    }
+
+    // Group training sessions
+
+    fun addGroupSession(session: GroupSession): Int {
+        val stmt = db.connection.prepareStatement(
+            """
+            INSERT INTO group_sessions(groupID, workoutID, scheduledDate)
+            VALUES (?, ?, ?)
+            """.trimIndent(),
+            Statement.RETURN_GENERATED_KEYS
+        )
+        stmt.setInt(1, session.groupID)
+        stmt.setInt(2, session.workoutID)
+        stmt.setString(3, session.scheduledDate)
+
+        val rowsInserted = stmt.executeUpdate()
+
+        if (rowsInserted == 0) { 
+            stmt.close()
+            return -1 
+        }
+
+        val rs = stmt.generatedKeys
+        val id = if (rs.next()){rs.getInt(1)} else -1
+
+        rs.close()
+        stmt.close()
+
+        return id
+    }
+
+    fun getUpcomingGroupSessions(groupID: Int): List<GroupSession> {
+
+        val today = LocalDate.now().toString()
+        val stmt = db.connection.prepareStatement(
+            """
+            SELECT * FROM group_sessions
+            WHERE groupID = ? AND scheduledDate >= ?
+            ORDER BY scheduledDate ASC
+            """.trimIndent()
+        )
+
+        stmt.setInt(1, groupID)
+        stmt.setString(2, today)
+
+        val rs = stmt.executeQuery()
+        val sessions = mutableListOf<GroupSession>()
+
+        while (rs.next()) {
+            sessions.add(
+                GroupSession(
+                    sessionID = rs.getInt("sessionID"),
+                    groupID = rs.getInt("groupID"),
+                    workoutID = rs.getInt("workoutID"),
+                    scheduledDate = rs.getString("scheduledDate")
+                )
+            )
+        }
+        rs.close()
+        stmt.close()
+
+        return sessions
+    }
+
+    fun getPastGroupSessions(groupID: Int): List<GroupSession> {
+        val today = LocalDate.now().toString()
+        val stmt = db.connection.prepareStatement(
+            """
+            SELECT * FROM group_sessions
+            WHERE groupID = ? AND scheduledDate < ?
+            ORDER BY scheduledDate DESC
+            """.trimIndent()
+        )
+        stmt.setInt(1, groupID)
+        stmt.setString(2, today)
+
+        val rs = stmt.executeQuery()
+        val sessions = mutableListOf<GroupSession>()
+
+        while (rs.next()) {
+            sessions.add(
+                GroupSession(
+                    sessionID = rs.getInt("sessionID"),
+                    groupID = rs.getInt("groupID"),
+                    workoutID = rs.getInt("workoutID"),
+                    scheduledDate = rs.getString("scheduledDate")
+                )
+            )
+        }
+        rs.close()
+        stmt.close()
+
+        return sessions
+    }
+
+    fun deleteGroupSession(sessionID: Int): Boolean {
+        val stmt = db.connection.prepareStatement(
+            "DELETE FROM group_sessions WHERE sessionID = ?"
+        )
+        stmt.setInt(1, sessionID)
+
+        val rows = stmt.executeUpdate()
+        stmt.close()
+
+        return rows > 0
+    }
+
     //Functions for the dashboard of the frontend
 
     fun getRecentWorkouts(email: String): List<Workout>{
@@ -1430,6 +1749,9 @@ class DatabaseService{
                 )
             )
         }
+        rs.close()
+        stmt.close()
+
         return results
     }
 
@@ -1466,6 +1788,9 @@ class DatabaseService{
                 )
             )
         }
+        rs.close()
+        stmt.close()
+        
         return results
     }
     
@@ -1499,6 +1824,9 @@ class DatabaseService{
                 )
             )
         }
+        rs.close()
+        stmt.close()
+        
         return results
     }
 
@@ -1532,6 +1860,9 @@ class DatabaseService{
                 )
             )
         }
+        rs.close()
+        stmt.close()
+        
         return results
     }
 
@@ -1565,6 +1896,9 @@ class DatabaseService{
                 )
             )
         }
+        rs.close()
+        stmt.close()
+        
         return results
     }
 
