@@ -10,6 +10,7 @@ import StatisticsPage from "./pages/StatisticsPage"
 import CompetitionPage from "./pages/CompetitionPage"
 import TrainingGroupsPage from "./pages/TrainingGroupsPage"
 import StartWorkoutPage from "./pages/StartWorkoutPage"
+import NewRoutinePage from "./pages/NewRoutinePage"
 
 function App() {
   return (
@@ -39,6 +40,8 @@ function App() {
         <Route path="/training-groups" element={<TrainingGroupsPage />} />
 
         <Route path="/start-workout" element={<StartWorkoutPage />} />
+
+        <Route path="/new-routine" element={<NewRoutinePage />} />
       </Routes>
 
     </BrowserRouter>
