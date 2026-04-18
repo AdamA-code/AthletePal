@@ -11,6 +11,8 @@ import io.ktor.serialization.kotlinx.json.*
 
 // Import routing functions for authorisation requests (i.e. login and create account functions)
 import routes.authRoutes
+// Import routing functions for retrival of user activity (e.g. for dashboard ect)
+import routes.activityRoutes
 
 fun main() {
     embeddedServer(Netty, port = 3000) { // Server with Netty engine on port 3000
@@ -36,6 +38,8 @@ fun Application.module() { // Function for config. of Ktor app.
         }
 
         authRoutes() // Add authRoutes to Ktor routing table
+
+        activityRoutes()
 
     }
 }
