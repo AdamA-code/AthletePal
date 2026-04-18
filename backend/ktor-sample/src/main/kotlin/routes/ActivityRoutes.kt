@@ -171,7 +171,7 @@ fun Route.activityRoutes(){
                 val id = call.parameters["id"]!!.toInt()
                 val body = call.receive<UpdateWorkoutRequest>()
 
-                val updated = db.updateWorkout(id, body.date ?: "", body.duration)
+                val updated = db.updateWorkout(id, body.date ?: "", body.duration, body.workoutType)
 
                 if (updated) {
                     call.respond(HttpStatusCode.OK, mapOf("message" to "Workout updated"))
@@ -287,7 +287,7 @@ fun Route.activityRoutes(){
                 val id = call.parameters["id"]!!.toInt()
                 val body = call.receive<Competition>()
 
-                val updated = db.updateCompetition(id, body.name, body.date, body.rank)
+                val updated = db.updateCompetition(id, body.name, body.date, body.rank, body.result)
 
                 if (updated) {
                     call.respond(HttpStatusCode.OK, mapOf("message" to "Competition updated"))

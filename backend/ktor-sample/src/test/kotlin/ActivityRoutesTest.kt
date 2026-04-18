@@ -32,6 +32,7 @@ class ActivityRoutesTest {
             contentType(ContentType.Application.Json)
             setBody("""
                 {
+                    
                     "createdBy": 18,
                     "assignedTo": 18,
                     "date": "2026-05-01"

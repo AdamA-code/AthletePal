@@ -611,6 +611,8 @@ class DatabaseServiceTest {
         assertTrue(updatedExercises.any { it.exerciseID == benchPressID })
         assertTrue(updatedExercises.any { it.exerciseID == runID })
         assertTrue(updatedExercises.none { it.exerciseID == squatID })
+
+        assertTrue(ds.deleteUser(email))
     }
 
     @Test
