@@ -12,6 +12,9 @@ import io.ktor.server.application.Application
 import io.ktor.server.testing.testApplication
 import com.example.module
 
+import services.AuthService
+import services.DatabaseService
+
 class ActivityRoutesTest {
 
     private fun ApplicationTestBuilder.setup() {
@@ -20,10 +23,19 @@ class ActivityRoutesTest {
         }
     }
 
+    var userID: Int? = null
+
+    @BeforeTest
+    fun setup() = testApplication {
+        application { module() }
+        userID = AuthService().registerUser("TestAccount", "TestingEmail@email.com", "wordpass", false)
+    }
+
     // ===========================
     // WORKOUT ROUTES TESTING
     // ===========================
 
+    
     @Test
     fun createWorkout_valid() = testApplication { // Normal Case = testing normal behaviour for creating new workout
         application { module() }
@@ -33,8 +45,8 @@ class ActivityRoutesTest {
             setBody("""
                 {
                     
-                    "createdBy": 18,
-                    "assignedTo": 18,
+                    "createdBy": ${userID!!},
+                    "assignedTo": ${userID!!},
                     "date": "2026-05-01"
                 }
                 """.trimIndent())
@@ -105,7 +117,7 @@ class ActivityRoutesTest {
             contentType(ContentType.Application.Json)
             setBody("""
                 {
-                    "userID": 18,
+                    "userID": ${userID!!},
                     "name": "NE Regionals",
                     "date": "2026-09-01"
                 }
@@ -140,7 +152,7 @@ class ActivityRoutesTest {
             contentType(ContentType.Application.Json)
             setBody("""
                 {
-                    "userID": 1,
+                    "userID": ${userID!!},
                     "name": "Updated Competition",
                     "date": "2026-01-01",
                     "rank": 1
@@ -162,7 +174,7 @@ class ActivityRoutesTest {
             contentType(ContentType.Application.Json)
             setBody("""
                 {
-                    "userID": 18,
+                    "userID": ${userID!!},
                     "name": "Hyde Park Loop",
                     "distance": 5.6,
                     "date": "2026-05-10"
@@ -183,7 +195,7 @@ class ActivityRoutesTest {
             contentType(ContentType.Application.Json)
             setBody("""
                 {
-                    "userID": 1,
+                    "userID": ${userID!!},
                     "name": "Route with missing date",
                     "distance": 5.0
                 }
@@ -232,7 +244,7 @@ class ActivityRoutesTest {
     fun getRecentActivity_valid() = testApplication { // Normal Case: test behaviour for getting recent activity of user, when correct usage used
         application { module() }
 
-        val response = client.get("/api/activity/recent/test@test.com") // HTTP request when correct usage used (i.e. email parsed in correct format)
+        val response = client.get("/api/activity/recent/TestingEmail@email.com") // HTTP request when correct usage used (i.e. email parsed in correct format)
 
         assertEquals(HttpStatusCode.OK, response.status) // Expect response to contain OK status code, as valid HTTP request was made
     }
@@ -253,8 +265,8 @@ class ActivityRoutesTest {
             contentType(ContentType.Application.Json)
             setBody("""
                 {
-                    "createdBy": 1,
-                    "assignedTo": 1,
+                    "createdBy": ${userID!!},
+                    "assignedTo": ${userID!!},
                     "date": "2026-05-01",
                     "duration": 45
                 }
@@ -262,6 +274,11 @@ class ActivityRoutesTest {
         }
         println("STATUS = ${response.status}")
         println("BODY = ${response.bodyAsText()}")
+    }
+
+    @AfterTest
+    fun cleanup() {
+        assertTrue(DatabaseService().deleteUser("TestingEmail@email.com"))
     }
 
     private suspend fun HttpResponse.debug() {
