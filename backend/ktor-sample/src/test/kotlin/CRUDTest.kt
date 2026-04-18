@@ -12,6 +12,9 @@ import services.DatabaseService.Statistic
 import services.DatabaseService.Competition
 import services.DatabaseService.Route
 import services.DatabaseService.CalendarEvent
+import services.DatabaseService.GroupSession
+import services.DatabaseService.TrainingGroup
+import services.DatabaseService.GroupMember
 import java.time.LocalDate
 import services.AuthService
 
@@ -517,12 +520,12 @@ class DatabaseServiceTest {
         assertNotNull(token)
 
         // Wrong token
-        val fail = ds.resetPasswordWithToken(email, "wrongtoken", "newPassword")
+        val fail = ds.resetPasswordWithToken("wrongtoken", "newPassword")
         assertFalse(fail)
 
         // Correct token
         val newPassword = "newPassword"
-        val success = ds.resetPasswordWithToken(email, token, newPassword)
+        val success = ds.resetPasswordWithToken(token, newPassword)
         assertTrue(success)
 
         // New password should work
@@ -533,7 +536,7 @@ class DatabaseServiceTest {
         assertFalse(authService.verifyPassword(oldPassword, user.passwordKey, user.passwordHash))
 
         // Token should be used
-        val reusedToken = ds.resetPasswordWithToken(email, token, "password")
+        val reusedToken = ds.resetPasswordWithToken(token, "password")
         assertFalse(reusedToken)
 
         // Cleanup
@@ -657,5 +660,119 @@ class DatabaseServiceTest {
 
         // Cleanup
         assertTrue(ds.deleteUser(email))
+    }
+
+    @Test
+    fun testTrainingGroup() {
+        val ds = DatabaseService()
+        val creatorEmail = "creator@test.com"
+        val memberEmail = "member@test.com"
+
+        ds.deleteUser(creatorEmail)
+        ds.deleteUser(memberEmail)
+
+        val creatorID = ds.createUser(
+            User(0, "Group Creator", creatorEmail, "hash", "key", "Male", 25, 180.0, 75.0, false)
+        )
+        val memberID = ds.createUser(
+            User(0, "Group Member", memberEmail, "hash", "key", "Female", 22, 165.0, 60.0, false)
+        )
+        assertTrue(creatorID > 0)
+        assertTrue(memberID > 0)
+
+        //Create group
+
+        val groupID = ds.createGroup(
+            TrainingGroup(0, creatorID, "Test Group", "A test group", "Run a 5k")
+        )
+        assertTrue(groupID > 0)
+
+        // Creator should be automatically added
+        val members = ds.getGroupMembers(groupID)
+        assertEquals(1, members.size)
+        assertTrue(members.any { it.userID == creatorID })
+
+        // Find group
+
+        val group = ds.findGroup(groupID)
+        assertNotNull(group)
+        assertEquals("Test Group", group.name)
+        assertEquals("A test group", group.description)
+        assertEquals("Run a 5k", group.goal)
+
+        // Update group
+
+        assertTrue(ds.updateGroup(groupID, "Updated Group", "Updated description", "Run a 10k"))
+        val updated = ds.findGroup(groupID)
+        assertNotNull(updated)
+        assertEquals("Updated Group", updated.name)
+        assertEquals("Run a 10k", updated.goal)
+
+        // Join group
+
+        assertTrue(ds.joinGroup(groupID, memberID))
+        val newMembers = ds.getGroupMembers(groupID)
+        assertEquals(2, newMembers.size)
+        assertTrue(newMembers.any { it.userID == memberID })
+
+        //  Find all groups for user
+
+        val creatorGroups = ds.findAllGroups(creatorID)
+        assertTrue(creatorGroups.any { it.groupID == groupID })
+
+        val memberGroups = ds.findAllGroups(memberID)
+        assertTrue(memberGroups.any { it.groupID == groupID })
+
+        // Join table sessions tests
+
+        val future = LocalDate.now().plusDays(7).toString()
+        val past = "2025-01-01"
+
+        // Create a workout
+        val workoutID = ds.createWorkout(
+            Workout(0, creatorID, creatorID, future, 60, "cardio")
+        )
+        val pastWorkoutID = ds.createWorkout(
+            Workout(0, creatorID, creatorID, past, 45, "weights")
+        )
+        assertTrue(workoutID > 0)
+        assertTrue(pastWorkoutID > 0)
+
+        val upcomingSessionID = ds.addGroupSession(
+            GroupSession(0, groupID, workoutID, future)
+        )
+        val pastSessionID = ds.addGroupSession(
+            GroupSession(0, groupID, pastWorkoutID, past)
+        )
+        assertTrue(upcomingSessionID > 0)
+        assertTrue(pastSessionID > 0)
+
+        // Only future sessions should show
+        val upcoming = ds.getUpcomingGroupSessions(groupID)
+        assertTrue(upcoming.any { it.sessionID == upcomingSessionID })
+        assertTrue(upcoming.none { it.scheduledDate < LocalDate.now().toString() })
+
+        // Past sessions should only return past
+        val pastSessions = ds.getPastGroupSessions(groupID)
+        assertTrue(pastSessions.any { it.sessionID == pastSessionID })
+        assertTrue(pastSessions.none { it.scheduledDate >= LocalDate.now().toString() })
+
+        // Delete session
+        assertTrue(ds.deleteGroupSession(upcomingSessionID))
+        assertTrue(ds.getUpcomingGroupSessions(groupID).none { it.sessionID == upcomingSessionID })
+
+        // Leave group
+        assertTrue(ds.leaveGroup(groupID, memberID))
+        val afterLeave = ds.getGroupMembers(groupID)
+        assertEquals(1, afterLeave.size)
+        assertTrue(afterLeave.none { it.userID == memberID })
+
+        // Delete group
+        assertTrue(ds.deleteGroup(groupID))
+        assertNull(ds.findGroup(groupID))
+
+        // Cleanup
+        assertTrue(ds.deleteUser(creatorEmail))
+        assertTrue(ds.deleteUser(memberEmail))
     }
 }
