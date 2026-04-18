@@ -1,3 +1,29 @@
+CREATE TABLE IF NOT EXISTS training_groups (
+    groupID INTEGER PRIMARY KEY AUTOINCREMENT,
+    createdBy INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    goal TEXT,
+    FOREIGN KEY(createdBy) REFERENCES users(userID) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS group_members (
+    memberID INTEGER PRIMARY KEY AUTOINCREMENT,
+    groupID INTEGER NOT NULL,
+    userID INTEGER NOT NULL,
+    FOREIGN KEY(groupID) REFERENCES training_groups(groupID) ON DELETE CASCADE,
+    FOREIGN KEY(userID) REFERENCES users(userID) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS group_sessions (
+    sessionID INTEGER PRIMARY KEY AUTOINCREMENT,
+    groupID INTEGER NOT NULL,
+    workoutID INTEGER NOT NULL,
+    scheduledDate TEXT NOT NULL,
+    FOREIGN KEY(groupID) REFERENCES training_groups(groupID) ON DELETE CASCADE,
+    FOREIGN KEY(workoutID) REFERENCES workouts(workoutID) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS password_reset_tokens (
     tokenID INTEGER PRIMARY KEY AUTOINCREMENT,
     userID INTEGER NOT NULL,
@@ -43,7 +69,7 @@ CREATE TABLE IF NOT EXISTS competitions (
     name TEXT NOT NULL,
     date TEXT NOT NULL,
     rank INTEGER,
-    result Integer,
+    result INTEGER,
     FOREIGN KEY(userID) REFERENCES users(userID) ON DELETE CASCADE
 );
 

@@ -5,5 +5,3 @@ build/
 *.jar
 *.zip
 *.tar
-
-*.db

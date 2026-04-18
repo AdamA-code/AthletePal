@@ -287,7 +287,7 @@ fun Route.activityRoutes(){
                 val id = call.parameters["id"]!!.toIntOrNull() ?: return@put call.respond(HttpStatusCode.BadRequest)
                 val body = call.receive<Competition>()
 
-                val updated = db.updateCompetition(id, body.name, body.date, body.rank ?: 0, body.result ?: 0)
+                val updated = db.updateCompetition(id, body.name, body.date, body.rank, body.result)
 
                 if (updated) {
                     call.respond(HttpStatusCode.OK, mapOf("message" to "Competition updated"))
