@@ -191,13 +191,13 @@ class DatabaseServiceTest {
 
         assertTrue(
             ds.updateStatistic(
-                statisticID = stat.statisticID,
+                statisticID = stat.statisticID ?: 0,
                 scoreValue = 110.0,
                 date = "2026-01-02"
             )
         )
 
-        assertTrue(ds.deleteStatistic(stat.statisticID))
+        assertTrue(ds.deleteStatistic(stat.statisticID ?: 0))
 
         // =========================
         // 6. COMPETITION

@@ -132,7 +132,7 @@ class ActivityRoutesTest {
     }
 
     @Test
-    fun updateCompetition_boundaryField() = testApplication { // Boundary Case: test for when a field has a bounary value (i.e. rank = 0)
+    fun updateCompetition_boundaryField() = testApplication { // Boundary Case: test for when a field has a bounary value (i.e. rank = 1)
         application { module() }
 
         val response = client.put("/api/competitions/1") { // Form HTTP request with bounary value for "rank"
@@ -142,7 +142,7 @@ class ActivityRoutesTest {
                     "userID": 1,
                     "name": "Updated Competition",
                     "date": "2026-01-01",
-                    "rank": 0
+                    "rank": 1
                 }
             """.trimIndent())
         }
