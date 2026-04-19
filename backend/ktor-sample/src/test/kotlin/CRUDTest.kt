@@ -249,7 +249,8 @@ class DatabaseServiceTest {
                 distance = 5.0,
                 estimatedTime = 30.0,
                 date = "2026-01-01",
-                isPublic = false
+                isPublic = false,
+                routeData = "Fake route data"
             )
         )
 
@@ -267,7 +268,8 @@ class DatabaseServiceTest {
                 distance = 6.0,
                 estimatedTime = 32.0,
                 date = "2026-01-02",
-                isPublic = true
+                isPublic = true,
+                routeData = "Still fake route data"
             )
         )
 
@@ -364,11 +366,11 @@ class DatabaseServiceTest {
 
         // Routes
         ds.addRoute(
-            Route(0, userId, "Route 1", 5.0, 30.0, today, false)
+            Route(0, userId, "Route 1", 5.0, 30.0, today, false, "Big loop somewhere on map")
         )
 
         ds.addRoute(
-            Route(0, userId, "Route 2", 6.0, 35.0, past, true)
+            Route(0, userId, "Route 2", 6.0, 35.0, past, true, "Big square somewhere on map")
         )
 
         // Tests

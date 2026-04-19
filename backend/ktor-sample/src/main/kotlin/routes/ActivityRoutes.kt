@@ -409,7 +409,8 @@ fun Route.activityRoutes(){
                     body.distance,
                     body.estimatedTime,
                     body.date,
-                    body.isPublic
+                    body.isPublic,
+                    body.routeData
                 )
 
                 if (updated) {

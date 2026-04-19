@@ -167,7 +167,8 @@ class ActivityRoutesTest {
                     "name": "Hyde Park Loop",
                     "distance": 5.6,
                     "date": "2026-05-10",
-                    "isPublic": false
+                    "isPublic": false,
+                    "routeData": "Big circle on map in hyde park"
                 }
             """.trimIndent())
         }

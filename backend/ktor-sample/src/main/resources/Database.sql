@@ -1,3 +1,4 @@
+
 CREATE TABLE IF NOT EXISTS training_groups (
     groupID INTEGER PRIMARY KEY AUTOINCREMENT,
     createdBy INTEGER NOT NULL,
@@ -52,6 +53,7 @@ CREATE TABLE IF NOT EXISTS routes (
     estimatedTime REAL,
     date TEXT NOT NULL,
     isPublic INTEGER NOT NULL DEFAULT 0,
+    routeData TEXT NOT NULL,
     FOREIGN KEY(userID) REFERENCES users(userID) ON DELETE CASCADE
 );
 

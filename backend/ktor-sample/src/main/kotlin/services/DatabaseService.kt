@@ -93,7 +93,8 @@ class DatabaseService{
         val distance: Double,
         val estimatedTime: Double? = null,
         val date: String,
-        val isPublic: Boolean
+        val isPublic: Boolean,
+        val routeData: String
     )
 
     @Serializable
@@ -1040,8 +1041,8 @@ class DatabaseService{
 
         val stmt = db.connection.prepareStatement(
             """
-            INSERT INTO routes(userID, name, distance, estimatedTime, date, isPublic)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO routes(userID, name, distance, estimatedTime, date, isPublic, routeData)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """.trimIndent(),
             Statement.RETURN_GENERATED_KEYS
         )
@@ -1052,6 +1053,7 @@ class DatabaseService{
         stmt.setObject(4, route.estimatedTime)
         stmt.setString(5, route.date)
         stmt.setBoolean(6, route.isPublic)
+        stmt.setString(7, route.routeData)
 
         val rowsInserted = stmt.executeUpdate()
 
@@ -1087,7 +1089,8 @@ class DatabaseService{
                 distance = rs.getDouble("distance"),
                 estimatedTime = rs.getObject("estimatedTime") as Double?,
                 date = rs.getString("date"),
-                isPublic = rs.getBoolean("isPublic")
+                isPublic = rs.getBoolean("isPublic"),
+                routeData = rs.getString("routeData")
             )
             routes.add(route)
         }
@@ -1103,13 +1106,14 @@ class DatabaseService{
         distance: Double,
         estimatedTime: Double?,
         date: String?,
-        isPublic: Boolean
+        isPublic: Boolean,
+        routeData: String
     ): Boolean {
 
         val stmt: PreparedStatement = db.connection.prepareStatement(
             """
             UPDATE routes
-            SET name = ?, distance = ?, estimatedTime = ?, date = ?, isPublic = ?
+            SET name = ?, distance = ?, estimatedTime = ?, date = ?, isPublic = ?, routeData = ?
             WHERE routeID = ?
             """.trimIndent()
         )
@@ -1119,7 +1123,8 @@ class DatabaseService{
         stmt.setObject(3, estimatedTime)
         stmt.setString(4, date)
         stmt.setBoolean(5, isPublic)
-        stmt.setInt(6, routeID)
+        stmt.setString(6, routeData)
+        stmt.setInt(7, routeID)
 
         val rowsUpdated = stmt.executeUpdate()
         stmt.close()
@@ -1265,7 +1270,8 @@ class DatabaseService{
                 distance = rs.getDouble("distance"),
                 estimatedTime = rs.getObject("estimatedTime") as Double?,
                 date = rs.getString("date"),
-                isPublic = rs.getBoolean("isPublic")
+                isPublic = rs.getBoolean("isPublic"),
+                routeData = rs.getString("routeData")
             )
         } else null
 
@@ -1879,7 +1885,8 @@ class DatabaseService{
                     distance = rs.getDouble("distance"),
                     estimatedTime = rs.getObject("estimatedTime") as Double?,
                     date = rs.getString("date"),
-                    isPublic = rs.getBoolean("isPublic")
+                    isPublic = rs.getBoolean("isPublic"),
+                    routeData = rs.getString("routeData")
                 )
             )
         }
