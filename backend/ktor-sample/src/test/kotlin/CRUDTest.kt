@@ -140,7 +140,8 @@ class DatabaseServiceTest {
                 date = "2026-01-02",
                 duration = 75,
                 workoutType = null,
-                notes = null
+                notes = null,
+                routeID = null
             )
         )
 
@@ -172,7 +173,7 @@ class DatabaseServiceTest {
             )
         )
 
-        // cascade: assertTrue(ds.deleteWorkoutExercise(workoutExercisesId))
+        // cascade so not required: assertTrue(ds.deleteWorkoutExercise(workoutExercisesId))
 
         // =========================
         // 5. STATISTICS
@@ -417,15 +418,15 @@ class DatabaseServiceTest {
         assertTrue(userId > 0)
 
         // Need at least 4 to test cutoff is 3
-        ds.createWorkout(Workout(0, userId, userId, "2025-01-01", 30, "cardio", null))
-        ds.createWorkout(Workout(0, userId, userId, "2025-02-01", 35, "cardio", null))
-        ds.createWorkout(Workout(0, userId, userId, "2025-03-01", 40, "cardio", null))
-        ds.createWorkout(Workout(0, userId, userId, "2025-04-01", 45, "cardio", null))
+        ds.createWorkout(Workout(0, userId, userId, "2025-01-01", 30, "cardio", null, null))
+        ds.createWorkout(Workout(0, userId, userId, "2025-02-01", 35, "cardio", null, null))
+        ds.createWorkout(Workout(0, userId, userId, "2025-03-01", 40, "cardio", null, null))
+        ds.createWorkout(Workout(0, userId, userId, "2025-04-01", 45, "cardio", null, null))
 
-        ds.createWorkout(Workout(0, userId, userId, "2025-01-01", 60, "weights", null))
-        ds.createWorkout(Workout(0, userId, userId, "2025-02-01", 65, "weights", null))
-        ds.createWorkout(Workout(0, userId, userId, "2025-03-01", 70, "weights", null))
-        ds.createWorkout(Workout(0, userId, userId, "2025-04-01", 75, "weights", null))
+        ds.createWorkout(Workout(0, userId, userId, "2025-01-01", 60, "weights", null, null))
+        ds.createWorkout(Workout(0, userId, userId, "2025-02-01", 65, "weights", null, null))
+        ds.createWorkout(Workout(0, userId, userId, "2025-03-01", 70, "weights", null, null))
+        ds.createWorkout(Workout(0, userId, userId, "2025-04-01", 75, "weights", null, null))
 
         val recent = ds.getRecentWorkoutsByType(userId)
 
@@ -469,17 +470,17 @@ class DatabaseServiceTest {
         val future = "2050-12-01"
 
         // Past cardio workouts
-        ds.createWorkout(Workout(0, userId, userId, past1, 30, "cardio", "Test notes"))
-        ds.createWorkout(Workout(0, userId, userId, past2, 45, "cardio", "Test notes 2"))
+        ds.createWorkout(Workout(0, userId, userId, past1, 30, "cardio", "Test notes", null))
+        ds.createWorkout(Workout(0, userId, userId, past2, 45, "cardio", "Test notes 2", null))
 
         // Past weights workout
-        ds.createWorkout(Workout(0, userId, userId, past1, 60, "weights"))
+        ds.createWorkout(Workout(0, userId, userId, past1, 60, "weights", null))
 
         // Future workout (should not appear)
-        ds.createWorkout(Workout(0, userId, userId, future, 50, "cardio"))
+        ds.createWorkout(Workout(0, userId, userId, future, 50, "cardio", null))
 
         // Workout with no type (should be excluded from progression but not workout Count)
-        ds.createWorkout(Workout(0, userId, userId, past1, 20, null))
+        ds.createWorkout(Workout(0, userId, userId, past1, 20, null, null))
 
 
         // Test it splits the types
@@ -738,10 +739,10 @@ class DatabaseServiceTest {
 
         // Create a workout
         val workoutID = ds.createWorkout(
-            Workout(0, creatorID, creatorID, future, 60, "cardio", "Future training group session")
+            Workout(0, creatorID, creatorID, future, 60, "cardio", "Future training group session", null)
         )
         val pastWorkoutID = ds.createWorkout(
-            Workout(0, creatorID, creatorID, past, 45, "weights", "Past session")
+            Workout(0, creatorID, creatorID, past, 45, "weights", "Past session", null)
         )
         assertTrue(workoutID > 0)
         assertTrue(pastWorkoutID > 0)

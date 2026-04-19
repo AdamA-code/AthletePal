@@ -92,6 +92,8 @@ CREATE TABLE IF NOT EXISTS workouts (
     duration INTEGER,
     workoutType TEXT,
     notes TEXT,
+    routeID INTEGER,
+    FOREIGN KEY (routeID) REFERENCES routes(routeID) ON DELETE CASCADE,
     FOREIGN KEY (createdBy) REFERENCES users(userID) ON DELETE CASCADE,
     FOREIGN KEY (assignedTo) REFERENCES users(userID) ON DELETE CASCADE
 );

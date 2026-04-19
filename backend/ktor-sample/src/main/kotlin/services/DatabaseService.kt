@@ -44,7 +44,8 @@ class DatabaseService{
         val date: String,
         val duration: Int? = null,
         val workoutType: String? = null,
-        val notes: String? = null
+        val notes: String? = null,
+        val routeID: Int? = null
     )
 
     @Serializable
@@ -505,8 +506,8 @@ class DatabaseService{
 
         val stmt: PreparedStatement = db.connection.prepareStatement(
             """
-            INSERT INTO workouts(createdBy, assignedTo, date, duration, workoutType, notes)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO workouts(createdBy, assignedTo, date, duration, workoutType, notes, routeID)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """.trimIndent(),
             Statement.RETURN_GENERATED_KEYS
         )
@@ -517,6 +518,7 @@ class DatabaseService{
         stmt.setObject(4, workout.duration)
         stmt.setObject(5, workout.workoutType)
         stmt.setObject(6, workout.notes)
+        stmt.setObject(7, workout.routeID)
 
         val rowsInserted = stmt.executeUpdate()
 
@@ -553,7 +555,8 @@ class DatabaseService{
                 date = rs.getString("date"),
                 duration = rs.getObject("duration") as Int?,
                 workoutType = rs.getObject("workoutType") as String?,
-                notes = rs.getObject("notes") as String?
+                notes = rs.getObject("notes") as String?,
+                routeID = rs.getObject("routeID") as Int?
             )
             workouts.add(workout)
         }
@@ -568,13 +571,14 @@ class DatabaseService{
         date: String,
         duration: Int?,
         workoutType: String?,
-        notes: String?
+        notes: String?,
+        routeID: Int?
     ): Boolean {
 
         val stmt: PreparedStatement = db.connection.prepareStatement(
             """
             UPDATE workouts
-            SET date = ?, duration = ?, workoutType = ?, notes = ?
+            SET date = ?, duration = ?, workoutType = ?, notes = ?, routeID = ?
             WHERE workoutID = ?
             """.trimIndent()
         )
@@ -583,7 +587,8 @@ class DatabaseService{
         stmt.setObject(2, duration)
         stmt.setObject(3, workoutType)
         stmt.setObject(4, notes)
-        stmt.setInt(5, workoutID)
+        stmt.setObject(5, routeID)
+        stmt.setInt(6, workoutID)
 
         val rowsUpdated = stmt.executeUpdate()
         stmt.close()
@@ -1317,7 +1322,8 @@ class DatabaseService{
                 date = rs.getString("date"),
                 duration = rs.getObject("duration") as Int?,
                 workoutType = rs.getObject("workoutType") as String?,
-                notes = rs.getObject("notes") as String?
+                notes = rs.getObject("notes") as String?,
+                routeID = rs.getObject("routeID") as Int?
             )
             rs.close()
             stmt.close()
@@ -1758,7 +1764,8 @@ class DatabaseService{
                     date = rs.getString("date"),
                     duration = rs.getObject("duration") as Int?,
                     workoutType = rs.getObject("workoutType") as String?,
-                    notes = rs.getObject("notes") as String?
+                    notes = rs.getObject("notes") as String?,
+                    routeID = rs.getObject("routeID") as Int?
                 )
             )
         }
@@ -1798,7 +1805,8 @@ class DatabaseService{
                     date = rs.getString("date"),
                     duration = rs.getObject("duration") as Int?,
                     workoutType = rs.getObject("workoutType") as String?,
-                    notes = rs.getObject("notes") as String?
+                    notes = rs.getObject("notes") as String?,
+                    routeID = rs.getObject("routeID") as Int?
                 )
             )
         }
@@ -2016,10 +2024,7 @@ class DatabaseService{
     }
 
     // Log workout for workout logs page
-    fun logWorkout(
-        workout: Workout,
-        exercises: List<WorkoutExercise>
-    ): Int {
+    fun logWorkout(workout: Workout, exercises: List<WorkoutExercise>): Int {
         // Create workout
         val workoutID = createWorkout(workout)
         if (workoutID == -1) return -1
@@ -2043,7 +2048,7 @@ class DatabaseService{
     // Update a logged workout (in case of a changed exercise or another detail)
     fun updateLoggedWorkout(workout: Workout, exercises: List<WorkoutExercise>): Boolean {
 
-        updateWorkout(workout.workoutID, workout.date, workout.duration, workout.workoutType, workout.notes)
+        updateWorkout(workout.workoutID, workout.date, workout.duration, workout.workoutType, workout.notes, workout.routeID)
 
         // Delete all exercise links
         deleteWorkoutExercise(workout.workoutID)
