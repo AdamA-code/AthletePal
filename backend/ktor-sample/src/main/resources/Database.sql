@@ -28,8 +28,8 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
     tokenID INTEGER PRIMARY KEY AUTOINCREMENT,
     userID INTEGER NOT NULL,
     token TEXT NOT NULL,
-    expiry TEXT NOT NULL, -- datetime the token expires after 1 hour
-    used INTEGER DEFAULT 0, -- 0 = not used, 1 = already used, prevents reuse
+    expiry TEXT NOT NULL,
+    used INTEGER DEFAULT 0, --prevents reuse
     FOREIGN KEY (userID) REFERENCES users(userID) ON DELETE CASCADE
 );
 
@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS routes (
     distance REAL NOT NULL,
     estimatedTime REAL,
     date TEXT NOT NULL,
+    isPublic INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY(userID) REFERENCES users(userID) ON DELETE CASCADE
 );
 
@@ -90,6 +91,7 @@ CREATE TABLE IF NOT EXISTS workouts (
     date TEXT NOT NULL,
     duration INTEGER,
     workoutType TEXT,
+    notes TEXT,
     FOREIGN KEY (createdBy) REFERENCES users(userID) ON DELETE CASCADE,
     FOREIGN KEY (assignedTo) REFERENCES users(userID) ON DELETE CASCADE
 );

@@ -35,7 +35,8 @@ class ActivityRoutesTest {
                     
                     "createdBy": 18,
                     "assignedTo": 18,
-                    "date": "2026-05-01"
+                    "date": "2026-05-01",
+                    "notes": "Workout routes test"
                 }
                 """.trimIndent())
         }
@@ -165,7 +166,8 @@ class ActivityRoutesTest {
                     "userID": 18,
                     "name": "Hyde Park Loop",
                     "distance": 5.6,
-                    "date": "2026-05-10"
+                    "date": "2026-05-10",
+                    "isPublic": false
                 }
             """.trimIndent())
         }

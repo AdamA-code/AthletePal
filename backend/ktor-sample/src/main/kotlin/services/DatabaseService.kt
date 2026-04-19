@@ -43,7 +43,8 @@ class DatabaseService{
         val assignedTo: Int,
         val date: String,
         val duration: Int? = null,
-        val workoutType: String? = null
+        val workoutType: String? = null,
+        val notes: String? = null
     )
 
     @Serializable
@@ -90,7 +91,8 @@ class DatabaseService{
         val name: String,
         val distance: Double,
         val estimatedTime: Double? = null,
-        val date: String
+        val date: String,
+        val isPublic: Boolean
     )
 
     @Serializable
@@ -503,8 +505,8 @@ class DatabaseService{
 
         val stmt: PreparedStatement = db.connection.prepareStatement(
             """
-            INSERT INTO workouts(createdBy, assignedTo, date, duration, workoutType)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO workouts(createdBy, assignedTo, date, duration, workoutType, notes)
+            VALUES (?, ?, ?, ?, ?, ?)
             """.trimIndent(),
             Statement.RETURN_GENERATED_KEYS
         )
@@ -514,6 +516,7 @@ class DatabaseService{
         stmt.setString(3, workout.date)
         stmt.setObject(4, workout.duration)
         stmt.setObject(5, workout.workoutType)
+        stmt.setObject(6, workout.notes)
 
         val rowsInserted = stmt.executeUpdate()
 
@@ -549,7 +552,8 @@ class DatabaseService{
                 assignedTo = rs.getInt("assignedTo"),
                 date = rs.getString("date"),
                 duration = rs.getObject("duration") as Int?,
-                workoutType = rs.getObject("workoutType") as String?
+                workoutType = rs.getObject("workoutType") as String?,
+                notes = rs.getObject("notes") as String?
             )
             workouts.add(workout)
         }
@@ -563,13 +567,14 @@ class DatabaseService{
         workoutID: Int,
         date: String,
         duration: Int?,
-        workoutType: String?
+        workoutType: String?,
+        notes: String?
     ): Boolean {
 
         val stmt: PreparedStatement = db.connection.prepareStatement(
             """
             UPDATE workouts
-            SET date = ?, duration = ?, workoutType = ?
+            SET date = ?, duration = ?, workoutType = ?, notes = ?
             WHERE workoutID = ?
             """.trimIndent()
         )
@@ -577,7 +582,8 @@ class DatabaseService{
         stmt.setString(1, date)
         stmt.setObject(2, duration)
         stmt.setObject(3, workoutType)
-        stmt.setInt(4, workoutID)
+        stmt.setObject(4, notes)
+        stmt.setInt(5, workoutID)
 
         val rowsUpdated = stmt.executeUpdate()
         stmt.close()
@@ -1029,8 +1035,8 @@ class DatabaseService{
 
         val stmt = db.connection.prepareStatement(
             """
-            INSERT INTO routes(userID, name, distance, estimatedTime, date)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO routes(userID, name, distance, estimatedTime, date, isPublic)
+            VALUES (?, ?, ?, ?, ?, ?)
             """.trimIndent(),
             Statement.RETURN_GENERATED_KEYS
         )
@@ -1040,6 +1046,7 @@ class DatabaseService{
         stmt.setDouble(3, route.distance)
         stmt.setObject(4, route.estimatedTime)
         stmt.setString(5, route.date)
+        stmt.setBoolean(6, route.isPublic)
 
         val rowsInserted = stmt.executeUpdate()
 
@@ -1060,7 +1067,7 @@ class DatabaseService{
     fun findAllRoutes(userID: Int): List<Route> {
 
         val stmt: PreparedStatement = db.connection.prepareStatement(
-            "SELECT * FROM routes WHERE userID = ?"
+            "SELECT * FROM routes WHERE userID = ? or isPublic = 1"
         )
 
         stmt.setInt(1, userID)
@@ -1074,7 +1081,8 @@ class DatabaseService{
                 name = rs.getString("name"),
                 distance = rs.getDouble("distance"),
                 estimatedTime = rs.getObject("estimatedTime") as Double?,
-                date = rs.getString("date")
+                date = rs.getString("date"),
+                isPublic = rs.getBoolean("isPublic")
             )
             routes.add(route)
         }
@@ -1089,13 +1097,14 @@ class DatabaseService{
         name: String,
         distance: Double,
         estimatedTime: Double?,
-        date: String?
+        date: String?,
+        isPublic: Boolean
     ): Boolean {
 
         val stmt: PreparedStatement = db.connection.prepareStatement(
             """
             UPDATE routes
-            SET name = ?, distance = ?, estimatedTime = ?, date = ?
+            SET name = ?, distance = ?, estimatedTime = ?, date = ?, isPublic = ?
             WHERE routeID = ?
             """.trimIndent()
         )
@@ -1104,7 +1113,8 @@ class DatabaseService{
         stmt.setDouble(2, distance)
         stmt.setObject(3, estimatedTime)
         stmt.setString(4, date)
-        stmt.setInt(5, routeID)
+        stmt.setBoolean(5, isPublic)
+        stmt.setInt(6, routeID)
 
         val rowsUpdated = stmt.executeUpdate()
         stmt.close()
@@ -1249,7 +1259,8 @@ class DatabaseService{
                 name = rs.getString("name"),
                 distance = rs.getDouble("distance"),
                 estimatedTime = rs.getObject("estimatedTime") as Double?,
-                date = rs.getString("date")
+                date = rs.getString("date"),
+                isPublic = rs.getBoolean("isPublic")
             )
         } else null
 
@@ -1305,7 +1316,8 @@ class DatabaseService{
                 assignedTo = rs.getInt("assignedTo"),
                 date = rs.getString("date"),
                 duration = rs.getObject("duration") as Int?,
-                workoutType = rs.getObject("workoutType") as String?
+                workoutType = rs.getObject("workoutType") as String?,
+                notes = rs.getObject("notes") as String?
             )
             rs.close()
             stmt.close()
@@ -1745,7 +1757,8 @@ class DatabaseService{
                     assignedTo = rs.getInt("assignedTo"),
                     date = rs.getString("date"),
                     duration = rs.getObject("duration") as Int?,
-                    workoutType = rs.getObject("workoutType") as String?
+                    workoutType = rs.getObject("workoutType") as String?,
+                    notes = rs.getObject("notes") as String?
                 )
             )
         }
@@ -1784,7 +1797,8 @@ class DatabaseService{
                     assignedTo = rs.getInt("assignedTo"),
                     date = rs.getString("date"),
                     duration = rs.getObject("duration") as Int?,
-                    workoutType = rs.getObject("workoutType") as String?
+                    workoutType = rs.getObject("workoutType") as String?,
+                    notes = rs.getObject("notes") as String?
                 )
             )
         }
@@ -1856,7 +1870,8 @@ class DatabaseService{
                     name = rs.getString("name"),
                     distance = rs.getDouble("distance"),
                     estimatedTime = rs.getObject("estimatedTime") as Double?,
-                    date = rs.getString("date")
+                    date = rs.getString("date"),
+                    isPublic = rs.getBoolean("isPublic")
                 )
             )
         }
@@ -2028,7 +2043,7 @@ class DatabaseService{
     // Update a logged workout (in case of a changed exercise or another detail)
     fun updateLoggedWorkout(workout: Workout, exercises: List<WorkoutExercise>): Boolean {
 
-        updateWorkout(workout.workoutID, workout.date, workout.duration, workout.workoutType)
+        updateWorkout(workout.workoutID, workout.date, workout.duration, workout.workoutType, workout.notes)
 
         // Delete all exercise links
         deleteWorkoutExercise(workout.workoutID)
