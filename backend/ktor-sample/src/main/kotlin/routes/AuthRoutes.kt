@@ -21,27 +21,37 @@ fun Route.authRoutes() {
 
     route("/auth") { // If HTTP request in the '/auth' route... 
         post("/login") { // If HTTP request is a POST of '/login'...
-            val loginRequest = call.receive<LoginRequest>() // Break down the request into usable data, as outlined in LoginRequest
+            try {
+                val loginRequest = call.receive<LoginRequest>() // Break down the request into usable data, as outlined in LoginRequest
 
-            val isValid = authService.validateLogin(loginRequest.email, loginRequest.password) // If authService deems the password acceptable
+                val isValid = authService.validateLogin(loginRequest.email, loginRequest.password) // If authService deems the password acceptable
 
-            if (isValid) {
-                call.respond(mapOf("message" to "Login Successful")) // Response for valid login
-            } else {
-                call.respond(mapOf("message" to "Invalid Credentials")) // Response for invalid login
+                if (isValid) {
+                    call.respond(HttpStatusCode.OK, mapOf("message" to "Login Successful")) // Response for valid login
+                } else {
+                    call.respond(HttpStatusCode.NotFound, mapOf("message" to "Invalid Credentials")) // Response for invalid login
+                }
+            }
+            catch (e: Exception) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
 
         }
 
         post("/create-account") { // If HTTP request is post of account creation
-            val createAccountRequest = call.receive<CreateAccountRequest>() // Retrieve data from POST, and store in a class 'createAccountRequest'
+            try {
+                val createAccountRequest = call.receive<CreateAccountRequest>() // Retrieve data from POST, and store in a class 'createAccountRequest'
 
-            val accountCreated = authService.registerUser(createAccountRequest.name, createAccountRequest.email, createAccountRequest.password, createAccountRequest.accountType) // Call function for account creation in authService, retrieve boolean confirmation
+                val accountCreated = authService.registerUser(createAccountRequest.name, createAccountRequest.email, createAccountRequest.password, createAccountRequest.accountType) // Call function for account creation in authService, retrieve boolean confirmation
 
-            if (accountCreated > 0) {
-                call.respond(mapOf("message" to "Account created!")) // Success message if account successfully created
-            } else {
-                call.respond(mapOf("message" to "User already exists!")) // Fail message if account not created (as user already exists)
+                if (accountCreated > 0) {
+                    call.respond(HttpStatusCode.OK, mapOf("ID" to accountCreated)) // Success message if account successfully created
+                } else {
+                    call.respond(HttpStatusCode.NotAcceptable, mapOf("message" to "User already exists!")) // Fail message if account not created (as user already exists)
+                }
+            }
+            catch (e: Exception) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
         }
     
