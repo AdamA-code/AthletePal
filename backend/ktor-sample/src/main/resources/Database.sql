@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS routes (
 );
 
 CREATE TABLE IF NOT EXISTS competition_exercises (
-    competitionExercisesID INTEGER PRIMARY KEY AUTOINCREMENT,
+    competitionExerciseID INTEGER PRIMARY KEY AUTOINCREMENT,
     competitionID INTEGER NOT NULL,
     exerciseID INTEGER NOT NULL,
     performance REAL,

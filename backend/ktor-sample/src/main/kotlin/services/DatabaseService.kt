@@ -141,6 +141,10 @@ class DatabaseService{
         init {
             connection.createStatement().execute("PRAGMA foreign_keys = ON") // Enable deletion cascading
         }
+
+        fun close() {
+            if (!connection.isClosed) connection.close()
+        }
     }
     val db = DatabaseConnection()
     // User db
@@ -1455,36 +1459,56 @@ class DatabaseService{
     // Training groups
 
     fun createGroup(group: TrainingGroup): Int {
-        val stmt = db.connection.prepareStatement(
-            """
-            INSERT INTO training_groups(createdBy, name, description, goal)
-            VALUES (?, ?, ?, ?)
-            """.trimIndent(),
-            Statement.RETURN_GENERATED_KEYS
-        )
-        stmt.setInt(1, group.createdBy)
-        stmt.setString(2, group.name)
-        stmt.setObject(3, group.description)
-        stmt.setObject(4, group.goal)
+        db.connection.autoCommit = false // stops db from saving each statting - keeps atomicty
+        try {
+            val stmt = db.connection.prepareStatement(
+                """
+                INSERT INTO training_groups(createdBy, name, description, goal)
+                VALUES (?, ?, ?, ?)
+                """.trimIndent(),
+                Statement.RETURN_GENERATED_KEYS
+            )
+            stmt.setInt(1, group.createdBy)
+            stmt.setString(2, group.name)
+            stmt.setObject(3, group.description)
+            stmt.setObject(4, group.goal)
 
-        val rowsInserted = stmt.executeUpdate()
-        if (rowsInserted == 0) { 
-            stmt.close() 
-            return -1 
+            val rowsInserted = stmt.executeUpdate()
+            // If group creation failed undo everything
+            if (rowsInserted == 0) { 
+                db.connection.rollback()
+                stmt.close() 
+                return -1 
+            }
+
+            val rs = stmt.generatedKeys
+            // Get new group ID
+            val groupID = if (rs.next()) rs.getInt(1) else -1
+
+            rs.close()
+            stmt.close()
+
+            // If that failed, retract what happend for atomicty
+            if (groupID == -1) {
+                db.connection.rollback()
+                return -1
+            }
+
+            // Add creator to group
+            if (!joinGroup(groupID, group.createdBy)){
+                // If fails undo the group creation too
+                db.connection.rollback()
+                return -1
+            }
+             //Group and member all successful
+            db.connection.commit()
+            return groupID
+        } catch (e: Exception) { // If unexpected error undo everything
+            db.connection.rollback()
+            return -1
+        } finally { // Always restore autocommit if failur eor success
+            db.connection.autoCommit = true
         }
-
-        val rs = stmt.generatedKeys
-        val groupID = if (rs.next()) rs.getInt(1) else -1
-
-        rs.close()
-        stmt.close()
-
-        // Automatically add creator as first member
-        if (groupID != -1) {
-            joinGroup(groupID, group.createdBy)
-        }
-
-        return groupID
     }
 
     fun deleteGroup(groupID: Int): Boolean {
@@ -1563,7 +1587,7 @@ class DatabaseService{
         stmt.setString(1, name)
         stmt.setString(2, description)
         stmt.setObject(3, goal)
-        stmt.setObject(4, groupID)
+        stmt.setInt(4, groupID)
 
         val rows = stmt.executeUpdate()
         stmt.close()
@@ -2032,36 +2056,67 @@ class DatabaseService{
 
     // Log workout for workout logs page
     fun logWorkout(workout: Workout, exercises: List<WorkoutExercise>): Int {
-        // Create workout
-        val workoutID = createWorkout(workout)
-        if (workoutID == -1) return -1
 
-        // Link each exercise to the workout
-        exercises.forEach { exercise ->
-            val we = WorkoutExercise(
-                workoutExercisesID = 0,
-                workoutID = workoutID,
-                exerciseID = exercise.exerciseID,
-                sets = exercise.sets,
-                reps = exercise.reps,
-                weight = exercise.weight
-            )
-            addExerciseToWorkout(we)
+        db.connection.autoCommit = false // Allows grouping of statements (transactions) so atomic
+        try {
+            // Create workout, if fails undo everything
+            val workoutID = createWorkout(workout)
+            if (workoutID == -1) {
+                db.connection.rollback()
+                return -1
+            }
+            // Link each exercise to the workout, if fails undo everything
+            exercises.forEach { exercise ->
+                val we = WorkoutExercise(
+                    workoutExercisesID = 0,
+                    workoutID = workoutID,
+                    exerciseID = exercise.exerciseID,
+                    sets = exercise.sets,
+                    reps = exercise.reps,
+                    weight = exercise.weight
+                )
+                if (addExerciseToWorkout(we) == -1) {
+                    db.connection.rollback()
+                    return -1
+                }
+            // Commit all this if success
+            db.connection.commit()
+            return workoutID
+        } catch (e: Exception) { // If any error undo everything
+            db.connection.rollback()
+            return -1
+        } finally {
+            db.connection.autoCommit = true // Restore autocommit
         }
-
-        return workoutID
     }
 
     // Update a logged workout (in case of a changed exercise or another detail)
     fun updateLoggedWorkout(workout: Workout, exercises: List<WorkoutExercise>): Boolean {
+        // As usual, turn off autocommit as multiple statement function
+        db.connection.autoCommit = false
+        try {
+            val updated = updateWorkout(workout.workoutID, workout.date, workout.duration, workout.workoutType, workout.notes, workout.routeID)
+            // Update workout failed so undo everything
+            if (!updated) {
+                db.connection.rollback()
+                return false
+            }
+            // Delete all exercise links
+            deleteWorkoutExercise(workout.workoutID)
 
-        updateWorkout(workout.workoutID, workout.date, workout.duration, workout.workoutType, workout.notes, workout.routeID)
-
-        // Delete all exercise links
-        deleteWorkoutExercise(workout.workoutID)
-
-        // Add new exercise list
-        exercises.forEach { exercise ->addExerciseToWorkout(exercise.copy(workoutID = workout.workoutID))}
-        return true
+            // Add new exercise list
+            exercises.forEach { exercise -> if (addExerciseToWorkout(exercise.copy(workoutID = workout.workoutID)) == -1)} {
+                //If link fails  undo everything
+                db.connection.rollback()
+                return false
+            }
+            db.connection.commit()
+            return true
+        } catch (e: Exception) {
+            db.connection.rollback()
+            return false
+        } finally {
+            db.connection.autoCommit = true
+        }
     }
 }
