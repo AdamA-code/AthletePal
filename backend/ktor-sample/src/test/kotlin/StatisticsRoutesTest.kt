@@ -182,133 +182,272 @@ class StatisticsRoutesTest {
 
     @Test
     fun getBestStat_valid() = testApplication {
+        application { module() }
+        val response = client.get("/api/statistic/exercise/${userID!!}/2")
 
+        assertEquals(HttpStatusCode.OK, response.status)
     }
 
     @Test
     fun getBestStat_invalidUserID() = testApplication {
+        application { module() }
 
+        val response = client.get("/api/statistic/exercise/9999999/2")
+
+        assertEquals(HttpStatusCode.NotFound, response.status)
     }
     
     @Test
     fun getBestStat_invalidExerciseID() = testApplication {
+        application { module() }
 
+        val response = client.get("/api/statistic/exercise/${userID!!}/9999999")
+
+        assertEquals(HttpStatusCode.NotFound, response.status)
     }
 
     @Test
     fun getBestStat_badJSON() = testApplication {
+        application { module() }
 
+        val response = client.get("/api/statistic/exercise/abcd/efgh")
+
+        assertEquals(HttpStatusCode.BadRequest, response.status)
     }
 
     @Test
     fun getStat_valid() = testApplication {
+        application { module() }
 
+        val response = client.get("/api/statistic/${statGetID!!}")
+
+        assertEquals(HttpStatusCode.OK, response.status)
     }
 
     @Test
     fun getStat_invalidStatID() = testApplication {
+        application { module() }
 
+        val response = client.get("/api/statistic/9999999")
+
+        assertEquals(HttpStatusCode.NotFound, response.status)
     }
 
     @Test
     fun getStat_badJSON() = testApplication {
+        application { module() }
 
+        val response = client.get("/api/statistic/abc")
+
+        assertEquals(HttpStatusCode.BadRequest, response.status)
     }
 
     @Test
     fun getUserProgression_valid() = testApplication {
+        application { module() }
 
+        val response = client.get("/api/statistic/user/workout-progression/${userID!!}")
+
+        assertEquals(HttpStatusCode.OK, response.status || HttpStatusCode.NotFound, response.status)
     }
 
     @Test
     fun getUserProgression_invalidUserID() = testApplication {
+        application { module() }
 
+        val response = client.get("/api/statistic/user/workout-progression/9999999")
+
+        assertEquals(HttpStatusCode.NotFound, response.status)
     }
     
     @Test
     fun getUserProgression_badJSON() = testApplication {
+        application { module() }
 
+        val response = client.get("/api/statistic/user/workout-progression/abc")
+
+        assertEquals(HttpStatusCode.BadRequest, response.status)
     }
 
     @Test
     fun getWorkoutsCompleted_valid() = testApplication {
+        application { module() }
 
+        val response = client.get("/api/statistic/user/workouts-completed/${userID!!}")
+
+        assertEquals(HttpStatusCode.OK, response.status || HttpStatusCode.NotFound, response.status)
     }
 
     @Test
     fun getWorkoutsCompleted_invalidUserID() = testApplication {
+        application { module() }
 
+        val response = client.get("/api/statistic/user/workouts-completed/999999")
+
+        assertEquals(HttpStatusCode.NotFound, response.status)
     }
 
     @Test
     fun getWorkoutsCompleted_badJSON() = testApplication {
+        application { module() }
 
+        val response = client.get("/api/statistic/user/workouts-completed/abc")
+
+        assertEquals(HttpStatusCode.BadRequest, response.status)
     }
 
     @Test
     fun getHoursTrained_valid() = testApplication {
+        application { module() }
 
-    }
+        val response = client.get("/api/statistic/user/hours-trained/${userID!!}")
 
-    @Test
-    fun getHourstrained_invalidUserID() = testApplication {
-
+        assertEquals(HttpStatusCode.OK, response.status)
     }
 
     @Test
     fun getHoursTrained_badJSON() = testApplication {
+        application { module() }
 
+        val response = client.get("/api/statistic/user/hours-trained/abc")
+
+        assertEquals(HttpStatusCode.BadRequest, response.status)
     }
 
     @Test
     fun getWorkoutStreak_valid() = testApplication {
+        application { module() }
 
-    }
+        val response = client.get("/api/statistic/user/workout-streak/${userID!!}")
 
-    @Test
-    fun getWorkoutStreak_invalidUserID() = testApplication {
-
+        assertEquals(HttpStatusCode.OK, response.status)
     }
 
     @Test
     fun getWorkoutStreak_badJSON() = testApplication {
+        application { module() }
 
+        val response = client.get("/api/statistic/user/workout-streak/abc")
+
+        assertEquals(HttpStatusCode.BadRequest, response.status)
     }
 
     @Test
     fun getWeeklyHistory_valid() = testApplication {
+        application { module() }
 
+        val response = client.get("/api/statistic/user/training-history/${userID!!}")
+
+        assertEquals(HttpStatusCode.OK, response.status || HttpStatusCode.NotFound, response.status)
     }
 
     @Test
     fun getWeeklyHistory_invalidUserID() = testApplication {
+        application { module() }
 
+        val response = client.get("/api/statistic/user/training-history/9999999")
+
+        assertEquals(HttpStatusCode.NotFound, response.status)
     }
 
     @Test
     fun getWeeklyHistory_badJSON() = testApplication {
+        application { module() }
 
+        val response = client.get("/api/statistic/user/training-history/abc")
+
+        assertEquals(HttpStatusCode.BadRequest, response.status)
     }
 
     @Test
     fun getExerciseBreakdown_valid() = testApplication {
+        application { module() }
 
+        val response = client.get("/api/statistics/user/exercise-breakdown/${userID!!}")
+
+        assertTrue(HttpStatusCode.Ok, response.status || HttpStatusCode.NotFound, response.status)
     }
 
     @Test
     fun getExerciseBreakdown_invalidUserID() = testApplication {
+        application { module() }
 
+        val response = client.get("/api/statistics/user/exercise-breakdown/99999999")
+
+        assertTrue(HttpStatusCode.NotFound, response.status)
     }
 
     @Test
     fun getExerciseBreakdown_badJSON() = testApplication {
+        application { module() }
 
+        val response = client.get("/api/statistics/user/exercise-breakdown/abc")
+
+        assertTrue(HttpStatusCode.BadRequest, response.status)
     }
 
     @Test
-    fun getPersonalBest
+    fun getPersonalBest_valid() = testApplication {
+        application { module() }
 
+        val response = client.get("/api/statistics/user/personal-bests/${userID!!}")
 
+        assertTrue(HttpStatusCode.OK, response.status || HttpStatusCode.NotFound, response.status)
+    }
+
+    @Test
+    fun getPersonalBest_invalidUserID() = testApplication {
+        application { module() }
+
+        val response = client.get("/api/statistics/user/personal-bests/9999999")
+
+        assertTrue(HttpStatusCode.NotFound, response.status)
+    }
+
+    @Test
+    fun getPersonalBest_badJSON() = testApplication {
+        application { module() }
+
+        val response = client.get("/api/statistics/user/personal-bests/abc")
+
+        assertTrue(HttpStatusCode.BadRequest, response.status)
+    }
+
+    @Test
+    fun getAllUserExerciseStats_valid() = testApplication {
+        application { module() }
+
+        val response = client.get("/api/statistics/exercise/${userID!!}/2")
+
+        assertTrue(HttpStatusCode.OK, response.status)
+    }
+
+    @Test
+    fun getAllUserExerciseStats_invalidUserID() = testApplication {
+        application { module() }
+
+        val response = client.get("/api/statistics/exercise/9999999/2")
+
+        assertTrue(HttpStatusCode.NotFound, response.status)
+    }
+
+    @Test
+    fun getAllUserExerciseStats_invalidExerciseID() = testApplication {
+        application { module() }
+
+        val response = client.get("/api/statistics/exercise/${userID!!}/999999")
+
+        assertTrue(HttpStatusCode.NotFound, response.status)
+    }
+
+    @Test
+    fun getAllUserExerciseStats_badJSON() = testApplication {
+        application { module() }
+
+        val response = client.get("/api/statistics/exercise/abc/def")
+
+        assertTrue(HttpStatusCode.BadRequest, response.status)
+    }
 
     // =================================================
     // POST-TEST CLEANUP (deleting test user and stats)
@@ -318,6 +457,13 @@ class StatisticsRoutesTest {
     fun cleanup() {
         DatabaseService().deleteUser("StatsTestEmail@email.com")
         DatabaseService().deleteStatistic(statGetID)
+
+        try {
+            DatabaseService().deleteStatistic(statID)
+        }
+        catch (e: Exception) {
+            println("Test-made stat already deleted!")
+        }
 
     }
 
