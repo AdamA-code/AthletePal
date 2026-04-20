@@ -1,3 +1,4 @@
+
 CREATE TABLE IF NOT EXISTS training_groups (
     groupID INTEGER PRIMARY KEY AUTOINCREMENT,
     createdBy INTEGER NOT NULL,
@@ -28,8 +29,8 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
     tokenID INTEGER PRIMARY KEY AUTOINCREMENT,
     userID INTEGER NOT NULL,
     token TEXT NOT NULL,
-    expiry TEXT NOT NULL, -- datetime the token expires after 1 hour
-    used INTEGER DEFAULT 0, -- 0 = not used, 1 = already used, prevents reuse
+    expiry TEXT NOT NULL,
+    used INTEGER DEFAULT 0, --prevents reuse
     FOREIGN KEY (userID) REFERENCES users(userID) ON DELETE CASCADE
 );
 
@@ -51,11 +52,13 @@ CREATE TABLE IF NOT EXISTS routes (
     distance REAL NOT NULL,
     estimatedTime REAL,
     date TEXT NOT NULL,
+    isPublic INTEGER NOT NULL DEFAULT 0,
+    routeData TEXT NOT NULL,
     FOREIGN KEY(userID) REFERENCES users(userID) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS competition_exercises (
-    competitionExercisesID INTEGER PRIMARY KEY AUTOINCREMENT,
+    competitionExerciseID INTEGER PRIMARY KEY AUTOINCREMENT,
     competitionID INTEGER NOT NULL,
     exerciseID INTEGER NOT NULL,
     performance REAL,
@@ -90,6 +93,9 @@ CREATE TABLE IF NOT EXISTS workouts (
     date TEXT NOT NULL,
     duration INTEGER,
     workoutType TEXT,
+    notes TEXT,
+    routeID INTEGER,
+    FOREIGN KEY (routeID) REFERENCES routes(routeID) ON DELETE CASCADE,
     FOREIGN KEY (createdBy) REFERENCES users(userID) ON DELETE CASCADE,
     FOREIGN KEY (assignedTo) REFERENCES users(userID) ON DELETE CASCADE
 );
