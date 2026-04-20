@@ -9,5 +9,6 @@ data class Route(
     val name: String,
     val distance: Double,
     val estimatedTime: Double?,
-    val date: String?
+    val date: String?,
+    val isPublic: Boolean
 )

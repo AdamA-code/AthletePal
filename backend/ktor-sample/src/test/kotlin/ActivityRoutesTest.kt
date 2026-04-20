@@ -45,9 +45,10 @@ class ActivityRoutesTest {
             setBody("""
                 {
                     
-                    "createdBy": ${userID!!},
-                    "assignedTo": ${userID!!},
-                    "date": "2026-05-01"
+                    "createdBy": 1,
+                    "assignedTo": 1,
+                    "date": "2026-05-01",
+                    "notes": "Workout routes test"
                 }
                 """.trimIndent())
         }
@@ -117,7 +118,7 @@ class ActivityRoutesTest {
             contentType(ContentType.Application.Json)
             setBody("""
                 {
-                    "userID": ${userID!!},
+                    "userID": 1,
                     "name": "NE Regionals",
                     "date": "2026-09-01"
                 }
@@ -174,10 +175,12 @@ class ActivityRoutesTest {
             contentType(ContentType.Application.Json)
             setBody("""
                 {
-                    "userID": ${userID!!},
+                    "userID": 1,
                     "name": "Hyde Park Loop",
                     "distance": 5.6,
-                    "date": "2026-05-10"
+                    "date": "2026-05-10",
+                    "isPublic": false,
+                    "routeData": "Big circle on map in hyde park"
                 }
             """.trimIndent())
         }

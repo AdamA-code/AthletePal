@@ -43,7 +43,9 @@ class DatabaseService{
         val assignedTo: Int,
         val date: String,
         val duration: Int? = null,
-        val workoutType: String? = null
+        val workoutType: String? = null,
+        val notes: String? = null,
+        val routeID: Int? = null
     )
 
     @Serializable
@@ -90,7 +92,9 @@ class DatabaseService{
         val name: String,
         val distance: Double,
         val estimatedTime: Double? = null,
-        val date: String
+        val date: String,
+        val isPublic: Boolean,
+        val routeData: String
     )
 
     @Serializable
@@ -136,6 +140,10 @@ class DatabaseService{
         // Runs automatically on creation
         init {
             connection.createStatement().execute("PRAGMA foreign_keys = ON") // Enable deletion cascading
+        }
+
+        fun close() {
+            if (!connection.isClosed) connection.close()
         }
     }
     val db = DatabaseConnection()
@@ -303,63 +311,89 @@ class DatabaseService{
     }
 
     fun resetPasswordWithToken(token: String, newPassword: String): Boolean {
-        // FInd unused token
-        val stmt = db.connection.prepareStatement("""
-            SELECT * FROM password_reset_tokens
-            WHERE token = ? AND used = 0
-        """.trimIndent()
-        )
-        stmt.setString(1, token)
-        
-        val rs = stmt.executeQuery()
+        db.connection.autoCommit = false
+        try {
+            // FInd unused token
+            val stmt = db.connection.prepareStatement("""
+                SELECT * FROM password_reset_tokens
+                WHERE token = ? AND used = 0
+            """.trimIndent()
+            )
+            stmt.setString(1, token)
+            
+            val rs = stmt.executeQuery()
 
-        // If no matching token found return false
-        if (!rs.next()) {
+            // If no matching token found return false
+            if (!rs.next()) {
+                rs.close()
+                stmt.close()
+                db.connection.rollback()
+                return false
+            }
+
+            // Get expiry and userID
+            val expiry = LocalDateTime.parse(rs.getString("expiry")) // Set to parse object
+            val userID = rs.getInt("userID")
+
             rs.close()
             stmt.close()
+
+            // expiry check
+            if (LocalDateTime.now().isAfter(expiry)){
+                db.connection.rollback()
+                return false
+            }
+
+            // Generate new salt and hash for new password
+            val authService = AuthService()
+            val newKey = authService.generateSalt()
+            val newHash = authService.hashPassword(newPassword, newKey)
+
+            // Update password in db
+            val updateStmt = db.connection.prepareStatement("""
+                UPDATE users
+                SET passwordHash = ?, passwordKey = ?
+                WHERE userID = ?
+            """.trimIndent()
+            )
+            updateStmt.setString(1, newHash)
+            updateStmt.setString(2, newKey)
+            updateStmt.setInt(3, userID)
+
+            val updatedPassword = updateStmt.executeUpdate()
+            updateStmt.close()
+
+            // check on password updating
+            if (updatedPassword == 0) {
+                db.connection.rollback()
+                return false
+            }
+
+            // Mark token as used (cant be used again)
+            val usedTokenStmt = db.connection.prepareStatement("""
+                UPDATE password_reset_tokens
+                SET used = 1 WHERE token = ?
+            """.trimIndent()
+            )
+            usedTokenStmt.setString(1, token)
+
+            val tokenUsed = usedTokenStmt.executeUpdate()
+            usedTokenStmt.close()
+            //check failure at token being set to used
+            if (tokenUsed == 0) {
+                db.connection.rollback()
+                return false
+            }
+
+            db.connection.commit()
+            return true
+        // Find any unexpected errors and rollback if so, set connection back to autocommit either way
+        } catch (erro: Exception) {
+            db.connection.rollback()
             return false
+        } finally {
+            db.connection.autoCommit = true
         }
-
-        // Get expiry and userID
-        val expiry = LocalDateTime.parse(rs.getString("expiry")) // Set to parse object
-        val userID = rs.getInt("userID")
-
-        rs.close()
-        stmt.close()
-
-        if (LocalDateTime.now().isAfter(expiry)) return false
-
-        // Generate new salt and hash for new password
-        val authService = AuthService()
-        val newKey = authService.generateSalt()
-        val newHash = authService.hashPassword(newPassword, newKey)
-
-        // Update password in db
-        val updateStmt = db.connection.prepareStatement("""
-            UPDATE users
-            SET passwordHash = ?, passwordKey = ?
-            WHERE userID = ?
-        """.trimIndent()
-        )
-        updateStmt.setString(1, newHash)
-        updateStmt.setString(2, newKey)
-        updateStmt.setInt(3, userID)
-
-        val updatedPassword = updateStmt.executeUpdate()
-        updateStmt.close()
-
-        // Mark token as used (cant be used again)
-        val usedTokenStmt = db.connection.prepareStatement("""
-            UPDATE password_reset_tokens
-            SET used = 1 WHERE token = ?
-        """.trimIndent()
-        )
-        usedTokenStmt.setString(1, token)
-
-        val tokenUsed = usedTokenStmt.executeUpdate()
-        usedTokenStmt.close()
-
-        return updatedPassword > 0 && tokenUsed > 0
     }
 
     fun deleteUser(email: String): Boolean {
@@ -503,8 +537,8 @@ class DatabaseService{
 
         val stmt: PreparedStatement = db.connection.prepareStatement(
             """
-            INSERT INTO workouts(createdBy, assignedTo, date, duration, workoutType)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO workouts(createdBy, assignedTo, date, duration, workoutType, notes, routeID)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """.trimIndent(),
             Statement.RETURN_GENERATED_KEYS
         )
@@ -514,6 +548,8 @@ class DatabaseService{
         stmt.setString(3, workout.date)
         stmt.setObject(4, workout.duration)
         stmt.setObject(5, workout.workoutType)
+        stmt.setObject(6, workout.notes)
+        stmt.setObject(7, workout.routeID)
 
         val rowsInserted = stmt.executeUpdate()
 
@@ -549,7 +585,9 @@ class DatabaseService{
                 assignedTo = rs.getInt("assignedTo"),
                 date = rs.getString("date"),
                 duration = rs.getObject("duration") as Int?,
-                workoutType = rs.getObject("workoutType") as String?
+                workoutType = rs.getObject("workoutType") as String?,
+                notes = rs.getObject("notes") as String?,
+                routeID = rs.getObject("routeID") as Int?
             )
             workouts.add(workout)
         }
@@ -563,13 +601,15 @@ class DatabaseService{
         workoutID: Int,
         date: String,
         duration: Int?,
-        workoutType: String?
+        workoutType: String?,
+        notes: String?,
+        routeID: Int?
     ): Boolean {
 
         val stmt: PreparedStatement = db.connection.prepareStatement(
             """
             UPDATE workouts
-            SET date = ?, duration = ?, workoutType = ?
+            SET date = ?, duration = ?, workoutType = ?, notes = ?, routeID = ?
             WHERE workoutID = ?
             """.trimIndent()
         )
@@ -577,7 +617,9 @@ class DatabaseService{
         stmt.setString(1, date)
         stmt.setObject(2, duration)
         stmt.setObject(3, workoutType)
-        stmt.setInt(4, workoutID)
+        stmt.setObject(4, notes)
+        stmt.setObject(5, routeID)
+        stmt.setInt(6, workoutID)
 
         val rowsUpdated = stmt.executeUpdate()
         stmt.close()
@@ -1029,8 +1071,8 @@ class DatabaseService{
 
         val stmt = db.connection.prepareStatement(
             """
-            INSERT INTO routes(userID, name, distance, estimatedTime, date)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO routes(userID, name, distance, estimatedTime, date, isPublic, routeData)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """.trimIndent(),
             Statement.RETURN_GENERATED_KEYS
         )
@@ -1040,6 +1082,8 @@ class DatabaseService{
         stmt.setDouble(3, route.distance)
         stmt.setObject(4, route.estimatedTime)
         stmt.setString(5, route.date)
+        stmt.setBoolean(6, route.isPublic)
+        stmt.setString(7, route.routeData)
 
         val rowsInserted = stmt.executeUpdate()
 
@@ -1060,7 +1104,7 @@ class DatabaseService{
     fun findAllRoutes(userID: Int): List<Route> {
 
         val stmt: PreparedStatement = db.connection.prepareStatement(
-            "SELECT * FROM routes WHERE userID = ?"
+            "SELECT * FROM routes WHERE userID = ? or isPublic = 1"
         )
 
         stmt.setInt(1, userID)
@@ -1074,7 +1118,9 @@ class DatabaseService{
                 name = rs.getString("name"),
                 distance = rs.getDouble("distance"),
                 estimatedTime = rs.getObject("estimatedTime") as Double?,
-                date = rs.getString("date")
+                date = rs.getString("date"),
+                isPublic = rs.getBoolean("isPublic"),
+                routeData = rs.getString("routeData")
             )
             routes.add(route)
         }
@@ -1089,13 +1135,15 @@ class DatabaseService{
         name: String,
         distance: Double,
         estimatedTime: Double?,
-        date: String?
+        date: String?,
+        isPublic: Boolean,
+        routeData: String
     ): Boolean {
 
         val stmt: PreparedStatement = db.connection.prepareStatement(
             """
             UPDATE routes
-            SET name = ?, distance = ?, estimatedTime = ?, date = ?
+            SET name = ?, distance = ?, estimatedTime = ?, date = ?, isPublic = ?, routeData = ?
             WHERE routeID = ?
             """.trimIndent()
         )
@@ -1104,7 +1152,9 @@ class DatabaseService{
         stmt.setDouble(2, distance)
         stmt.setObject(3, estimatedTime)
         stmt.setString(4, date)
-        stmt.setInt(5, routeID)
+        stmt.setBoolean(5, isPublic)
+        stmt.setString(6, routeData)
+        stmt.setInt(7, routeID)
 
         val rowsUpdated = stmt.executeUpdate()
         stmt.close()
@@ -1249,7 +1299,9 @@ class DatabaseService{
                 name = rs.getString("name"),
                 distance = rs.getDouble("distance"),
                 estimatedTime = rs.getObject("estimatedTime") as Double?,
-                date = rs.getString("date")
+                date = rs.getString("date"),
+                isPublic = rs.getBoolean("isPublic"),
+                routeData = rs.getString("routeData")
             )
         } else null
 
@@ -1305,7 +1357,9 @@ class DatabaseService{
                 assignedTo = rs.getInt("assignedTo"),
                 date = rs.getString("date"),
                 duration = rs.getObject("duration") as Int?,
-                workoutType = rs.getObject("workoutType") as String?
+                workoutType = rs.getObject("workoutType") as String?,
+                notes = rs.getObject("notes") as String?,
+                routeID = rs.getObject("routeID") as Int?
             )
             rs.close()
             stmt.close()
@@ -1431,36 +1485,56 @@ class DatabaseService{
     // Training groups
 
     fun createGroup(group: TrainingGroup): Int {
-        val stmt = db.connection.prepareStatement(
-            """
-            INSERT INTO training_groups(createdBy, name, description, goal)
-            VALUES (?, ?, ?, ?)
-            """.trimIndent(),
-            Statement.RETURN_GENERATED_KEYS
-        )
-        stmt.setInt(1, group.createdBy)
-        stmt.setString(2, group.name)
-        stmt.setObject(3, group.description)
-        stmt.setObject(4, group.goal)
+        db.connection.autoCommit = false // stops db from saving each statting - keeps atomicty
+        try {
+            val stmt = db.connection.prepareStatement(
+                """
+                INSERT INTO training_groups(createdBy, name, description, goal)
+                VALUES (?, ?, ?, ?)
+                """.trimIndent(),
+                Statement.RETURN_GENERATED_KEYS
+            )
+            stmt.setInt(1, group.createdBy)
+            stmt.setString(2, group.name)
+            stmt.setObject(3, group.description)
+            stmt.setObject(4, group.goal)
 
-        val rowsInserted = stmt.executeUpdate()
-        if (rowsInserted == 0) { 
-            stmt.close() 
-            return -1 
+            val rowsInserted = stmt.executeUpdate()
+            // If group creation failed undo everything
+            if (rowsInserted == 0) { 
+                db.connection.rollback()
+                stmt.close() 
+                return -1 
+            }
+
+            val rs = stmt.generatedKeys
+            // Get new group ID
+            val groupID = if (rs.next()) rs.getInt(1) else -1
+
+            rs.close()
+            stmt.close()
+
+            // If that failed, retract what happend for atomicty
+            if (groupID == -1) {
+                db.connection.rollback()
+                return -1
+            }
+
+            // Add creator to group
+            if (!joinGroup(groupID, group.createdBy)){
+                // If fails undo the group creation too
+                db.connection.rollback()
+                return -1
+            }
+             //Group and member all successful
+            db.connection.commit()
+            return groupID
+        } catch (error: Exception) { // If unexpected error undo everything
+            db.connection.rollback()
+            return -1
+        } finally { // Always restore autocommit if failur eor success
+            db.connection.autoCommit = true
         }
-
-        val rs = stmt.generatedKeys
-        val groupID = if (rs.next()) rs.getInt(1) else -1
-
-        rs.close()
-        stmt.close()
-
-        // Automatically add creator as first member
-        if (groupID != -1) {
-            joinGroup(groupID, group.createdBy)
-        }
-
-        return groupID
     }
 
     fun deleteGroup(groupID: Int): Boolean {
@@ -1539,7 +1613,7 @@ class DatabaseService{
         stmt.setString(1, name)
         stmt.setString(2, description)
         stmt.setObject(3, goal)
-        stmt.setObject(4, groupID)
+        stmt.setInt(4, groupID)
 
         val rows = stmt.executeUpdate()
         stmt.close()
@@ -1745,7 +1819,9 @@ class DatabaseService{
                     assignedTo = rs.getInt("assignedTo"),
                     date = rs.getString("date"),
                     duration = rs.getObject("duration") as Int?,
-                    workoutType = rs.getObject("workoutType") as String?
+                    workoutType = rs.getObject("workoutType") as String?,
+                    notes = rs.getObject("notes") as String?,
+                    routeID = rs.getObject("routeID") as Int?
                 )
             )
         }
@@ -1784,7 +1860,9 @@ class DatabaseService{
                     assignedTo = rs.getInt("assignedTo"),
                     date = rs.getString("date"),
                     duration = rs.getObject("duration") as Int?,
-                    workoutType = rs.getObject("workoutType") as String?
+                    workoutType = rs.getObject("workoutType") as String?,
+                    notes = rs.getObject("notes") as String?,
+                    routeID = rs.getObject("routeID") as Int?
                 )
             )
         }
@@ -1856,7 +1934,9 @@ class DatabaseService{
                     name = rs.getString("name"),
                     distance = rs.getDouble("distance"),
                     estimatedTime = rs.getObject("estimatedTime") as Double?,
-                    date = rs.getString("date")
+                    date = rs.getString("date"),
+                    isPublic = rs.getBoolean("isPublic"),
+                    routeData = rs.getString("routeData")
                 )
             )
         }
@@ -2001,40 +2081,70 @@ class DatabaseService{
     }
 
     // Log workout for workout logs page
-    fun logWorkout(
-        workout: Workout,
-        exercises: List<WorkoutExercise>
-    ): Int {
-        // Create workout
-        val workoutID = createWorkout(workout)
-        if (workoutID == -1) return -1
+    fun logWorkout(workout: Workout, exercises: List<WorkoutExercise>): Int {
 
-        // Link each exercise to the workout
-        exercises.forEach { exercise ->
-            val we = WorkoutExercise(
-                workoutExercisesID = 0,
-                workoutID = workoutID,
-                exerciseID = exercise.exerciseID,
-                sets = exercise.sets,
-                reps = exercise.reps,
-                weight = exercise.weight
-            )
-            addExerciseToWorkout(we)
+        db.connection.autoCommit = false // Allows grouping of statements (transactions) so atomic
+        try {
+            // Create workout, if fails undo everything
+            val workoutID = createWorkout(workout)
+            if (workoutID == -1) {
+                db.connection.rollback()
+                return -1
+            }
+            // Link each exercise to the workout, if fails undo everything
+            exercises.forEach { exercise ->
+                val we = WorkoutExercise(
+                    workoutExercisesID = 0,
+                    workoutID = workoutID,
+                    exerciseID = exercise.exerciseID,
+                    sets = exercise.sets,
+                    reps = exercise.reps,
+                    weight = exercise.weight
+                )
+                if (addExerciseToWorkout(we) == -1) {
+                    db.connection.rollback()
+                    return -1
+                }
+            }
+            // Commit all this if success
+            db.connection.commit()
+            return workoutID
+        } catch (error: Exception) { // If any error undo everything
+            db.connection.rollback()
+            return -1
+        } finally {
+            db.connection.autoCommit = true // Restore autocommit
         }
-
-        return workoutID
     }
 
     // Update a logged workout (in case of a changed exercise or another detail)
     fun updateLoggedWorkout(workout: Workout, exercises: List<WorkoutExercise>): Boolean {
+        // As usual, turn off autocommit as multiple statement function
+        db.connection.autoCommit = false
+        try {
+            val updated = updateWorkout(workout.workoutID, workout.date, workout.duration, workout.workoutType, workout.notes, workout.routeID)
+            // Update workout failed so undo everything
+            if (!updated) {
+                db.connection.rollback()
+                return false
+            }
+            // Delete all exercise links
+            deleteWorkoutExercise(workout.workoutID)
 
-        updateWorkout(workout.workoutID ?: return false, workout.date, workout.duration, workout.workoutType)
-
-        // Delete all exercise links
-        deleteWorkoutExercise(workout.workoutID)
-
-        // Add new exercise list
-        exercises.forEach { exercise ->addExerciseToWorkout(exercise.copy(workoutID = workout.workoutID))}
-        return true
+            // Add new exercise list
+            exercises.forEach { exercise -> if (addExerciseToWorkout(exercise.copy(workoutID = workout.workoutID)) == -1) {
+                //If link fails  undo everything
+                db.connection.rollback()
+                return false
+            }
+        }
+            db.connection.commit()
+            return true
+        } catch (error: Exception) {
+            db.connection.rollback()
+            return false
+        } finally {
+            db.connection.autoCommit = true
+        }
     }
 }
