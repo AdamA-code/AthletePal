@@ -1,17 +1,40 @@
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.ktor.server.testing.*
 import kotlin.test.*
-import com.example.module
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import io.ktor.server.application.Application
 import io.ktor.server.testing.testApplication
+import com.example.module
 import io.mockk.mockk
 
 import services.AuthService
+import services.DatabaseService
 
 class AuthRoutesTest {
 
+    // ========================================
+    // Pre-Test Setup
+    // ========================================
+
     val authService = mockk<AuthService>() // Creates a mock of AuthService for testing
+
+    private fun ApplicationTestBuilder.setup() {
+        application {
+            module()
+        }
+    }
+
+    var userID: Int? = null
+
+    @BeforeTest
+    fun setup() = testApplication {
+        application { module() }
+        userID = AuthService().registerUser("TestAccount", "TestingEmail@email.com", "wordpass", false)
+    }
 
     // =======================
     // CREATE ACCOUNT TESTS
@@ -29,14 +52,15 @@ class AuthRoutesTest {
             setBody("""
                 {
                     "name": "TestUser",
-                    "email": "testuser${System.nanoTime()}@test.com"
+                    "email": "testuser@test.com",
                     "password": "wordpass",
                     "accountType": true
                 }
             """.trimIndent())
         }
+
         assertEquals(HttpStatusCode.OK, response.status) // Assume response has OK status code
-        assertTrue(response.bodyAsText().contains("Account created!")) // Assume response contains success message
+        assertTrue(response.bodyAsText().contains("ID")) // Assume response contains success message
     }
 
     @Test
@@ -46,24 +70,19 @@ class AuthRoutesTest {
             module()
         }
 
-        val body = """
-            {
-                "name": "DuplicateAccount",
-                "email": "duplicate@test.com",
-                "password": "wordpass",
-                "accountType": true
-            }
-        """.trimIndent() // HTTP request for creaating same (duplicate account)
-
-        client.post("/auth/create-account"){ // Initially add the account (doesn't exist prior, so can be added)
-            contentType(ContentType.Application.Json)
-            setBody(body)
-        }
         val response = client.post("/auth/create-account"){ // Attempt adding a duplicate of the account
             contentType(ContentType.Application.Json)
-            setBody(body)
+            setBody("""
+                {
+                    "name": "TestAccount",
+                    "email": "TestingEmail@email.com",
+                    "password": "wordpass",
+                    "accountType": false
+                }
+            """.trimIndent())
         }
-        assertEquals(HttpStatusCode.OK, response.status) // Request is technically valid so check HTTP status is OK
+
+        assertEquals(HttpStatusCode.NotAcceptable, response.status) // Request is technically valid so check HTTP status is OK
         assertTrue(response.bodyAsText().contains("User already exists!")) // Check that logically request is rejected by server
 
     }
@@ -77,16 +96,9 @@ class AuthRoutesTest {
 
         val response = client.post("/auth/create-account"){ // HTTP request for account creation using bad JSON on accountType
             contentType(ContentType.Application.Json)
-            setBody("""
-                {
-                    "name": "BadJson",
-                    "email": "test@test.com",
-                    "password": "wordpass",
-                    "accountType": True
-                }
-            """.trimIndent())
+            setBody("Invalid JSON")
         }
-        assertTrue(response.status.value == 200 || response.status.value == 500) // Assume HTTP error is given, so response is 200/500
+        assertEquals(HttpStatusCode.BadRequest, response.status) // Assume HTTP error is given, so response is 200/500
     }
 
     @Test
@@ -105,7 +117,7 @@ class AuthRoutesTest {
                 }
             """.trimIndent())
         }
-        assertTrue(response.status.value >= 400) // Presume an error is thrown, so expect response status greater or equal to 400
+        assertEquals(HttpStatusCode.BadRequest, response.status) // Presume an error is thrown, so expect response status greater or equal to 400
     }
 
     // =======================
@@ -119,23 +131,11 @@ class AuthRoutesTest {
             module()
         }
 
-        client.post("/auth/create-account") { // HTTP request to create a dummy account for login attempting
-            contentType(ContentType.Application.Json)
-            setBody("""
-                {
-                    "name": "LoginTestUser",
-                    "email": "login@test.com",
-                    "password": "wordpass",
-                    "accountType": true
-                }
-            """.trimIndent())
-        }
-
         val response = client.post("/auth/login") { // Attempt to login to dummy account we just created, using correct credentials
             contentType(ContentType.Application.Json)
             setBody("""
                 {
-                    "email": "login@test.com",
+                    "email": "TestingEmail@email.com",
                     "password": "wordpass"
                 }
             """.trimIndent())
@@ -151,28 +151,16 @@ class AuthRoutesTest {
             module()
         }
         
-        client.post("/auth/create-account") { // Create a dummy account which we will try to login with incorrect password
-            contentType(ContentType.Application.Json)
-            setBody("""
-                {
-                    "name": "user",
-                    "email": "wrongpassword@test.com",
-                    "password": "CorrectPassword",
-                    "accountType": true
-                }
-            """.trimIndent())
-        }
-
         val response = client.post("/auth/login") { // Create login HTTP request for dummy account, using wrong password
             contentType(ContentType.Application.Json)
             setBody("""
                 {
-                    "email": "wrongpassword@test.com",
+                    "email": "TestingEmail@email.com"
                     "password": "WrongPassword"
                 }
             """.trimIndent())
         }
-        assertEquals(HttpStatusCode.OK, response.status) // HTTP request is syntactically correct so expect OK status code
+        assertEquals(HttpStatusCode.NotFound, response.status) // HTTP request is syntactically correct so expect OK status code
         assertTrue(response.bodyAsText().contains("Invalid Credentials")) //Logically credentials dont match, so expect relevent error to be given 
     }
 
@@ -192,7 +180,7 @@ class AuthRoutesTest {
                 }
             """.trimIndent())
         }
-        assertEquals(HttpStatusCode.OK, response.status) // Syntax of HTTP request is correct so return OK status code
+        assertEquals(HttpStatusCode.NotFound, response.status) // Syntax of HTTP request is correct so return OK status code
         assertTrue(response.bodyAsText().contains("Invalid Credentials")) // Logically there is no matching user in databse, so expect relevent error
     }
 
@@ -205,14 +193,9 @@ class AuthRoutesTest {
 
         val response = client.post("/auth/login") { // Create HTTP request for login using incorrect JSON for password
             contentType(ContentType.Application.Json)
-            setBody("""
-                {
-                    "email": "test@test.com",
-                    "password" : 123456
-                }
-            """.trimIndent())
+            setBody("Invalid JSON")
         }
-        assertTrue(response.status.value == 200 || response.status.value == 500) // HTTP request has incorrect syntax as required to be JSON serialisable
+        assertEquals(HttpStatusCode.BadRequest, response.status) // HTTP request has incorrect syntax as required to be JSON serialisable
     }
 
     @Test
@@ -226,11 +209,21 @@ class AuthRoutesTest {
             contentType(ContentType.Application.Json)
             setBody("""
                 {
-                    "email": "test@test.com"
-                }
+                    "email": "testuser@test.com"
+             }
             """.trimIndent())
         }
-        assertTrue(response.status.value >= 400) // Expect HTTP response to show an error, as more values expected by client
+        assertEquals(HttpStatusCode.BadRequest, response.status) // Expect HTTP response to show an error, as more values expected by client
+    }
+
+    // ========================================
+    // Post-Test Clean-Up (Delete Test User)
+    // ========================================
+
+    @AfterTest
+    fun cleanup() {
+        DatabaseService().deleteUser("TestingEmail@email.com")
+        DatabaseService().deleteUser("testuser@test.com")
     }
 
 }

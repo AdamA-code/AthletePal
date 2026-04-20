@@ -55,16 +55,16 @@ class DatabaseService{
         val exerciseID: Int,
         val sets: Int?,
         val reps: Int?,
-        val weight: Double?,
+        val weight: Double?
     )
 
     @Serializable
     data class Statistic(
-        val statisticID: Int,
+        val statisticID: Int? = null,
         val userID: Int,
         val exerciseID: Int,
         val scoreValue: Double,
-        val date: String,
+        val date: String
     )
 
     @Serializable
@@ -935,8 +935,8 @@ class DatabaseService{
         competitionID: Int,
         name: String,
         date: String,
-        rank: Int?,
-        result: Int?
+        rank: Int? = null,
+        result: Int? = null
     ): Boolean {
 
         val stmt: PreparedStatement = db.connection.prepareStatement(
@@ -2038,7 +2038,7 @@ class DatabaseService{
     // Exercise by category
     fun getExerciseBreakdown(userID: Int): Map<String, Map<String, Any>> {
         val workouts = findAllWorkouts(userID).filter { it.date < LocalDate.now().toString() }
-        val workoutIDs = workouts.map { it.workoutID }
+        val workoutIDs: List<Int> = workouts.mapNotNull { it.workoutID }
         
         if (workoutIDs.isEmpty()) return emptyMap()
 

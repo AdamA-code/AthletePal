@@ -8,6 +8,7 @@ data class Competitions (
     val userID: Int,
     val name: String,
     val date: String,
-    val rank: Int?
+    val rank: Int?,
+    val result: Int?
 
 )

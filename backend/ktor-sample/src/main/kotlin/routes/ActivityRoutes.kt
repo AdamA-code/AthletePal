@@ -284,7 +284,7 @@ fun Route.activityRoutes(){
         // Update a given competition on the users account
         put("/competitions/{id}"){
             try {
-                val id = call.parameters["id"]!!.toInt()
+                val id = call.parameters["id"]!!.toIntOrNull() ?: return@put call.respond(HttpStatusCode.BadRequest)
                 val body = call.receive<Competition>()
 
                 val updated = db.updateCompetition(id, body.name, body.date, body.rank, body.result)
