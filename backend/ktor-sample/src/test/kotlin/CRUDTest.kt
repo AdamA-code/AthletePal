@@ -606,7 +606,7 @@ class DatabaseServiceTest {
 
         // Update workout
         val updated = ds.updateLoggedWorkout(
-            Workout(workoutID, userId, userId, today, 90, "weights"),
+            Workout(workoutID, userId, userId, today, 90, "weights", null, null),
             listOf(
                 WorkoutExercise(0, workoutID, benchPressID, 4, 8, 110.0),
                 WorkoutExercise(0, workoutID, runID, null, null, null)

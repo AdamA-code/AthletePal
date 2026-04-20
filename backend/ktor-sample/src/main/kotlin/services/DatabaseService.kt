@@ -311,63 +311,89 @@ class DatabaseService{
     }
 
     fun resetPasswordWithToken(token: String, newPassword: String): Boolean {
-        // FInd unused token
-        val stmt = db.connection.prepareStatement("""
-            SELECT * FROM password_reset_tokens
-            WHERE token = ? AND used = 0
-        """.trimIndent()
-        )
-        stmt.setString(1, token)
-        
-        val rs = stmt.executeQuery()
+        db.connection.autoCommit = false
+        try {
+            // FInd unused token
+            val stmt = db.connection.prepareStatement("""
+                SELECT * FROM password_reset_tokens
+                WHERE token = ? AND used = 0
+            """.trimIndent()
+            )
+            stmt.setString(1, token)
+            
+            val rs = stmt.executeQuery()
 
-        // If no matching token found return false
-        if (!rs.next()) {
+            // If no matching token found return false
+            if (!rs.next()) {
+                rs.close()
+                stmt.close()
+                db.connection.rollback()
+                return false
+            }
+
+            // Get expiry and userID
+            val expiry = LocalDateTime.parse(rs.getString("expiry")) // Set to parse object
+            val userID = rs.getInt("userID")
+
             rs.close()
             stmt.close()
+
+            // expiry check
+            if (LocalDateTime.now().isAfter(expiry)){
+                db.connection.rollback()
+                return false
+            }
+
+            // Generate new salt and hash for new password
+            val authService = AuthService()
+            val newKey = authService.generateSalt()
+            val newHash = authService.hashPassword(newPassword, newKey)
+
+            // Update password in db
+            val updateStmt = db.connection.prepareStatement("""
+                UPDATE users
+                SET passwordHash = ?, passwordKey = ?
+                WHERE userID = ?
+            """.trimIndent()
+            )
+            updateStmt.setString(1, newHash)
+            updateStmt.setString(2, newKey)
+            updateStmt.setInt(3, userID)
+
+            val updatedPassword = updateStmt.executeUpdate()
+            updateStmt.close()
+
+            // check on password updating
+            if (updatedPassword == 0) {
+                db.connection.rollback()
+                return false
+            }
+
+            // Mark token as used (cant be used again)
+            val usedTokenStmt = db.connection.prepareStatement("""
+                UPDATE password_reset_tokens
+                SET used = 1 WHERE token = ?
+            """.trimIndent()
+            )
+            usedTokenStmt.setString(1, token)
+
+            val tokenUsed = usedTokenStmt.executeUpdate()
+            usedTokenStmt.close()
+            //check failure at token being set to used
+            if (tokenUsed == 0) {
+                db.connection.rollback()
+                return false
+            }
+
+            db.connection.commit()
+            return true
+        // Find any unexpected errors and rollback if so, set connection back to autocommit either way
+        } catch (erro: Exception) {
+            db.connection.rollback()
             return false
+        } finally {
+            db.connection.autoCommit = true
         }
-
-        // Get expiry and userID
-        val expiry = LocalDateTime.parse(rs.getString("expiry")) // Set to parse object
-        val userID = rs.getInt("userID")
-
-        rs.close()
-        stmt.close()
-
-        if (LocalDateTime.now().isAfter(expiry)) return false
-
-        // Generate new salt and hash for new password
-        val authService = AuthService()
-        val newKey = authService.generateSalt()
-        val newHash = authService.hashPassword(newPassword, newKey)
-
-        // Update password in db
-        val updateStmt = db.connection.prepareStatement("""
-            UPDATE users
-            SET passwordHash = ?, passwordKey = ?
-            WHERE userID = ?
-        """.trimIndent()
-        )
-        updateStmt.setString(1, newHash)
-        updateStmt.setString(2, newKey)
-        updateStmt.setInt(3, userID)
-
-        val updatedPassword = updateStmt.executeUpdate()
-        updateStmt.close()
-
-        // Mark token as used (cant be used again)
-        val usedTokenStmt = db.connection.prepareStatement("""
-            UPDATE password_reset_tokens
-            SET used = 1 WHERE token = ?
-        """.trimIndent()
-        )
-        usedTokenStmt.setString(1, token)
-
-        val tokenUsed = usedTokenStmt.executeUpdate()
-        usedTokenStmt.close()
-
-        return updatedPassword > 0 && tokenUsed > 0
     }
 
     fun deleteUser(email: String): Boolean {
@@ -1503,7 +1529,7 @@ class DatabaseService{
              //Group and member all successful
             db.connection.commit()
             return groupID
-        } catch (e: Exception) { // If unexpected error undo everything
+        } catch (error: Exception) { // If unexpected error undo everything
             db.connection.rollback()
             return -1
         } finally { // Always restore autocommit if failur eor success
@@ -2079,10 +2105,11 @@ class DatabaseService{
                     db.connection.rollback()
                     return -1
                 }
+            }
             // Commit all this if success
             db.connection.commit()
             return workoutID
-        } catch (e: Exception) { // If any error undo everything
+        } catch (error: Exception) { // If any error undo everything
             db.connection.rollback()
             return -1
         } finally {
@@ -2105,14 +2132,15 @@ class DatabaseService{
             deleteWorkoutExercise(workout.workoutID)
 
             // Add new exercise list
-            exercises.forEach { exercise -> if (addExerciseToWorkout(exercise.copy(workoutID = workout.workoutID)) == -1)} {
+            exercises.forEach { exercise -> if (addExerciseToWorkout(exercise.copy(workoutID = workout.workoutID)) == -1) {
                 //If link fails  undo everything
                 db.connection.rollback()
                 return false
             }
+        }
             db.connection.commit()
             return true
-        } catch (e: Exception) {
+        } catch (error: Exception) {
             db.connection.rollback()
             return false
         } finally {
