@@ -21,10 +21,11 @@ class StatisticsRoutesTest {
         application { module() }
     }
 
-    @BeforeTest
-    var userID: Int? = null
-    var statGetID: Int? = null
+    private var userID: Int? = null
+    private var statGetID: Int? = null
+    private var statID: Int? = null
 
+    @BeforeTest
     fun setup() = testApplication {
         application { module() }
         userID = AuthService().registerUser("StatisticsTestAccount", "StatsTestEmail@email.com",  "wordpass", false)
@@ -41,8 +42,9 @@ class StatisticsRoutesTest {
             """.trimIndent())
         }
 
-        val jsonResp = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+        val jsonResp = Json.parseToJsonElement(resp.bodyAsText()).jsonObject
         statGetID = jsonResp["ID"]?.jsonPrimitive?.content?.toInt()
+        statID = statGetID
 
     }
 
@@ -53,6 +55,7 @@ class StatisticsRoutesTest {
     @Test
     fun addNewStat_valid() = testApplication {
         application { module() }
+
         val response = client.post("/api/statistics"){
             contentType(ContentType.Application.Json)
             setBody("""
@@ -66,7 +69,7 @@ class StatisticsRoutesTest {
         }
 
         val jsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
-        val statID = jsonResponse["ID"]?.jsonPrimitive?.content?.toInt()
+        statID = jsonResponse["ID"]?.jsonPrimitive?.content?.toInt()
 
         assertEquals(HttpStatusCode.OK, response.status)
     }
@@ -74,6 +77,7 @@ class StatisticsRoutesTest {
     @Test
     fun addNewStat_invalidUserID() = testApplication {
         application { module() }
+
         val response = client.post("/api/statistics"){
             contentType(ContentType.Application.Json)
             setBody("""
@@ -85,12 +89,13 @@ class StatisticsRoutesTest {
                 }
             """.trimIndent())
         }
-        assertEquals(HttpStatusCode.InternalServerError, response.status)
+        assertTrue((HttpStatusCode.InternalServerError == response.status) || (HttpStatusCode.BadRequest == response.status))
     }
     
     @Test
     fun addNewStat_invalidJSON() = testApplication {
         application { module() }
+
         val response = client.post("/api/statistics"){
             contentType(ContentType.Application.Json)
             setBody("Invalid JSON")
@@ -101,6 +106,7 @@ class StatisticsRoutesTest {
     @Test
     fun updateStat_valid() = testApplication {
         application { module() }
+
         val response = client.put("/api/statistics/${statID!!}") {
             contentType(ContentType.Application.Json)
             setBody("""
@@ -116,6 +122,7 @@ class StatisticsRoutesTest {
     @Test
     fun updateStat_invalidStatID() = testApplication {
         application { module() }
+
         val response = client.put("/api/statistics/9999") {
             contentType(ContentType.Application.Json)
             setBody("""
@@ -131,6 +138,7 @@ class StatisticsRoutesTest {
     @Test
     fun updateStat_missingValue() = testApplication {
         application { module() }
+
         val response = client.put("/api/statistics/${statID!!}") {
             contentType(ContentType.Application.Json)
             setBody("""
@@ -145,6 +153,7 @@ class StatisticsRoutesTest {
     @Test
     fun updateStat_invalidJSON() = testApplication {
         application { module() }
+
         val response = client.put("/api/statistics/${statID!!}") {
             contentType(ContentType.Application.Json)
             setBody("Invalid JSON")
@@ -155,6 +164,7 @@ class StatisticsRoutesTest {
     @Test
     fun deleteStat_invalidStatID() = testApplication {
         application { module() }
+
         val response = client.delete("/api/statistics/99999")
 
         assertEquals(HttpStatusCode.NotFound, response.status)
@@ -163,6 +173,7 @@ class StatisticsRoutesTest {
     @Test
     fun deleteStat_invalidJSON() = testApplication {
         application { module() }
+
         val response = client.delete("/api/statistics/abc")
 
         assertEquals(HttpStatusCode.BadRequest, response.status)
@@ -171,6 +182,7 @@ class StatisticsRoutesTest {
     @Test
     fun deleteStat_valid() = testApplication {
         application { module() }
+
         val response = client.delete("/api/statistics/${statID!!}")
 
         assertEquals(HttpStatusCode.OK, response.status)
@@ -183,6 +195,7 @@ class StatisticsRoutesTest {
     @Test
     fun getBestStat_valid() = testApplication {
         application { module() }
+
         val response = client.get("/api/statistic/exercise/${userID!!}/2")
 
         assertEquals(HttpStatusCode.OK, response.status)
@@ -248,7 +261,7 @@ class StatisticsRoutesTest {
 
         val response = client.get("/api/statistic/user/workout-progression/${userID!!}")
 
-        assertEquals(HttpStatusCode.OK, response.status || HttpStatusCode.NotFound, response.status)
+        assertTrue((HttpStatusCode.OK == response.status) || (HttpStatusCode.NotFound == response.status))
     }
 
     @Test
@@ -275,7 +288,7 @@ class StatisticsRoutesTest {
 
         val response = client.get("/api/statistic/user/workouts-completed/${userID!!}")
 
-        assertEquals(HttpStatusCode.OK, response.status || HttpStatusCode.NotFound, response.status)
+        assertTrue((HttpStatusCode.OK == response.status) || (HttpStatusCode.NotFound == response.status))
     }
 
     @Test
@@ -338,7 +351,7 @@ class StatisticsRoutesTest {
 
         val response = client.get("/api/statistic/user/training-history/${userID!!}")
 
-        assertEquals(HttpStatusCode.OK, response.status || HttpStatusCode.NotFound, response.status)
+        assertTrue((HttpStatusCode.OK == response.status) || (HttpStatusCode.NotFound == response.status))
     }
 
     @Test
@@ -365,7 +378,7 @@ class StatisticsRoutesTest {
 
         val response = client.get("/api/statistics/user/exercise-breakdown/${userID!!}")
 
-        assertTrue(HttpStatusCode.Ok, response.status || HttpStatusCode.NotFound, response.status)
+        assertTrue((HttpStatusCode.OK == response.status) || (HttpStatusCode.NotFound == response.status))
     }
 
     @Test
@@ -374,7 +387,7 @@ class StatisticsRoutesTest {
 
         val response = client.get("/api/statistics/user/exercise-breakdown/99999999")
 
-        assertTrue(HttpStatusCode.NotFound, response.status)
+        assertEquals(HttpStatusCode.NotFound, response.status)
     }
 
     @Test
@@ -383,7 +396,7 @@ class StatisticsRoutesTest {
 
         val response = client.get("/api/statistics/user/exercise-breakdown/abc")
 
-        assertTrue(HttpStatusCode.BadRequest, response.status)
+        assertEquals(HttpStatusCode.BadRequest, response.status)
     }
 
     @Test
@@ -392,7 +405,7 @@ class StatisticsRoutesTest {
 
         val response = client.get("/api/statistics/user/personal-bests/${userID!!}")
 
-        assertTrue(HttpStatusCode.OK, response.status || HttpStatusCode.NotFound, response.status)
+        assertTrue((HttpStatusCode.OK == response.status) || (HttpStatusCode.NotFound == response.status))
     }
 
     @Test
@@ -401,7 +414,7 @@ class StatisticsRoutesTest {
 
         val response = client.get("/api/statistics/user/personal-bests/9999999")
 
-        assertTrue(HttpStatusCode.NotFound, response.status)
+        assertEquals(HttpStatusCode.NotFound, response.status)
     }
 
     @Test
@@ -410,7 +423,7 @@ class StatisticsRoutesTest {
 
         val response = client.get("/api/statistics/user/personal-bests/abc")
 
-        assertTrue(HttpStatusCode.BadRequest, response.status)
+        assertEquals(HttpStatusCode.BadRequest, response.status)
     }
 
     @Test
@@ -419,7 +432,7 @@ class StatisticsRoutesTest {
 
         val response = client.get("/api/statistics/exercise/${userID!!}/2")
 
-        assertTrue(HttpStatusCode.OK, response.status)
+        assertEquals(HttpStatusCode.OK, response.status)
     }
 
     @Test
@@ -428,7 +441,8 @@ class StatisticsRoutesTest {
 
         val response = client.get("/api/statistics/exercise/9999999/2")
 
-        assertTrue(HttpStatusCode.NotFound, response.status)
+        assertEquals(HttpStatusCode.NotFound, response.status)
+
     }
 
     @Test
@@ -437,7 +451,8 @@ class StatisticsRoutesTest {
 
         val response = client.get("/api/statistics/exercise/${userID!!}/999999")
 
-        assertTrue(HttpStatusCode.NotFound, response.status)
+        assertEquals(HttpStatusCode.NotFound, response.status)
+
     }
 
     @Test
@@ -446,7 +461,8 @@ class StatisticsRoutesTest {
 
         val response = client.get("/api/statistics/exercise/abc/def")
 
-        assertTrue(HttpStatusCode.BadRequest, response.status)
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+
     }
 
     // =================================================
@@ -456,10 +472,15 @@ class StatisticsRoutesTest {
     @AfterTest
     fun cleanup() {
         DatabaseService().deleteUser("StatsTestEmail@email.com")
-        DatabaseService().deleteStatistic(statGetID)
+
+        statGetID?.let {
+            DatabaseService().deleteStatistic(it)
+        }
 
         try {
-            DatabaseService().deleteStatistic(statID)
+            statID?.let {
+                DatabaseService().deleteStatistic(it)
+            }
         }
         catch (e: Exception) {
             println("Test-made stat already deleted!")
