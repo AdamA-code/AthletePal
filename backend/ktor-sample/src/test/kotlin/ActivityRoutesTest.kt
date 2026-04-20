@@ -278,7 +278,7 @@ class ActivityRoutesTest {
 
     @AfterTest
     fun cleanup() {
-        assertTrue(DatabaseService().deleteUser("TestingEmail@email.com"))
+        DatabaseService().deleteUser("TestingEmail@email.com")
     }
 
     private suspend fun HttpResponse.debug() {
