@@ -299,14 +299,14 @@ class DatabaseServiceTest {
 
         assertTrue(
             ds.updateCalendarEvent(
-                calendarID = event.calendarID,
+                calendarID = event.calendarID!!,
                 status = "COMPLETED",
                 scheduledDate = "2026-01-02",
                 name = "Updated Event"
             )
         )
 
-        assertTrue(ds.deleteCalendarEvent(event.calendarID))
+        assertTrue(ds.deleteCalendarEvent(event.calendarID!!))
 
         // End it (cascading)
         assertTrue(ds.deleteUser(email))

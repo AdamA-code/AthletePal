@@ -6,5 +6,5 @@ import kotlinx.serialization.Serializable
 data class UpdateWorkoutExerciseRequest (
     val sets: Int?,
     val reps: Int?,
-    val weight: Int?
+    val weight: Double?
 )

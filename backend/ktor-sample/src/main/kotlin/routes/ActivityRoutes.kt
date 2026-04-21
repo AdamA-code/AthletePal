@@ -12,6 +12,7 @@ import models.RecentActivityRequest
 import models.UpdateWorkoutRequest
 import models.UpdateCompetitionRequest
 import models.UpdateWorkoutExerciseRequest
+import models.WorkoutExerciseResponse
 
 import models.Activity
 import services.DatabaseService.Competition as Competition
@@ -222,7 +223,7 @@ fun Route.activityRoutes(){
                 val id = db.addExerciseToWorkout(workoutExercise)
 
                 if (id != -1) {
-                    call.respond(HttpStatusCode.OK, mapOf("message" to "Invalid Request"))
+                    call.respond(HttpStatusCode.OK, mapOf("ID" to id))
                 }
 
                 else if (id == -1) {
@@ -235,13 +236,19 @@ fun Route.activityRoutes(){
         }
 
         // Find all exercises belonging to a given workout
-        get("/workout/{workoutID}") {
+        get("/workout/exercises/{workoutID}") {
             try {
                 val id = call.parameters["workoutID"]!!.toInt()
                 val workoutExercises = db.findAllWorkoutExercises(id)
 
                 if (workoutExercises.isNullOrEmpty() == false) {
-                    call.respond(HttpStatusCode.OK, mapOf("Exercises" to workoutExercises))
+                    call.respond(HttpStatusCode.OK, workoutExercises.map { exercise ->
+                        WorkoutExerciseResponse(
+                            exerciseID = exercise.exerciseID,
+                            sets = exercise.sets,
+                            reps = exercise.reps,
+                            weight = exercise.weight
+                    )})
                 }
                 else {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "Workout not found"))
@@ -249,6 +256,7 @@ fun Route.activityRoutes(){
 
             }
             catch (e: Exception) {
+                e.printStackTrace()
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
         }
@@ -268,6 +276,7 @@ fun Route.activityRoutes(){
                 }
             }
             catch (e: Exception) {
+                e.printStackTrace()
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
         }
@@ -288,6 +297,7 @@ fun Route.activityRoutes(){
                 }
             }
             catch (e: Exception) {
+                e.printStackTrace()
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
         }
@@ -307,6 +317,7 @@ fun Route.activityRoutes(){
                 }
             }
             catch (e: Exception) {
+                e.printStackTrace()
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
         }
