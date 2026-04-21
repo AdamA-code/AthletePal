@@ -1,16 +1,15 @@
 package services
-import services.DatabaseService
 import java.security.MessageDigest // Provides hashing algorithms
 import java.security.SecureRandom // Used for generating random salt
 import java.util.Base64 // Converts binary data into readable strings
 
-import services.DatabaseService.User as User
-
 class AuthService {
-
     val databaseService = DatabaseService()
 
-    fun validateLogin(email: String, password: String): Boolean {
+    fun validateLogin(
+        email: String,
+        password: String,
+    ): Boolean {
         val user = databaseService.findUser(email) // Load user from databsed
 
         if (user != null && verifyPassword(password, user.passwordKey, user.passwordHash)) {
@@ -19,18 +18,18 @@ class AuthService {
         return false
     }
 
-
     fun generateSalt(): String {
-
         val random = SecureRandom() // Create secure random number generator
         val saltBytes = ByteArray(16) // Create array to hold random data
         random.nextBytes(saltBytes) // Fill array with random bytes
-        
+
         return Base64.getEncoder().encodeToString(saltBytes) // Convert binary to text
     }
 
-    fun hashPassword(password: String, salt: String): String {
-        
+    fun hashPassword(
+        password: String,
+        salt: String,
+    ): String {
         val digest = MessageDigest.getInstance("SHA-256") // Create a SHA-256 hashing object
 
         val combined = password + salt
@@ -40,8 +39,11 @@ class AuthService {
         return encoded
     }
 
-    fun verifyPassword(password: String, passwordKey: String, passwordHash: String): Boolean {
-
+    fun verifyPassword(
+        password: String,
+        passwordKey: String,
+        passwordHash: String,
+    ): Boolean {
         val newHash = hashPassword(password, passwordKey) // Recreate hash using the same password and key
         return newHash == passwordHash // Return if it is equal to what is stored
     }
@@ -50,24 +52,24 @@ class AuthService {
         name: String,
         email: String,
         password: String,
-        accountType: Boolean
+        accountType: Boolean,
     ): Int {
-
         val key = generateSalt()
         val hash = hashPassword(password, key)
 
-        val user = DatabaseService.User(
-            0,
-            name,
-            email,
-            hash,
-            key,
-            null,
-            null,
-            null,
-            null,
-            accountType
-        )
+        val user =
+            DatabaseService.User(
+                0,
+                name,
+                email,
+                hash,
+                key,
+                null,
+                null,
+                null,
+                null,
+                accountType,
+            )
 
         return databaseService.createUser(user)
     }
