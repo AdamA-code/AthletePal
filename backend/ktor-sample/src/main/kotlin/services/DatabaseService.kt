@@ -16,7 +16,7 @@ class DatabaseService{
     
     @Serializable
     data class User(
-        val userID: Int,
+        val userID: Int? = 0,
         val name: String,
         val email: String,
         val passwordHash: String,
@@ -30,7 +30,7 @@ class DatabaseService{
 
     @Serializable
     data class Exercise(
-        val exerciseID: Int,
+        val exerciseID: Int? = 0,
         val name: String,
         val category: String,
         val description: String?
@@ -50,7 +50,7 @@ class DatabaseService{
 
     @Serializable
     data class WorkoutExercise(
-        val workoutExercisesID: Int,
+        val workoutExercisesID: Int = 0,
         val workoutID: Int,
         val exerciseID: Int,
         val sets: Int?,
@@ -60,7 +60,7 @@ class DatabaseService{
 
     @Serializable
     data class Statistic(
-        val statisticID: Int? = null,
+        val statisticID: Int? = 0,
         val userID: Int,
         val exerciseID: Int,
         val scoreValue: Double,
@@ -69,7 +69,7 @@ class DatabaseService{
 
     @Serializable
     data class Competition(
-        val competitionID: Int? = null,
+        val competitionID: Int? = 0,
         val userID: Int,
         val name: String,
         val date: String,
@@ -79,7 +79,7 @@ class DatabaseService{
 
     @Serializable
     data class CompetitionExercise(
-        val competitionExerciseID: Int,
+        val competitionExerciseID: Int? = 0,
         val competitionID: Int,
         val exerciseID: Int,
         val performance: Double?
@@ -87,7 +87,7 @@ class DatabaseService{
 
     @Serializable
     data class Route(
-        val routeID: Int? = null,
+        val routeID: Int? = 0,
         val userID: Int,
         val name: String,
         val distance: Double,
@@ -99,7 +99,7 @@ class DatabaseService{
 
     @Serializable
     data class CalendarEvent(
-        val calendarID: Int,
+        val calendarID: Int? = 0,
         val userID: Int,
         val eventType: String,
         val eventID: Int,
@@ -110,7 +110,7 @@ class DatabaseService{
 
     @Serializable
     data class TrainingGroup(
-        val groupID: Int,
+        val groupID: Int? = 0,
         val createdBy: Int,
         val name: String,
         val description: String?,
@@ -119,14 +119,14 @@ class DatabaseService{
 
     @Serializable
     data class GroupMember(
-        val memberID: Int,
+        val memberID: Int? = 0,
         val groupID: Int,
         val userID: Int
     )
 
     @Serializable
     data class GroupSession(
-        val sessionID: Int,
+        val sessionID: Int? = 0,
         val groupID: Int,
         val workoutID: Int,
         val scheduledDate: String
