@@ -10,6 +10,7 @@ import models.TodayWorkoutsRequest
 import models.UpcomingCompetitionsRequest
 import models.RecentActivityRequest
 import models.UpdateWorkoutRequest
+import models.UpdateCompetitionRequest
 
 import models.Activity
 import services.DatabaseService.Competition as Competition
@@ -17,6 +18,7 @@ import services.DatabaseService.Workout as Workout
 import services.DatabaseService.Route as RunningRoute
 
 import services.DatabaseService
+
 
 fun Route.activityRoutes(){
     val db = DatabaseService() // Import service responsible for following requests
@@ -31,11 +33,12 @@ fun Route.activityRoutes(){
         get("/activity/recent/{email}"){
             try {
                 val email = call.parameters["email"]!!
-                val activity = mapOf(
-                    "Recent Workouts" to db.getRecentWorkouts(email),
-                    "Upcoming Competitions" to db.getUpcomingCompetitions(email),
-                    "Recent Routes" to db.getRecentRoutes(email)
-                    )
+                val activity = Activity(
+                    db.getRecentWorkouts(email),
+                    db.getUpcomingCompetitions(email),
+                    db.getRecentRoutes(email)
+                )
+
                 if (activity != null) {
                     call.respond(HttpStatusCode.OK, activity)
                 }
@@ -44,6 +47,7 @@ fun Route.activityRoutes(){
                 }
             }
             catch (e: Exception) {
+                e.printStackTrace()
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid request"))
             }
         }
@@ -285,7 +289,7 @@ fun Route.activityRoutes(){
         put("/competitions/{id}"){
             try {
                 val id = call.parameters["id"]!!.toIntOrNull() ?: return@put call.respond(HttpStatusCode.BadRequest)
-                val body = call.receive<Competition>()
+                val body = call.receive<UpdateCompetitionRequest>()
 
                 val updated = db.updateCompetition(id, body.name, body.date, body.rank, body.result)
 

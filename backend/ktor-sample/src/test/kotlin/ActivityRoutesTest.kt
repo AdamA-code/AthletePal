@@ -12,6 +12,10 @@ import io.ktor.server.application.Application
 import io.ktor.server.testing.testApplication
 import com.example.module
 
+import services.DatabaseService.Workout as Workout
+import services.DatabaseService.Competition as Competition
+import services.DatabaseService.Route as RunningRoute
+
 import services.AuthService
 import services.DatabaseService
 
@@ -24,11 +28,47 @@ class ActivityRoutesTest {
     }
 
     var userID: Int? = null
+    var workoutID: Int? = null
+    var competitionID: Int? = null
+    var routeID: Int? = null
 
     @BeforeTest
     fun setup() = testApplication {
         application { module() }
+
         userID = AuthService().registerUser("TestAccount", "TestingEmail@email.com", "wordpass", false)
+
+
+        // Create Test WORKOUT
+        val workout = Workout(
+            createdBy = userID!!,
+            assignedTo = userID!!,
+            date = "2026-01-01",
+            notes = "Test Workout"
+        )
+        workoutID = DatabaseService().createWorkout(workout)
+
+
+        // Create Test COMPETITION
+        val competition = Competition(
+            userID = userID!!,
+            name = "Test Competition",
+            date = "2026-01-01",
+            rank = 2,
+            result = 1
+        )
+        competitionID = DatabaseService().addComp(competition)
+
+        // Create Test ROUTE
+        val runningRoute = RunningRoute(
+            userID = userID!!,
+            name = "Test Route",
+            distance = 10.0,
+            date = "2026-01-01",
+            isPublic = false,
+            routeData = "Test Route Data"
+        )
+        routeID = DatabaseService().addRoute(runningRoute)
     }
 
     // ===========================
@@ -45,22 +85,25 @@ class ActivityRoutesTest {
             setBody("""
                 {
                     
-                    "createdBy": 1,
-                    "assignedTo": 1,
+                    "createdBy": ${userID!!},
+                    "assignedTo": ${userID!!},
                     "date": "2026-05-01",
                     "notes": "Workout routes test"
                 }
                 """.trimIndent())
         }
 
-        response.debug()
         assertEquals(HttpStatusCode.OK, response.status) // Response should have OK HTTP status code associated
         assertTrue(response.bodyAsText().contains("ID")) // Response should contain ID of new workout made
-        
+
+        val testJsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+        val testWorkoutID = testJsonResponse["ID"]?.jsonPrimitive?.content?.toInt() 
+
+        DatabaseService().deleteWorkout(testWorkoutID!!)  
     }
 
     @Test
-    fun createAccount_missingField() = testApplication { // Erroneous Case: testing behaviour when a field is missing
+    fun createWorkout_missingField() = testApplication { // Erroneous Case: testing behaviour when a field is missing
         application { module() }
 
         val response = client.post("/api/workouts") { // Form HTTP request with no userID, date, or duration and send to endpoint
@@ -71,10 +114,25 @@ class ActivityRoutesTest {
     }
 
     @Test
+    fun updateWorkout_valid() = testApplication {
+        application { module() }
+
+        val response = client.put("/api/workouts/${workoutID!!}") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    "date": "2026-06-01",
+                    "duration": 60
+                }
+            """.trimIndent())
+        }
+    }
+
+    @Test
     fun updateWorkout_nullOptionalField() = testApplication { // Normal Case: testing behaviour when an optional field is left blank
         application { module() }
 
-        val response = client.put("/api/workouts/1") { // Form PUT HTTP request with missing optional field
+        val response = client.put("/api/workouts/${workoutID!!}") { // Form PUT HTTP request with missing optional field
             contentType(ContentType.Application.Json)
             setBody("""
                 {
@@ -83,9 +141,17 @@ class ActivityRoutesTest {
                 }
             """.trimIndent())
         }
-        response.debug()
         assertTrue(response.status == HttpStatusCode.OK || response.status == HttpStatusCode.NotFound || response.status == HttpStatusCode.BadRequest) // Response should be OK or NotFound (if workout non-existant)
         
+    }
+
+    @Test
+    fun getWorkout_valid() = testApplication {
+        application { module() }
+
+        val response = client.get("/api/workout/${workoutID!!}")
+
+        assertEquals(HttpStatusCode.OK, response.status)
     }
 
     @Test
@@ -118,16 +184,19 @@ class ActivityRoutesTest {
             contentType(ContentType.Application.Json)
             setBody("""
                 {
-                    "userID": 1,
+                    "userID": ${userID!!},
                     "name": "NE Regionals",
                     "date": "2026-09-01"
                 }
             """.trimIndent())
         }
-        response.debug()
         assertEquals(HttpStatusCode.OK, response.status) // Response should be HTTP status of OK, as request is valid
         assertTrue(response.bodyAsText().contains("ID")) // Response should contain ID of new competition
         
+        val testJsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+        val testCompetitionID = testJsonResponse["ID"]?.jsonPrimitive?.content?.toInt() 
+
+        DatabaseService().deleteCompetition(testCompetitionID!!)
     }
 
     @Test
@@ -146,21 +215,37 @@ class ActivityRoutesTest {
     }
 
     @Test
-    fun updateCompetition_boundaryField() = testApplication { // Boundary Case: test for when a field has a bounary value (i.e. rank = 1)
+    fun updateCompetition_valid() = testApplication {
         application { module() }
 
-        val response = client.put("/api/competitions/1") { // Form HTTP request with bounary value for "rank"
+        val response = client.put("/api/competitions/${competitionID!!}") {
             contentType(ContentType.Application.Json)
             setBody("""
                 {
-                    "userID": ${userID!!},
+                    "name": "Updated Test Competition",
+                    "date": "2028-01-01",
+                    "rank": 2
+                }
+            """.trimIndent())
+        }
+        assertEquals(HttpStatusCode.OK, response.status)
+    }
+
+    @Test
+    fun updateCompetition_boundaryField() = testApplication { // Boundary Case: test for when a field has a bounary value (i.e. rank = 1)
+        application { module() }
+
+        val response = client.put("/api/competitions/${competitionID!!}") { // Form HTTP request with bounary value for "rank"
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
                     "name": "Updated Competition",
                     "date": "2026-01-01",
                     "rank": 1
                 }
             """.trimIndent())
         }
-        assertTrue(response.status == HttpStatusCode.OK || response.status == HttpStatusCode.NotFound) // Expect response to be OK or NotFound (if target competition doesn't exist)
+        assertEquals(response.status, HttpStatusCode.OK)
     }
 
     // ===========================
@@ -175,7 +260,7 @@ class ActivityRoutesTest {
             contentType(ContentType.Application.Json)
             setBody("""
                 {
-                    "userID": 1,
+                    "userID": ${userID!!},
                     "name": "Hyde Park Loop",
                     "distance": 5.6,
                     "date": "2026-05-10",
@@ -184,7 +269,12 @@ class ActivityRoutesTest {
                 }
             """.trimIndent())
         }
-        response.debug()
+
+        val testJsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+        val testRouteID = testJsonResponse["ID"]?.jsonPrimitive?.content?.toInt() 
+
+        testRouteID?.let { DatabaseService().deleteRoute(it) }
+
         assertEquals(HttpStatusCode.OK, response.status) // Expect response to contain OK status code, as valid request was made
         assertTrue(response.bodyAsText().contains("ID")) // Expect response to contain the routeID of the newly made route
         
@@ -211,7 +301,7 @@ class ActivityRoutesTest {
     fun updateRoute_valid() = testApplication { // Normal Case: test behaviour when correct usage of updateRoute endpoint is used
         application { module() }
 
-        val response = client.put("/api/routes/1") { // Form valid HTTP request for updating route
+        val response = client.put("/api/routes/${routeID!!}") { // Form valid HTTP request for updating route
             contentType(ContentType.Application.Json)
             setBody("""
                 {
@@ -222,7 +312,6 @@ class ActivityRoutesTest {
                 }
             """.trimIndent())
         }
-        response.debug()
         assertTrue(response.status == HttpStatusCode.OK || response.status == HttpStatusCode.NotFound || response.status == HttpStatusCode.BadRequest) // Expect resposne to contain OK status code, or NotFound (if target route doesn't exist)
         
     }
@@ -231,7 +320,7 @@ class ActivityRoutesTest {
     fun updateRoute_invalidJSON() = testApplication { // Erroneous Case: test behaviour when wrong type is provided as an argument in HTTP request (i.e. invalid JSON)
         application { module() }
 
-        val response = client.put("/api/routes/1") { // Form HTTP request where argument for sitance is provided in wrong form (i.e. string provided, when double expected)
+        val response = client.put("/api/routes/${routeID!!}") { // Form HTTP request where argument for sitance is provided in wrong form (i.e. string provided, when double expected)
             contentType(ContentType.Application.Json)
             setBody("""{"distance": "not-number"}""")
         }
@@ -261,32 +350,12 @@ class ActivityRoutesTest {
         assertEquals(HttpStatusCode.BadRequest, response.status) // Expect HTTP response to contain BadRequest, as invalid userID was provided in request
     }
 
-    @Test
-    fun debug_workout() = testApplication {
-        application { module() }
-        val response = client.post("/api/workouts"){
-            contentType(ContentType.Application.Json)
-            setBody("""
-                {
-                    "createdBy": ${userID!!},
-                    "assignedTo": ${userID!!},
-                    "date": "2026-05-01",
-                    "duration": 45
-                }
-            """.trimIndent())
-        }
-        println("STATUS = ${response.status}")
-        println("BODY = ${response.bodyAsText()}")
-    }
-
     @AfterTest
     fun cleanup() {
         DatabaseService().deleteUser("TestingEmail@email.com")
-    }
-
-    private suspend fun HttpResponse.debug() {
-        println("STATUS = ${status}")
-        println("BODY = ${bodyAsText()}")
+        workoutID?.let { DatabaseService().deleteWorkout(it) }
+        competitionID?.let { DatabaseService().deleteCompetition(it) }
+        routeID?.let { DatabaseService().deleteRoute(it) }
     }
 
 }
