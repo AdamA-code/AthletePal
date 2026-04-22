@@ -13,6 +13,7 @@ import models.UpdateWorkoutRequest
 import models.UpdateCompetitionRequest
 import models.UpdateWorkoutExerciseRequest
 import models.WorkoutExerciseResponse
+import models.LogWorkoutRequest
 
 import models.Activity
 import services.DatabaseService.Competition as Competition
@@ -27,6 +28,51 @@ fun Route.activityRoutes(){
     val db = DatabaseService() // Import service responsible for following requests
 
     route("/api") {
+
+        // =====================
+        // WORKOUT LOGGING
+        // =====================
+
+        post("/log/workout") {
+            try {
+                val body = call.receive<LogWorkoutRequest>()
+                val workout: Workout = body.workout
+                val exercises: List<WorkoutExercise> = body.exercises
+
+                val id = db.logWorkout(workout, exercises)
+
+                if (id != -1) {
+                    call.respond(HttpStatusCode.OK, mapOf("ID" to id))
+                }
+                else if (id == -1) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("message" to "Workout logging failed"))
+                }
+            }
+            catch (e: Exception) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
+            }
+        }
+
+        put("/log/workout") {
+            try {
+                val body = call.receive<LogWorkoutRequest>()
+
+                val workout: Workout = body.workout
+                val exercises: List<WorkoutExercise> = body.exercises
+
+                val updated = db.updateLoggedWorkout(workout, exercises)
+
+                if (updated) {
+                    call.respond(HttpStatusCode.OK, mapOf("message" to "Logged Workout Updated"))
+                }
+                else if (!updated) {
+                    call.respond(HttpStatusCode.NotFound, mapOf("message" to "Workout Not Found"))
+                }
+            }
+            catch (e: Exception) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
+            }
+        }
 
         // =====================
         // ACTIVITY
