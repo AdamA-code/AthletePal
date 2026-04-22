@@ -116,8 +116,8 @@ class ActivityRoutesTest {
         val testJsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
         val testWorkoutID = testJsonResponse["ID"]?.jsonPrimitive?.content?.toInt()
 
-        DatabaseService().deleteAllExercisesInWorkout(testWorkoutID) // Delete all test exercises made to database
-        DatabaseService().deleteWorkout(testWorkoutID) // Delete test workout made to database
+        DatabaseService().deleteAllExercisesInWorkout(testWorkoutID!!) // Delete all test exercises made to database
+        DatabaseService().deleteWorkout(testWorkoutID!!) // Delete test workout made to database
 
     }
 
@@ -154,8 +154,8 @@ class ActivityRoutesTest {
         val testJsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
         val testWorkoutID = testJsonResponse["ID"]?.jsonPrimitive?.content?.toInt()
 
-        DatabaseService().deleteAllExercisesInWorkout(testWorkoutID) // Delete all test exercises made to database
-        DatabaseService().deleteWorkout(testWorkoutID) // Delete test workout made to database
+        DatabaseService().deleteAllExercisesInWorkout(testWorkoutID!!) // Delete all test exercises made to database
+        DatabaseService().deleteWorkout(testWorkoutID!!) // Delete test workout made to database
 
     }
 
