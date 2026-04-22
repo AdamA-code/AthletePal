@@ -155,7 +155,7 @@ fun Route.activityRoutes(){
         }
 
         // Add new workout to user account
-        post("/workouts"){
+        post("/workout"){
             try {
                 val workout = call.receive<Workout>()
                 val id = db.createWorkout(workout)
@@ -174,7 +174,7 @@ fun Route.activityRoutes(){
         }
 
         // Update specific workout on user account
-        put("/workouts/{workoutID}"){
+        put("/workout/{workoutID}"){
             try {
                 val id = call.parameters["workoutID"]!!.toInt()
                 val body = call.receive<UpdateWorkoutRequest>()
@@ -194,7 +194,7 @@ fun Route.activityRoutes(){
         }
 
         // Delete a specific workout from user account
-        delete("/workouts/{workoutID}"){
+        delete("/workout/{workoutID}"){
             try {
                 val id = call.parameters["workoutID"]!!.toInt()
 
@@ -217,7 +217,7 @@ fun Route.activityRoutes(){
         // =====================
 
         // Add an exercise to a existing workout
-        post("/workout/add-exercise"){
+        post("/workout/exercises/add-exercise"){
             try {
                 val workoutExercise = call.receive<WorkoutExercise>()
                 val id = db.addExerciseToWorkout(workoutExercise)
@@ -231,6 +231,7 @@ fun Route.activityRoutes(){
                 }
             }
             catch (e: Exception) {
+                e.printStackTrace()
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
         }
@@ -241,7 +242,7 @@ fun Route.activityRoutes(){
                 val id = call.parameters["workoutID"]!!.toInt()
                 val workoutExercises = db.findAllWorkoutExercises(id)
 
-                if (workoutExercises.isNullOrEmpty() == false) {
+                if (!workoutExercises.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.OK, workoutExercises.map { exercise ->
                         WorkoutExerciseResponse(
                             exerciseID = exercise.exerciseID,
@@ -251,7 +252,7 @@ fun Route.activityRoutes(){
                     )})
                 }
                 else {
-                    call.respond(HttpStatusCode.NotFound, mapOf("message" to "Workout not found"))
+                    call.respond(HttpStatusCode.NotFound, mapOf("message" to "No exercises found"))
                 }
 
             }
@@ -282,7 +283,7 @@ fun Route.activityRoutes(){
         }
 
         // Update an exercise in a given workout
-        put("/workout/{exerciseWorkoutID}") {
+        put("/workout/exercise/{exerciseWorkoutID}") {
             try {
                 val id = call.parameters["exerciseWorkoutID"]!!.toInt()
                 val body = call.receive<UpdateWorkoutExerciseRequest>()
@@ -302,8 +303,28 @@ fun Route.activityRoutes(){
             }
         }
 
+        // Delete ALL exercises from a workout (i.e. reset workout)
+        delete("/workout/exercises/{workoutID}") {
+            try {
+                val id = call.parameters["workoutID"]!!.toInt()
+
+                val deleted = db.deleteAllExercisesInWorkout(id)
+
+                if (deleted) {
+                    call.respond(HttpStatusCode.OK, mapOf("message" to "All exercises deleted"))
+                }
+                else if (!deleted) {
+                    call.respond(HttpStatusCode.NotFound, mapOf("message" to "Workout not found"))
+                }
+            }
+            catch (e: Exception) {
+                e.printStackTrace()
+                call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
+            }
+        }
+
         // Delete an exercise from a workout
-        delete("/workout/{exerciseWorkoutID}") {
+        delete("/workout/exercise/{exerciseWorkoutID}") {
             try {
                 val id = call.parameters["exerciseWorkoutID"]!!.toInt()
 
@@ -381,7 +402,7 @@ fun Route.activityRoutes(){
         }
 
         // Add new competition to user account
-        post("/competitions"){
+        post("/competition"){
             try {
                 val comp = call.receive<Competition>()
                 val id = db.addComp(comp)
@@ -400,7 +421,7 @@ fun Route.activityRoutes(){
         }
 
         // Update a given competition on the users account
-        put("/competitions/{competitionID}"){
+        put("/competition/{competitionID}"){
             try {
                 val id = call.parameters["competitionID"]!!.toIntOrNull() ?: return@put call.respond(HttpStatusCode.BadRequest)
                 val body = call.receive<UpdateCompetitionRequest>()
@@ -420,7 +441,7 @@ fun Route.activityRoutes(){
         }
 
         // Delete a given competition from the users account
-        delete("/competitions/{competitionID}"){
+        delete("/competition/{competitionID}"){
             try {
                 val id = call.parameters["competitionID"]!!.toInt()
 
@@ -497,7 +518,7 @@ fun Route.activityRoutes(){
         }
 
         // Add a route to the user account
-        post("/routes"){
+        post("/route"){
             try {
                 val route = call.receive<RunningRoute>()
                 val id = db.addRoute(route)
@@ -516,7 +537,7 @@ fun Route.activityRoutes(){
         }
 
         // Update a given route on the users account
-        put("/routes/{routeID}") {
+        put("/route/{routeID}") {
             try {
                 val id = call.parameters["routeID"]!!.toInt()
                 val body = call.receive<RunningRoute>()
@@ -544,7 +565,7 @@ fun Route.activityRoutes(){
         }
 
         // Delete a specific route from the users account
-        delete("/routes/{routeID}") {
+        delete("/route/{routeID}") {
             try {
                 val id = call.parameters["routeID"]!!.toInt()
                 val deleted = db.deleteRoute(id)
