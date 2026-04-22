@@ -102,12 +102,12 @@ fun Route.socialRoutes() {
         get("/groups/{userID}") {
             try {
                 val userID: Int = call.parameters["userID"]!!.toInt()
-                val trainingGroups: List<TrainingGroups> = db.findAllGroups(userID)
+                val trainingGroups: List<TrainingGroup> = db.findAllGroups(userID)
 
-                if (!trainingGroups.isEmptyOrNull()) {
+                if (!trainingGroups.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.OK, mapOf("Training Groups" to trainingGroups))
                 }
-                else if (trainingGroups.isEmptyOrNull()) {
+                else if (trainingGroups.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "No training groups found for user"))
                 }
             }
@@ -162,10 +162,10 @@ fun Route.socialRoutes() {
                 val groupID: Int = call.parameters["groupID"]!!.toInt()
                 val groupMembers: List<User> = db.getGroupMembers(groupID)
 
-                if (!groupMembers.isEmptyOrNull()) {
+                if (!groupMembers.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.OK, mapOf("Group Members" to groupMembers))
                 }
-                else if (groupMembers.isEmptyOrNull()) {
+                else if (groupMembers.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "No group members found"))
                 }
             }
@@ -203,10 +203,10 @@ fun Route.socialRoutes() {
                 val groupID: Int = call.parameters["groupID"]!!.toInt()
                 val upcomingSessions: List<GroupSession> = db.getUpcomingGroupSessions(groupID)
 
-                if (!upcomingSessions.isEmptyOrNull()) {
+                if (!upcomingSessions.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.OK, mapOf("Upcoming Sessions" to upcomingSessions))
                 }
-                else if (upcomingSessions.isEmptyOrNull()) {
+                else if (upcomingSessions.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "No upcoming sessions found for group"))
                 }
             }
@@ -221,10 +221,10 @@ fun Route.socialRoutes() {
                 val groupID: Int = call.parameters["groupID"]!!.toInt()
                 val pastSessions: List<GroupSession> = db.getPastGroupSessions(groupID)
 
-                if (!pastSessions.isEmptyOrNull()) {
+                if (!pastSessions.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.OK, mapOf("Past Sessions" to pastSessions))
                 }
-                else if (pastSessions.isEmptyOrNull()) {
+                else if (pastSessions.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "No past sessions found for group"))
                 }
             }
