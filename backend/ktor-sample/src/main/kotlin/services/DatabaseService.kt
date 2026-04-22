@@ -51,7 +51,7 @@ class DatabaseService{
     @Serializable
     data class WorkoutExercise(
         val workoutExercisesID: Int = 0,
-        val workoutID: Int,
+        val workoutID: Int = 0, // Still a required field for adding workout exercise to workout
         val exerciseID: Int,
         val sets: Int? = 0,
         val reps: Int? = 0,
@@ -2110,6 +2110,7 @@ class DatabaseService{
             db.connection.commit()
             return workoutID
         } catch (error: Exception) { // If any error undo everything
+            error.printStackTrace()
             db.connection.rollback()
             return -1
         } finally {
