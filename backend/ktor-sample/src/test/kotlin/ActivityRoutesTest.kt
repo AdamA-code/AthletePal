@@ -33,6 +33,7 @@ class ActivityRoutesTest {
     var competitionID: Int? = null
     var routeID: Int? = null
     var workoutExerciseID: Int? = null
+    var loggedWorkoutID: Int? = null
 
     @BeforeTest
     fun setup() = testApplication {
@@ -81,7 +82,227 @@ class ActivityRoutesTest {
             weight = 30.5
         )
         workoutExerciseID = DatabaseService().addExerciseToWorkout(workoutExercise)
+
+        val exercises: List<WorkoutExercise> = listOf(workoutExercise, workoutExercise) 
+        loggedWorkoutID = DatabaseService().logWorkout(workout, exercises)
     }
+
+    // ===============================
+    // WORKOUT LOGGING ROUTES TESTING
+    // ===============================
+
+    // 'Happy case' as the HTTP request is valid, we expect the workout to be made, and all exercises associated with it
+    @Test
+    fun logWorkout_valid() = testApplication {
+        application { module() }
+
+        val response = client.post("/api/log/workout") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    workout: {"createdBy": ${userID!!},
+                        "assignedTo": ${userID!!},
+                        "date": "2026-01-01",
+                        "duration": 60,
+                        "workoutType": "Weight Training",
+                        "notes": "TEST WORKOUT"},
+                    exercises: [{"exerciseID": 2, "sets": 3, "reps": 10, "weight": 45.0},
+                        {"exerciseID": 4, "sets": 2, "reps": 8, "weight": 50.5}]
+                }
+            """.trimIndent()) // HTTP request for making a workout containing two exercises, with all optional fields included
+        }
+        assertEquals(HttpStatusCode.OK, response.status) // Expect HTTP OK code return, as HTTP request is valid
+
+        val testJsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+        val testWorkoutID = testJsonResponse["ID"]?.jsonPrimitive?.content?.toInt()
+
+        DatabaseService().deleteAllExercisesInWorkout(testWorkoutID) // Delete all test exercises made to database
+        DatabaseService().deleteWorkout(testWorkoutID) // Delete test workout made to database
+
+    }
+
+    // 'Fail case' as we expect a fail with status code BadRequest, as HTTP body does not match expected structure and thus isn't serialisable
+    @Test
+    fun logWorkout_badJSON() = testApplication {
+        application { module() }
+
+        val response = client.post("/api/log/workout") {
+            contentType(ContentType.Application.Json)
+            setBody("VERY BAD JSON BODY") // Incorrect JSON passed for HTTP request body, not serialisable
+        }
+        assertEquals(HttpStatusCode.BadRequest, response.status) // Expect BadRequest status code, as exception is thrown in ActivityRoutes
+    }
+
+    @Test
+    fun logWorkout_missingOptionalFields() = testApplication {
+        application { module() }
+
+        val response = client.post("/api/log/workout") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    workout: {"createdBy": ${userID!!},
+                        "assignedTo": ${userID!!},
+                        "date": "2026-01-01"},
+                    exercises: [{"exerciseID": 2},
+                        {"exerciseID": 4}]
+                }
+            """.trimIndent()) // Only required fields are parse in HTTP request body (i.e. createdBy, assignedTo, date, exerciseID)
+        }
+        assertEquals(HttpStatusCode.OK, response.status) // Expect OK status code, as we still log workout as we have all required fields
+
+        val testJsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+        val testWorkoutID = testJsonResponse["ID"]?.jsonPrimitive?.content?.toInt()
+
+        DatabaseService().deleteAllExercisesInWorkout(testWorkoutID) // Delete all test exercises made to database
+        DatabaseService().deleteWorkout(testWorkoutID) // Delete test workout made to database
+
+    }
+
+    // 'Fail case' as we do not expect workout to be logged, as we do not parse required fields for workout/workoutExercise creation
+    @Test
+    fun logWorkout_missingRequiredFields() = testApplication {
+        application { module() }
+
+        val response = client.post("/api/log/workout") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    workout: {"duration": 60,
+                        "workoutType": "Weight Training",
+                        "notes": "TEST WORKOUT"},
+                    exercises: [{"sets": 3, "reps": 10, "weight": 45.0},
+                        {"sets": 2, "reps": 8, "weight": 50.5}]
+                }
+            """.trimIndent()) // Bad HTTP request body, as we only parse optional fields but not required (i.e. createdBy, assignedTo, date, exerciseID)
+        }
+        assertEquals(HttpStatusCode.BadRequest, response.status) // Expect BadRequest status code returned, as we cannot create workout or workoutExercise(s)
+    }
+
+    // 'Happy case' as we expect the logged workout to be updated, as we parse the respective workoutID and all required fields in correct JSON
+    @Test
+    fun updateLoggedWorkout_valid() = testApplication {
+        application { module() }
+
+        val response = client.put("/api/log/workout") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    workout: {"workoutID": ${loggedWorkoutID!!},
+                        "createdBy": ${userID!!},
+                        "assignedTo": ${userID!!},
+                        "date": "2027-01-01",
+                        "duration": 60,
+                        "workoutType": "Traditional Weight Training",
+                        "notes": "Test Workout"},
+                    exercises: [{"exerciseID": 4, "sets": 4, "reps": 15, "weight": 50.25},
+                        {"exerciseID": 6, "sets": 2, "reps": 8, "weight": 20.5}]
+                }
+            """.trimIndent()) // Valid HTTP request body for updating a logged workout under given workoutID
+        }
+        assertEquals(HttpStatusCode.OK, response.status) // Expect OK HTTP status, as we give all required fields so workout should be updated
+    }
+
+    // 'Fail case' as we provide it with a incorrect workoutID, so backend cannot find the target workout to update and throws error
+    @Test
+    fun updateLoggedWorkout_invalidWorkoutID() = testApplication {
+        application { module() }
+
+        val response = client.put("/api/log/workout") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    workout: {"workoutID": 999999999,
+                        "createdBy": ${userID!!},
+                        "assignedTo": ${userID!!},
+                        "date": "2027-01-01",
+                        "duration": 60,
+                        "workoutType": "Traditional Weight Training",
+                        "notes": "Test Workout"},
+                    exercises: [{"exerciseID": 4, "sets": 4, "reps": 15, "weight": 50.25},
+                        {"exerciseID": 6, "sets": 2, "reps": 8, "weight": 20.5}]
+                }
+            """.trimIndent()) // workoutID: 999999999 does not correspond to any existing workout
+        }
+        assertEquals(HttpStatusCode.NotFound, response.status) // Expect NotFound status code as program cannot identify target workout
+    }
+
+    // 'Fail case' as HTTP request body not in correct strucutre/format so cannot be JSON serialised
+    @Test
+    fun updateLoggedWorkout_badJSON() = testApplication {
+        application { module() }
+
+        val response = client.put("/api/log/workout") {
+            contentType(ContentType.Application.Json)
+            setBody("VERY BAD JSON BODY") // Body is in bad JSON format so will not be serialised by kotlinx serialisation import
+        }
+        assertEquals(HttpStatusCode.BadRequest, response.status) // Expect BadRequest status code as error thrown upon serialisation attempt
+    }
+
+    // 'Fail case' as we do not provide required values in HTTP body required for updating logged workout
+    @Test
+    fun updateLoggedWorkout_missingRequiredFields() = testApplication {
+        application { module() }
+
+        val response = client.put("/api/log/workout") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    workout: {"duration": 60,
+                        "workoutType": "Traditional Weight Training",
+                        "notes": "Test Workout"},
+                    exercises: [{"sets": 4, "reps": 15, "weight": 50.25},
+                        {"sets": 2, "reps": 8, "weight": 20.5}]
+                }
+            """.trimIndent()) // HTTP request body doesnt provide required fields (i.e. workoutID, createdBy, assignedTo, date, exerciseID)
+        }
+        assertEquals(HttpStatusCode.BadRequest, response.status) // Expect BadRequest status code as we do not provide required values
+    }
+
+    // 'Happy case' as we provide all required values, and optional fields do not impact updating logged workout
+    @Test
+    fun updateLoggedWorkout_missingOptionalFields() = testApplication {
+        application { module() }
+
+        val response = client.put("/api/log/workout") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    workout: {"workoutID": ${workoutID!!},
+                        "createdBy": ${userID!!},
+                        "assignedTo": ${userID!!},
+                        "date": "2027-01-01"},
+                    exercises: [{"exerciseID": 4},
+                        {"exerciseID": 6}]
+                }
+            """.trimIndent()) // HTTP request body contains all required fields for workout and exercises
+        }
+        assertEquals(HttpStatusCode.OK, response.status) // Expect OK status code as logged workout can be updated with only required fields
+    }
+
+    // 'Happy case' as we allow creation and login of a workout without any exercises
+    @Test
+    fun updateLoggedWorkout_emptyExercisesList() = testApplication {
+        application { module() }
+
+        val response = client.put("/api/log/workout") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    workout: {"workoutID": ${workoutID!!},
+                        "createdBy": ${userID!!},
+                        "assignedTo": ${userID!!},
+                        "date": "2027-01-01",
+                        "duration": 60,
+                        "workoutType": "Traditional Weight Training",
+                        "notes": "Test Workout"},
+                    exercises: []
+                }
+            """.trimIndent()) // Valid HTTP request with exercises list being empty (i.e. no WorkoutExercises provided)
+        }
+        assertEquals(HttpStatusCode.OK, response.status) // Expect OK status code returned as logged workout updated to contain no exercises successfully
+    }
+
 
     // ===========================
     // WORKOUT ROUTES TESTING
@@ -659,7 +880,9 @@ class ActivityRoutesTest {
         workoutID?.let { DatabaseService().deleteWorkout(it) }
         competitionID?.let { DatabaseService().deleteCompetition(it) }
         routeID?.let { DatabaseService().deleteRoute(it) }
-        try { workoutExerciseID!!.let { DatabaseService().deleteWorkoutExercise(it) } } catch(e: Exception) {}
+        workoutExerciseID!!?.let { DatabaseService().deleteWorkoutExercise(it) }
+        loggedWorkoutID!!?.let { DatabaseService().deleteAllExercisesInWorkout(it) }
+        loggedWorkoutID!!?.let { DatabaseService().deleteWorkout(it) }
     }
 
 }
