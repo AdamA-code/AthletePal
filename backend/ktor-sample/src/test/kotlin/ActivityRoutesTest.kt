@@ -15,6 +15,7 @@ import com.example.module
 import services.DatabaseService.Workout as Workout
 import services.DatabaseService.Competition as Competition
 import services.DatabaseService.Route as RunningRoute
+import services.DatabaseService.WorkoutExercise as WorkoutExercise
 
 import services.AuthService
 import services.DatabaseService
@@ -31,6 +32,7 @@ class ActivityRoutesTest {
     var workoutID: Int? = null
     var competitionID: Int? = null
     var routeID: Int? = null
+    var workoutExerciseID: Int? = null
 
     @BeforeTest
     fun setup() = testApplication {
@@ -69,6 +71,16 @@ class ActivityRoutesTest {
             routeData = "Test Route Data"
         )
         routeID = DatabaseService().addRoute(runningRoute)
+
+        // Create Test WORKOUT EXERCISE
+        val workoutExercise = WorkoutExercise(
+            workoutID = workoutID!!,
+            exerciseID = 2,
+            sets = 3,
+            reps =  8,
+            weight = 30.5
+        )
+        workoutExerciseID = DatabaseService().addExerciseToWorkout(workoutExercise)
     }
 
     // ===========================
@@ -80,7 +92,7 @@ class ActivityRoutesTest {
     fun createWorkout_valid() = testApplication { // Normal Case = testing normal behaviour for creating new workout
         application { module() }
 
-        val response = client.post("/api/workouts") { // Form HTTP request and send to endpoint
+        val response = client.post("/api/workout") { // Form HTTP request and send to endpoint
             contentType(ContentType.Application.Json)
             setBody("""
                 {
@@ -106,7 +118,7 @@ class ActivityRoutesTest {
     fun createWorkout_missingField() = testApplication { // Erroneous Case: testing behaviour when a field is missing
         application { module() }
 
-        val response = client.post("/api/workouts") { // Form HTTP request with no userID, date, or duration and send to endpoint
+        val response = client.post("/api/workout") { // Form HTTP request with no userID, date, or duration and send to endpoint
             contentType(ContentType.Application.Json)
             setBody("""{ "name": "Bad Workout"}""")
         }
@@ -117,7 +129,7 @@ class ActivityRoutesTest {
     fun updateWorkout_valid() = testApplication {
         application { module() }
 
-        val response = client.put("/api/workouts/${workoutID!!}") {
+        val response = client.put("/api/workout/${workoutID!!}") {
             contentType(ContentType.Application.Json)
             setBody("""
                 {
@@ -132,7 +144,7 @@ class ActivityRoutesTest {
     fun updateWorkout_nullOptionalField() = testApplication { // Normal Case: testing behaviour when an optional field is left blank
         application { module() }
 
-        val response = client.put("/api/workouts/${workoutID!!}") { // Form PUT HTTP request with missing optional field
+        val response = client.put("/api/workout/${workoutID!!}") { // Form PUT HTTP request with missing optional field
             contentType(ContentType.Application.Json)
             setBody("""
                 {
@@ -172,6 +184,297 @@ class ActivityRoutesTest {
         assertTrue(response.status == HttpStatusCode.NotFound || response.status == HttpStatusCode.BadRequest) // Response should either be NotFound (if negative ID allowed) or BadRequest
     }
 
+    // ================================
+    // WORKOUT EXERCISE ROUTES TESTING
+    // ================================
+
+    // 'Happy Case' where we successfully add a exercise to a predefined workout
+    @Test
+    fun addExerciseToWorkout_valid() = testApplication {
+        application { module() }
+
+        val response = client.post("/api/workout/exercises/add-exercise") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    "workoutID": ${workoutID!!},
+                    "exerciseID": 2,
+                    "sets": 3,
+                    "reps": 10,
+                    "weight": 50.5
+                }
+            """.trimIndent())
+        }
+
+        assertEquals(HttpStatusCode.OK, response.status) // Expect OK HTTP code to be returned, indicating exercise added
+
+        val testJsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+        val testWorkoutExerciseID = testJsonResponse["ID"]?.jsonPrimitive?.content?.toInt()
+        DatabaseService().deleteWorkoutExercise(testWorkoutExerciseID!!) // Delete exercise added to workout in test, so not to have impact on real db
+    }
+
+    // Fail case where we reject the request, as not JSON serialisable due to wrong body formatting
+    @Test
+    fun addExerciseToWorkout_invalidJSON() = testApplication {
+        application { module() }
+
+        val response = client.post("/api/workout/exercises/add-exercise") {
+            contentType(ContentType.Application.Json)
+            setBody(" INVALID JSON REQUEST") // Body does not follow expected structure, and hence not JSON serialisable
+        }
+        assertEquals(HttpStatusCode.BadRequest, response.status) // Expect BadRequest returned, indicating an exception thrown and exercise not added
+    }
+
+    // Fail case where we expect rejection due to non-existant workoutID being parsed
+    @Test
+    fun addExerciseToWorkout_invalidWorkoutID() = testApplication {
+        application { module() }
+
+        val response = client.post("/api/workout/exercises/add-exercise") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    "workoutID": 99999999,
+                    "exerciseID": 2,
+                    "sets": 1,
+                    "reps": 1,
+                    "weight": 10.0
+                }
+            """.trimIndent()) // Body of request valid, so as not to test two failures
+        }
+        assertEquals(HttpStatusCode.BadRequest, response.status) // Expect BadRequest HTTP code being returned, due to non-existant workoutID parsed
+    }
+
+    // Happy case, as we omit fields which aren't strictly requeired in the HTTP request
+    @Test
+    fun addExerciseToWorkout_nullOptionalFields() = testApplication {
+        application { module() }
+
+        val response = client.post("/api/workout/exercises/add-exercise") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    "workoutID": ${workoutID!!},
+                    "exerciseID": 2
+                }
+            """.trimIndent()) // We omit sets, reps, and weight fields from HTTP request, as all are optional
+        }
+        assertEquals(HttpStatusCode.OK, response.status) // Expect OK HTTP code returned, as exercise can still be created
+    }
+
+    // Fail case as we do not provide required fields for creating a exercise
+    @Test
+    fun addExerciseToWorkout_nullRequiredFields() = testApplication {
+        application { module() }
+
+        val response = client.post("/api/workout/exercises/add-exercise") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    "sets": 3,
+                    "reps": 5,
+                    "weight": 5.5
+                }
+            """.trimIndent()) // We do not provide workoutID, or exerciseID which are both required fields
+        }
+        assertEquals(HttpStatusCode.BadRequest, response.status) // Expect BadRequest code returned, as required fields not provided
+    }
+
+    @Test
+    fun getAllExercisesFromWorkout_valid() = testApplication {
+        application { module() }
+
+        val response = client.get("/api/workout/exercises/${workoutID!!}")
+
+        assertEquals(HttpStatusCode.OK, response.status)
+    }
+
+    @Test
+    fun getAllExercisesFromWorkout_invalidWorkoutID() = testApplication {
+        application { module() }
+
+        val response = client.get("/api/workout/exercises/9999999")
+
+        assertEquals(HttpStatusCode.NotFound, response.status)
+    }
+
+    @Test
+    fun getAllExercisesFromWorkout_badJSON() = testApplication {
+        application { module() }
+
+        val response = client.get("/api/workout/exercises/abcdef")
+
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+    }
+
+    @Test
+    fun getWorkoutExercise_valid() = testApplication {
+        application { module() }
+
+        val response = client.get("/api/workout/exercise/${workoutExerciseID!!}")
+
+        assertEquals(HttpStatusCode.OK, response.status)
+    }
+
+    @Test
+    fun getWorkoutExercise_invalidWorkoutExerciseID() = testApplication {
+        application { module() }
+
+        val response = client.get("/api/workout/exercise/99999594")
+
+        assertEquals(HttpStatusCode.NotFound, response.status)
+    }
+
+    @Test
+    fun getWorkoutExercise_badJSON() = testApplication {
+        application { module() }
+
+        val response = client.get("/api/workout/exercise/abc")
+
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+    }
+
+    @Test
+    fun updateWorkoutExercise_valid() = testApplication {
+        application { module() }
+
+        val response = client.put("/api/workout/exercise/${workoutExerciseID!!}") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    "sets": 2,
+                    "reps": 15,
+                    "weight": 60.25
+                }
+            """.trimIndent())
+        }
+        assertEquals(HttpStatusCode.OK, response.status)
+    }
+
+    @Test
+    fun updateWorkoutExercise_invalidWorkoutExerciseID() = testApplication {
+        application { module() }
+
+        val response = client.put("/api/workout/exercise/99999999") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    "sets": 2,
+                    "reps": 15,
+                    "weight": 60.25
+                }
+            """.trimIndent())
+        }
+        assertEquals(HttpStatusCode.NotFound, response.status)
+    }
+
+    @Test
+    fun updateWorkoutExercise_missingRequiredFields() = testApplication {
+        application { module() }
+
+        val response = client.put("/api/workout/exercise/${workoutExerciseID!!}") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    "sets": 2
+                }
+            """.trimIndent()) // All fields are required (sets, reps, weight) so missing fields are reps, weight
+        }
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+    }
+
+    @Test
+    fun updateWorkoutExercise_badJSONBody() = testApplication {
+        application { module() }
+
+        val response = client.put("/api/workout/exercise/${workoutExerciseID!!}") {
+            contentType(ContentType.Application.Json)
+            setBody("BAD JSON BODY")
+        }
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+    }
+
+    @Test
+    fun updateWorkoutExercise_badJSONID() = testApplication {
+        application { module() }
+
+        val response = client.put("/api/workout/exercise/abcdef") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    "sets": 4,
+                    "reps": 10,
+                    "weight": 0.0
+                }
+            """.trimIndent())
+        }
+    }
+
+    @Test
+    fun deleteSpecificWorkoutExercise_valid() = testApplication {
+        application { module() }
+
+        val response = client.delete("/api/workout/exercise/${workoutExerciseID!!}")
+
+        assertEquals(HttpStatusCode.OK, response.status)
+    }
+
+    @Test
+    fun deleteSpecificWorkoutExercise_invalidWorkoutExerciseID() = testApplication {
+        application { module() }
+
+        val response = client.delete("/api/workout/exercise/9999999")
+
+        assertEquals(HttpStatusCode.NotFound, response.status)
+    }
+
+    @Test
+    fun deleteSpecificWorkoutExercise_badJSON() = testApplication {
+        application { module() }
+
+        val response = client.delete("/api/workout/exercise/abc")
+
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+    }
+
+    @Test
+    fun deleteAllWorkoutExercises_valid() = testApplication {
+        application { module() }
+
+        val workoutExercise = WorkoutExercise(
+            workoutID = workoutID!!,
+            exerciseID = 2,
+            sets = 3,
+            reps =  8,
+            weight = 30.5
+        )
+
+        DatabaseService().addExerciseToWorkout(workoutExercise)
+        DatabaseService().addExerciseToWorkout(workoutExercise)
+
+        val response = client.delete("/api/workout/exercises/${workoutID!!}")
+
+        assertEquals(HttpStatusCode.OK, response.status)
+    }
+
+    @Test
+    fun deleteAllWorkoutExercises_invalidWorkoutID() = testApplication {
+        application { module() }
+
+        val response = client.delete("/api/workout/exercises/999999999")
+
+        assertEquals(HttpStatusCode.NotFound, response.status)
+    }
+
+    @Test
+    fun deleteAllWorkoutExercises_badJSON() = testApplication {
+        application { module() }
+
+        val response = client.delete("/api/workout/exercises/abc")
+
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+    }
+
     // ===========================
     // COMPETITION ROUTES TESTING
     // ===========================
@@ -180,7 +483,7 @@ class ActivityRoutesTest {
     fun createCompetition_valid() = testApplication { // Normal Case: testing behaviour for creating competition, providing all neccessary fields
         application { module() }
 
-        val response = client.post("/api/competitions") { // Form POST HTTP request for valid creating of new competition
+        val response = client.post("/api/competition") { // Form POST HTTP request for valid creating of new competition
             contentType(ContentType.Application.Json)
             setBody("""
                 {
@@ -203,7 +506,7 @@ class ActivityRoutesTest {
     fun createCompetition_missingField() = testApplication { // Erroneous Case: test behaviour for missing fields in HTTP request for creating new competition
         application { module() }
 
-        val response = client.post("/api/competitions") { // Form HTTP request with missing required fields
+        val response = client.post("/api/competition") { // Form HTTP request with missing required fields
             contentType(ContentType.Application.Json)
             setBody("""
                 {
@@ -218,7 +521,7 @@ class ActivityRoutesTest {
     fun updateCompetition_valid() = testApplication {
         application { module() }
 
-        val response = client.put("/api/competitions/${competitionID!!}") {
+        val response = client.put("/api/competition/${competitionID!!}") {
             contentType(ContentType.Application.Json)
             setBody("""
                 {
@@ -235,7 +538,7 @@ class ActivityRoutesTest {
     fun updateCompetition_boundaryField() = testApplication { // Boundary Case: test for when a field has a bounary value (i.e. rank = 1)
         application { module() }
 
-        val response = client.put("/api/competitions/${competitionID!!}") { // Form HTTP request with bounary value for "rank"
+        val response = client.put("/api/competition/${competitionID!!}") { // Form HTTP request with bounary value for "rank"
             contentType(ContentType.Application.Json)
             setBody("""
                 {
@@ -256,7 +559,7 @@ class ActivityRoutesTest {
     fun createRoute_valid() = testApplication { // Normal Case: test behaviour for when HTTP request for valid route creation is made
         application { module() }
 
-        val response = client.post("/api/routes") { // Form HTTP request containing all correct values (i.e. valid request)
+        val response = client.post("/api/route") { // Form HTTP request containing all correct values (i.e. valid request)
             contentType(ContentType.Application.Json)
             setBody("""
                 {
@@ -284,7 +587,7 @@ class ActivityRoutesTest {
     fun createRoute_missingField() = testApplication { // Erroneous Case: test behaviour for create new route when missing fields are provided
         application { module() }
 
-        val response = client.post("/api/routes") { // Form HTTP request with missing required fields
+        val response = client.post("/api/route") { // Form HTTP request with missing required fields
             contentType(ContentType.Application.Json)
             setBody("""
                 {
@@ -301,7 +604,7 @@ class ActivityRoutesTest {
     fun updateRoute_valid() = testApplication { // Normal Case: test behaviour when correct usage of updateRoute endpoint is used
         application { module() }
 
-        val response = client.put("/api/routes/${routeID!!}") { // Form valid HTTP request for updating route
+        val response = client.put("/api/route/${routeID!!}") { // Form valid HTTP request for updating route
             contentType(ContentType.Application.Json)
             setBody("""
                 {
@@ -320,7 +623,7 @@ class ActivityRoutesTest {
     fun updateRoute_invalidJSON() = testApplication { // Erroneous Case: test behaviour when wrong type is provided as an argument in HTTP request (i.e. invalid JSON)
         application { module() }
 
-        val response = client.put("/api/routes/${routeID!!}") { // Form HTTP request where argument for sitance is provided in wrong form (i.e. string provided, when double expected)
+        val response = client.put("/api/route/${routeID!!}") { // Form HTTP request where argument for sitance is provided in wrong form (i.e. string provided, when double expected)
             contentType(ContentType.Application.Json)
             setBody("""{"distance": "not-number"}""")
         }
@@ -356,6 +659,7 @@ class ActivityRoutesTest {
         workoutID?.let { DatabaseService().deleteWorkout(it) }
         competitionID?.let { DatabaseService().deleteCompetition(it) }
         routeID?.let { DatabaseService().deleteRoute(it) }
+        try { workoutExerciseID!!.let { DatabaseService().deleteWorkoutExercise(it) } } catch(e: Exception) {}
     }
 
 }
