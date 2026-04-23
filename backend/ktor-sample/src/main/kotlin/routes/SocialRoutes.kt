@@ -128,7 +128,7 @@ fun Route.socialRoutes() {
                     call.respond(HttpStatusCode.OK, mapOf("message" to "User added to group"))
                 }
                 else if (!userAdded) {
-                    call.respond(HttpStatusCode.NotFound, mapOf("message" to "User OR Group not found"))
+                    call.respond(HttpStatusCode.NotFound, mapOf("message" to "Group not found"))
                 }
             }
             catch (e: Exception) {
