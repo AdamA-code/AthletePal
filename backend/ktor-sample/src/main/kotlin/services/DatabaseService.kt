@@ -113,8 +113,8 @@ class DatabaseService{
         val groupID: Int? = 0,
         val createdBy: Int,
         val name: String,
-        val description: String?,
-        val goal: String?
+        val description: String? = null,
+        val goal: String? = null
     )
 
     @Serializable

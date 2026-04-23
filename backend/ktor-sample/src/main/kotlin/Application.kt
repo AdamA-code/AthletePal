@@ -15,6 +15,8 @@ import routes.authRoutes
 import routes.activityRoutes
 // Import routing functions for retrival of statistics, and reporting new statistics
 import routes.statisticsRoutes
+// Import routing functions for CRUD operations for training groups and group sessions
+import routes.socialRoutes
 
 fun main() {
     embeddedServer(Netty, port = 3000) { // Server with Netty engine on port 3000
@@ -41,9 +43,11 @@ fun Application.module() { // Function for config. of Ktor app.
 
         authRoutes() // Add authRoutes to Ktor routing table
 
-        activityRoutes()
+        activityRoutes() // Add activityRoutes to Ktor routing table
 
-        statisticsRoutes()
+        statisticsRoutes() // Add statisticsRoutes to Ktor routing table
+
+        socialRoutes() // Add socialRoutes to Ktor routing table
 
     }
 }
