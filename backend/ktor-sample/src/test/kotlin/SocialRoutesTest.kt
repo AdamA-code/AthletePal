@@ -556,25 +556,86 @@ class SocialRoutesTest {
     // ==============================
     // CREATE SESSION ENDPOINT TESTS
     // ==============================
-    /*
+
     @Test
     fun createGroupSession_valid() = testApplication {
         application { module() }
+
+        // Valid HTTP request as all required and optional fields are given in body, in correct format and data type
+        val response = client.post("/social/session") {
+            contentType(ContentType.Application.Json) // Declare that body of request has content type of JSON (for serialisation)
+            setBody("""
+                {
+                    "groupID": ${groupID!!},
+                    "workoutID": ${loggedWorkoutID!!},
+                    "scheduledDate": "2026-01-01"
+                }
+            """.trimIndent())
+        }
+        
+        // Expect OK status code as we provide all fields required for backend to create new group session
+        assertEquals(HttpStatusCode.OK, response.status)
+
+        // Get ID corresponding to newly created test group session
+        val jsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+        val testGroupSessionID = jsonResponse["ID"]?.jsonPrimitive?.content?.toInt()
+
+        // Delete newly made test group session, so as to now have lasting effect on real db
+        DatabaseService().deleteGroupSession(testGroupSessionID!!)
     }
 
     @Test
     fun createGroupSession_invalidGroupID() = testApplication {
         application { module() }
+
+        // Technically valid HTTP request as all required fields (and optional) are given in correct data types, allowing for serialisation
+        val response = client.post("/social/session") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    "groupID": 99394949994,
+                    "workoutID": ${loggedWorkoutID!!},
+                    "scheduledDate": "2026-01-01"
+                }
+            """.trimIndent()) // Expect groupID is not valid (not actual group in db)
+        }
+
+        // Expect BadRequest status code, as groupID does not correspond to an actual group
+        assertEquals(HttpStatusCode.BadRequest, response.status)
     }
 
     @Test
     fun createGroupSession_invalidWorkoutID() = testApplication {
         application { module() }
+
+        // Technically valid HTTP request as all required fields are still given in correct type and format
+        val response = client.post("/social/session") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    "groupID": ${groupID!!},
+                    "workoutID": 99999999999999,
+                    "scheduledDate": "2026-01-01"
+                }
+            """.trimIndent()) // Expect given workoutID is not valid (not actual workout in db)
+        }
+
+        // Expect BadRequest status code, as workoutID doesn't correspond to actual workout
+        assertEquals(HttpStatusCode.BadRequest, response.status)
     }
 
     @Test
     fun createGroupSession_badJSON() = testApplication {
         application { module() }
+
+        // Invalid HTTP request, as body of request does not follow correct format and so can't be serialised
+        val response = client.post("/social/session") {
+            contentType(ContentType.Application.Json)
+            setBody(" BAD JSON BODY ")
+        }
+        
+        // Expect BadRequest status code, as exception is met when trying to serialise a bad JSON body
+        assertEquals(HttpStatusCode.BadRequest, response.status)
     }
 
     // ============================
@@ -584,21 +645,51 @@ class SocialRoutesTest {
     @Test
     fun getUpcomingGroupSessions_valid() = testApplication {
         application { module() }
+
+        // Valid HTTP request as all parameters required for backend to perform operation are given in correct format
+        val response = client.get("/social/sessions/upcoming/${groupID!!}")
+
+        // Expect that we recieve a upcoming session (created in setup) so expect OK status code
+        assertEquals(HttpStatusCode.OK, response.status)
     }
 
     @Test
     fun getUpcomingGroupSessions_invalidGroupID() = testApplication {
         application { module() }
+
+        // Technically valid HTTP request as groupID parameter given in correct format
+        val response = client.get("/social/sessions/upcoming/999999999999999")
+
+        // Expect that no upcoming sessions are found as group doesn't exist, so expect BadRequest status code
+        assertEquals(HttpStatusCode.BadRequest, response.status)
     }
 
     @Test
     fun getUpcomingGroupSessions_noUpcomingSessions() = testApplication {
         application { module() }
+
+        // Create temporary new test group which has no upcoming sesssions
+        val tempTestGroupID = DatabaseService().createGroup(TrainingGroup(createdBy = userID!!, name = "Test Group"))
+
+        // Technically valid HTTP request as groupID parameter is in correct format so can be serialised to integer
+        val response = client.get("/social/sessions/upcoming/${tempTestGroupID!!}")
+
+        // Assume no upcoming sessions are found, and hence expect NotFound status code
+        assertEquals(HttpStatusCode.NotFound, response.status)
+
+        // Delete temporary test group, so as to not have impact or change the real db
+        DatabaseService().deleteGroup(tempTestGroupID!!)
     }
 
     @Test
     fun getUpcomingGroupSessions_badJSON() = testApplication {
         application { module() }
+
+        // Invalid HTTP request as groupID is passed as a string so cannot be serialised due to bad JSON
+        val response = client.get("/social/sessions/upcoming/abc")
+
+        // Expect BadRequest, as exception is met when trying to serialise bad JSON
+        assertEquals(HttpStatusCode.BadRequest, response.status)
     }
 
 
@@ -606,21 +697,51 @@ class SocialRoutesTest {
     @Test
     fun getPastGroupSessions_valid() = testApplication {
         application { module() }
+
+        // Valid HTTP request as we pass groupID as a parameter in correct format so can be serialised
+        val response = client.get("/social/sessions/past/${groupID!!}")
+
+        // Expect we found past group sessions (defined in setup) and hence expect OK status code
+        assertEquals(HttpStatusCode.OK, response.status)
     }
 
     @Test
     fun getPastGroupSessions_invalidGroupID() = testApplication {
         application { module() }
+
+        // Technically valid HTTP request as groupID is passed as parameter in correct format, allowing serialisation
+        val response = client.get("/social/sessions/past/99999999999999") // Assume 99999999999999 not valid groupID
+
+        // groupID passed as paramter expected not valid, hence expect no past sessions found and BadRequest status code returned
+        assertEquals(HttpStatusCode.BadRequest, response.status)
     }
 
     @Test
     fun getPastGroupSessions_noPastSessions() = testApplication {
         application { module() }
+
+        // Create a new temporary group which has no associated past sessions, for test
+        val tempTestGroupID = DatabaseService().createGroup(TrainingGroup(createdBy = userID!!, name = "Test Group"))
+
+        // Valid HTTP request as we give groupID as a parameter in the correct format, allowing serialisation
+        val response = client.get("/social/sessions/past/${tempTestGroupID!!}")
+
+        // Expect no past sessions found (as group just created), hence expect NotFound status code
+        assertEquals(HttpStatusCode.NotFound, response.status)
+
+        // Delete temporary group, so as to not have lasting affect on real db
+        DatabaseService().deleteGroup(tempTestGroupID!!)
     }
 
     @Test
     fun getPastGroupSessions_badJSON() = testApplication {
         application { module() }
+
+        // Invalid HTTP request as data type of groupID passed as parameter is string and hence cant be serialised into integer
+        val response = client.get("/social/sessions/past/abc")
+
+        // groupID is given as a string and hence an exception is hit when trying to serialise into integer, thus expect BadRequest status code
+        assertEquals(HttpStatusCode.BadRequest, response.status)
     }
 
     // ==============================
@@ -630,18 +751,44 @@ class SocialRoutesTest {
     @Test
     fun deleteGroupSession_valid() = testApplication {
         application { module() }
+
+        // Create temporary test group session for use in test
+        val tempTestSessionID = DatabaseService().addGroupSession(GroupSession(groupID = groupID!!, workoutID = loggedWorkoutID!!, scheduledDate = "2027-01-01"))
+
+        // Valid HTTP request, as we pass sessionID as a parameter of the correct data type
+        val response = client.delete("/social/session/${tempTestSessionID!!}")
+
+        // As we have given backend all required parameters for deleting the session, expect OK status code
+        assertEquals(HttpStatusCode.OK, response.status)
+
+        // Incase test fails, try deleting temporary test group session so no impact on real db
+        try {
+            DatabaseService().deleteGroupSession(tempTestSessionID!!)
+        }
+        catch (e: Exception) {}
     }
 
     @Test
     fun deleteGroupSession_invalidGroupID() = testApplication {
         application { module() }
+
+        // Technically valid HTTP request, as groupID is still passed as parameter of correct data type
+        val response = client.delete("/social/session/99999999999999") // Assume 99999999999999 is not valid sessionID
+
+        // Expect that there is no group session under given sessionID, so backend cant find session to delete so returns BadRequest status code
+        assertEquals(HttpStatusCode.BadRequest, response.status)
     }
 
     @Test
     fun deleteGroupSession_badJSON() = testApplication {
         application { module() }
+
+        // Invalid HTTP request, as groupID is given as a string which cannot be serialised into an integer
+        val response = client.delete("/social/session/abc")
+
+        // Expect BadRequest status code, as we hit an exception when we try serialising a string into a integer due to bad JSON
+        assertEquals(HttpStatusCode.BadRequest, response.status)
     }
-    */
 
     //====================== POST-TEST CLEANUP ============================
 
