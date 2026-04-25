@@ -1,4 +1,3 @@
-
 CREATE TABLE IF NOT EXISTS training_groups (
     groupID INTEGER PRIMARY KEY AUTOINCREMENT,
     createdBy INTEGER NOT NULL,
@@ -32,17 +31,6 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
     expiry TEXT NOT NULL,
     used INTEGER DEFAULT 0, --prevents reuse
     FOREIGN KEY (userID) REFERENCES users(userID) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS calendar_events (
-    calendarID INTEGER PRIMARY KEY AUTOINCREMENT,
-    userID INTEGER NOT NULL,
-    eventType TEXT NOT NULL, 
-    eventID INTEGER NOT NULL,
-    status TEXT NOT NULL,
-    scheduledDate TEXT NOT NULL,
-    name TEXT NOT NULL,
-    FOREIGN KEY(userID) REFERENCES users(userID) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS routes (

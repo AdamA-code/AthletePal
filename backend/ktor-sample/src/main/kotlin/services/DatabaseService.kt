@@ -1,19 +1,19 @@
+// Formatting assisted by ktlint
 package services
+import kotlinx.serialization.Serializable // Helps routes
 import java.sql.Connection // Interface for database connection
 import java.sql.DriverManager // To connect to the DB
 import java.sql.PreparedStatement // Precompiled SQL statement
 import java.sql.ResultSet // Represents results of SQL queries
 import java.sql.Statement
-import java.time.LocalDate
-import kotlinx.serialization.Serializable // Helps routes
 import java.time.DayOfWeek
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID // Univversal unique identifier for reset tokens
 
 // data classes to finitely store inputs (and potentially outputs) to database
 
-class DatabaseService{
-    
+class DatabaseService {
     @Serializable
     data class User(
         val userID: Int,
@@ -25,7 +25,7 @@ class DatabaseService{
         val age: Int?,
         val height: Double?,
         val weight: Double?,
-        val accountType: Boolean
+        val accountType: Boolean,
     )
 
     @Serializable
@@ -33,7 +33,7 @@ class DatabaseService{
         val exerciseID: Int? = 0,
         val name: String,
         val category: String,
-        val description: String?
+        val description: String?,
     )
 
     @Serializable
@@ -45,7 +45,7 @@ class DatabaseService{
         val duration: Int? = null,
         val workoutType: String? = null,
         val notes: String? = null,
-        val routeID: Int? = null
+        val routeID: Int? = null,
     )
 
     @Serializable
@@ -53,9 +53,9 @@ class DatabaseService{
         val workoutExercisesID: Int = 0,
         val workoutID: Int = 0, // Still a required field for adding workout exercise to workout
         val exerciseID: Int,
-        val sets: Int? = 0,
-        val reps: Int? = 0,
-        val weight: Double? = 0.0
+        val sets: Int? = 1,
+        val reps: Int? = 1,
+        val weight: Double? = 1.0
     )
 
     @Serializable
@@ -64,7 +64,7 @@ class DatabaseService{
         val userID: Int,
         val exerciseID: Int,
         val scoreValue: Double,
-        val date: String
+        val date: String,
     )
 
     @Serializable
@@ -74,7 +74,7 @@ class DatabaseService{
         val name: String,
         val date: String,
         val rank: Int? = null,
-        val result: Int? = null
+        val result: Int? = null,
     )
 
     @Serializable
@@ -82,7 +82,7 @@ class DatabaseService{
         val competitionExerciseID: Int? = 0,
         val competitionID: Int,
         val exerciseID: Int,
-        val performance: Double?
+        val performance: Double?,
     )
 
     @Serializable
@@ -94,7 +94,7 @@ class DatabaseService{
         val estimatedTime: Double? = null,
         val date: String,
         val isPublic: Boolean,
-        val routeData: String
+        val routeData: String,
     )
 
     @Serializable
@@ -105,7 +105,7 @@ class DatabaseService{
         val eventID: Int,
         val status: String,
         val scheduledDate: String,
-        val name: String
+        val name: String,
     )
 
     @Serializable
@@ -121,7 +121,7 @@ class DatabaseService{
     data class GroupMember(
         val memberID: Int? = 0,
         val groupID: Int,
-        val userID: Int
+        val userID: Int,
     )
 
     @Serializable
@@ -129,13 +129,14 @@ class DatabaseService{
         val sessionID: Int? = 0,
         val groupID: Int,
         val workoutID: Int,
-        val scheduledDate: String
+        val scheduledDate: String,
     )
 
     // Connect to DB
     class DatabaseConnection {
-        //open connection to database
-        val connection: Connection = DriverManager.getConnection("jdbc:sqlite:${System.getProperty("user.dir")}/src/main/resources/users.db")
+        // open connection to database
+        val connectionLocation = "jdbc:sqlite:${System.getProperty("user.dir")}/src/main/resources/users.db"
+        val connection: Connection = DriverManager.getConnection(connectionLocation)
 
         // Runs automatically on creation
         init {
@@ -146,6 +147,7 @@ class DatabaseService{
             if (!connection.isClosed) connection.close()
         }
     }
+
     val db = DatabaseConnection()
     // User db
 
@@ -154,13 +156,15 @@ class DatabaseService{
             // Connect to db, pepare query struct, use object that allows updating
             // and prevent SQL injection, store to set values and exec
             // SQL INSERT statement with "?"" as a placeholder
-            val stmt: PreparedStatement = db.connection.prepareStatement(
-                """
+            val stmt: PreparedStatement =
+                db.connection.prepareStatement(
+                    """
                 INSERT INTO users(name, email, passwordHash, passwordKey, gender, age, height, weight, accountType)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """.trimIndent(),
-                Statement.RETURN_GENERATED_KEYS // Needed to return created ID
-            )
+                """
+                        .trimIndent(),
+                    Statement.RETURN_GENERATED_KEYS,
+                ) // Needed to return created ID
 
             // Set placeholder values based on given data
             stmt.setString(1, user.name)
@@ -194,9 +198,10 @@ class DatabaseService{
     fun findUser(email: String): User? {
         // Connect to db, pepare query struct, use object that allows updating
         // and prevent SQL injection, store to set values and exec
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            "SELECT * FROM users WHERE email = ?"
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "SELECT * FROM users WHERE email = ?",
+            )
 
         stmt.setString(1, email) // Put email value in placeholder (?)
 
@@ -204,23 +209,24 @@ class DatabaseService{
 
         // If query returns a row, create a User object
         if (rs.next()) {
-            val user = User(
-                userID = rs.getInt("userID"),
-                name = rs.getString("name"),
-                email = rs.getString("email"),
-                passwordHash = rs.getString("passwordHash"),
-                passwordKey = rs.getString("passwordKey"),
-                gender = rs.getObject("gender") as String?,
-                age = rs.getObject("age") as Int?,
-                height = rs.getObject("height") as Double?,
-                weight = rs.getObject("weight") as Double?,
-                accountType = rs.getBoolean("accountType")
+            val user =
+                User(
+                    userID = rs.getInt("userID"),
+                    name = rs.getString("name"),
+                    email = rs.getString("email"),
+                    passwordHash = rs.getString("passwordHash"),
+                    passwordKey = rs.getString("passwordKey"),
+                    gender = rs.getObject("gender") as String?,
+                    age = rs.getObject("age") as Int?,
+                    height = rs.getObject("height") as Double?,
+                    weight = rs.getObject("weight") as Double?,
+                    accountType = rs.getBoolean("accountType"),
                 )
-                rs.close()
-                stmt.close()
-                return user
-            }
-            return null
+            rs.close()
+            stmt.close()
+            return user
+        }
+        return null
     }
 
     fun updateAccount(
@@ -228,17 +234,23 @@ class DatabaseService{
         gender: String?,
         age: Int?,
         height: Double?,
-        weight: Double?
-        ): Boolean {
+        weight: Double?,
+    ): Boolean {
         // Connect to db, pepare query struct, use object that allows updating
         // and prevent SQL injection, store to set values and exec
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            """
-            UPDATE users
-            SET gender = ?, age = ?, height = ?, weight = ?
-            WHERE email = ?
-            """.trimIndent()
-        )
+
+        //  Validation checks
+        if (email.isBlank() || !email.contains("@") || !email.contains(".")) return false
+        if (age != null && (age < 0 || age > 120)) return false
+
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                """
+                UPDATE users
+                SET gender = ?, age = ?, height = ?, weight = ?
+                WHERE email = ?
+                """.trimIndent(),
+            )
 
         // Set placeholder values based on given data
         stmt.setString(1, gender)
@@ -254,7 +266,13 @@ class DatabaseService{
     }
 
     // Voluntary change, not forgot password
-    fun updatePassword(email: String, oldPassword: String, newPassword: String): Boolean {
+    fun updatePassword(
+        email: String,
+        oldPassword: String,
+        newPassword: String,
+    ): Boolean {
+        // Validation checks
+        if (oldPassword.isBlank() || newPassword.isBlank() || newPassword.length < 8) return false
         val user = findUser(email) ?: return false
 
         val authService = AuthService()
@@ -268,12 +286,14 @@ class DatabaseService{
         val newSalt = authService.generateSalt()
         val newHash = authService.hashPassword(newPassword, newSalt)
 
-        val stmt = db.connection.prepareStatement("""
-            UPDATE users
-            SET passwordHash = ?, passwordKey = ?
-            WHERE email = ?
-        """.trimIndent()
-        )
+        val stmt =
+            db.connection.prepareStatement(
+                """
+                UPDATE users
+                SET passwordHash = ?, passwordKey = ?
+                WHERE email = ?
+                """.trimIndent(),
+            )
         stmt.setString(1, newHash)
         stmt.setString(2, newSalt)
         stmt.setString(3, email)
@@ -286,20 +306,25 @@ class DatabaseService{
 
     // Forgot password (email token)
     fun generatePasswordResetToken(email: String): String? {
+        // Validation checks
+        if (!email.contains("@") || !email.contains(".")) return null
+
         val user = findUser(email) ?: return null
 
         // Generate a random unique token
         val token = UUID.randomUUID().toString()
-        
+
         // Set expiry to 1 hour from now
         val expiry = LocalDateTime.now().plusHours(1).toString()
 
         // Store token in DB
-        val stmt = db.connection.prepareStatement("""
-            INSERT INTO password_reset_tokens (userID, token, expiry, used)
-            VALUES (?, ?, ?, 0)
-        """.trimIndent()
-        )
+        val stmt =
+            db.connection.prepareStatement(
+                """
+                INSERT INTO password_reset_tokens (userID, token, expiry, used)
+                VALUES (?, ?, ?, 0)
+                """.trimIndent(),
+            )
         stmt.setInt(1, user.userID)
         stmt.setString(2, token)
         stmt.setString(3, expiry)
@@ -307,20 +332,33 @@ class DatabaseService{
         val rows = stmt.executeUpdate()
         stmt.close()
 
-        return if (rows > 0) {token} else null
+        return if (rows > 0) {
+            token
+        } else {
+            null
+        }
     }
 
-    fun resetPasswordWithToken(token: String, newPassword: String): Boolean {
+    fun resetPasswordWithToken(
+        token: String,
+        newPassword: String,
+    ): Boolean {
+        // Validation checks
+        if (token.isBlank() || newPassword.length < 8) return false
+
+        // Turn off autocommit for transactions
         db.connection.autoCommit = false
         try {
             // FInd unused token
-            val stmt = db.connection.prepareStatement("""
-                SELECT * FROM password_reset_tokens
-                WHERE token = ? AND used = 0
-            """.trimIndent()
-            )
+            val stmt =
+                db.connection.prepareStatement(
+                    """
+                    SELECT * FROM password_reset_tokens
+                    WHERE token = ? AND used = 0
+                    """.trimIndent(),
+                )
             stmt.setString(1, token)
-            
+
             val rs = stmt.executeQuery()
 
             // If no matching token found return false
@@ -339,7 +377,7 @@ class DatabaseService{
             stmt.close()
 
             // expiry check
-            if (LocalDateTime.now().isAfter(expiry)){
+            if (LocalDateTime.now().isAfter(expiry)) {
                 db.connection.rollback()
                 return false
             }
@@ -350,12 +388,14 @@ class DatabaseService{
             val newHash = authService.hashPassword(newPassword, newKey)
 
             // Update password in db
-            val updateStmt = db.connection.prepareStatement("""
-                UPDATE users
-                SET passwordHash = ?, passwordKey = ?
-                WHERE userID = ?
-            """.trimIndent()
-            )
+            val updateStmt =
+                db.connection.prepareStatement(
+                    """
+                    UPDATE users
+                    SET passwordHash = ?, passwordKey = ?
+                    WHERE userID = ?
+                    """.trimIndent(),
+                )
             updateStmt.setString(1, newHash)
             updateStmt.setString(2, newKey)
             updateStmt.setInt(3, userID)
@@ -370,16 +410,18 @@ class DatabaseService{
             }
 
             // Mark token as used (cant be used again)
-            val usedTokenStmt = db.connection.prepareStatement("""
-                UPDATE password_reset_tokens
-                SET used = 1 WHERE token = ?
-            """.trimIndent()
-            )
+            val usedTokenStmt =
+                db.connection.prepareStatement(
+                    """
+                    UPDATE password_reset_tokens
+                    SET used = 1 WHERE token = ?
+                    """.trimIndent(),
+                )
             usedTokenStmt.setString(1, token)
 
             val tokenUsed = usedTokenStmt.executeUpdate()
             usedTokenStmt.close()
-            //check failure at token being set to used
+            // check failure at token being set to used
             if (tokenUsed == 0) {
                 db.connection.rollback()
                 return false
@@ -387,7 +429,7 @@ class DatabaseService{
 
             db.connection.commit()
             return true
-        // Find any unexpected errors and rollback if so, set connection back to autocommit either way
+            // Find any unexpected errors and rollback if so, set connection back to autocommit either way
         } catch (erro: Exception) {
             db.connection.rollback()
             return false
@@ -397,12 +439,13 @@ class DatabaseService{
     }
 
     fun deleteUser(email: String): Boolean {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            """DELETE FROM users
-            WHERE email = ?
-            """.trimIndent()
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                """
+                DELETE FROM users
+                WHERE email = ?
+                """.trimIndent(),
+            )
 
         stmt.setString(1, email)
 
@@ -415,13 +458,20 @@ class DatabaseService{
     // Exercise db
 
     fun createExercise(exercise: Exercise): Int {
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            """
-            INSERT INTO exercises(name, category, description)
-            VALUES (?, ?, ?)
-            """.trimIndent(),
-            Statement.RETURN_GENERATED_KEYS
-        )
+        
+        // Validation Checks
+        if (exercise.name.isBlank()) return -1
+        val validCategories = listOf("weights", "running", "cycling", "swimming", "walking")
+        if (exercise.category !in validCategories) return -1
+    
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                """
+                INSERT INTO exercises(name, category, description)
+                VALUES (?, ?, ?)
+                """.trimIndent(),
+                Statement.RETURN_GENERATED_KEYS,
+            )
 
         stmt.setString(1, exercise.name)
         stmt.setString(2, exercise.category)
@@ -444,25 +494,26 @@ class DatabaseService{
     }
 
     fun findExercise(exerciseID: Int): Exercise? {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            "SELECT * FROM exercises WHERE exerciseID = ?"
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "SELECT * FROM exercises WHERE exerciseID = ?",
+            )
 
         stmt.setInt(1, exerciseID)
 
         val rs: ResultSet = stmt.executeQuery()
 
-        val exercise = if (rs.next()) {
-            Exercise(
-                exerciseID = rs.getInt("exerciseID"),
-                name = rs.getString("name"),
-                category = rs.getString("category"),
-                description = rs.getString("description")
-            )
-        } else {
-            null
-        }
+        val exercise =
+            if (rs.next()) {
+                Exercise(
+                    exerciseID = rs.getInt("exerciseID"),
+                    name = rs.getString("name"),
+                    category = rs.getString("category"),
+                    description = rs.getString("description"),
+                )
+            } else {
+                null
+            }
 
         rs.close()
         stmt.close()
@@ -471,22 +522,23 @@ class DatabaseService{
     }
 
     fun findAllExercises(): List<Exercise> {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            "SELECT * FROM exercises"
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "SELECT * FROM exercises",
+            )
 
         val rs: ResultSet = stmt.executeQuery()
         val exercises = mutableListOf<Exercise>()
         while (rs.next()) {
-            val exercise = Exercise(
-                exerciseID = rs.getInt("exerciseID"),
-                name = rs.getString("name"),
-                category = rs.getString("category"),
-                description = rs.getString("description")
-            )
+            val exercise =
+                Exercise(
+                    exerciseID = rs.getInt("exerciseID"),
+                    name = rs.getString("name"),
+                    category = rs.getString("category"),
+                    description = rs.getString("description"),
+                )
             exercises.add(exercise)
-        } 
+        }
 
         rs.close()
         stmt.close()
@@ -497,16 +549,20 @@ class DatabaseService{
     fun updateExercise(
         name: String,
         category: String,
-        description: String?
+        description: String?,
     ): Boolean {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            """
-            UPDATE exercises
-            SET category = ?, description = ?
-            WHERE name = ?
-            """.trimIndent()
-        )
+        // Validation Checks
+        if (name.isBlank()) return false
+        val validCategories = listOf("weights", "running", "cycling", "swimming", "walking")
+        if (category !in validCategories) return false
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                """
+                UPDATE exercises
+                SET category = ?, description = ?
+                WHERE name = ?
+                """.trimIndent(),
+            )
 
         stmt.setString(1, category)
         stmt.setString(2, description)
@@ -519,10 +575,10 @@ class DatabaseService{
     }
 
     fun deleteExercise(exerciseID: Int): Boolean {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            "DELETE FROM exercises WHERE exerciseID = ?"
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "DELETE FROM exercises WHERE exerciseID = ?",
+            )
 
         stmt.setInt(1, exerciseID)
 
@@ -533,15 +589,21 @@ class DatabaseService{
     }
 
     // Workout to DB
-    fun createWorkout(workout : Workout): Int {
+    fun createWorkout(workout: Workout): Int {
+        // Validation Checks
+        if (workout.date.isBlank() || !workout.date.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) return -1
+        if (workout.duration != null && workout.duration <= 0) return -1
+        val validTypes = listOf("cardio", "weights", "running", "cycling", "swimming")
+        if (workout.workoutType != null && workout.workoutType !in validTypes) return -1
 
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            """
-            INSERT INTO workouts(createdBy, assignedTo, date, duration, workoutType, notes, routeID)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """.trimIndent(),
-            Statement.RETURN_GENERATED_KEYS
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                """
+                INSERT INTO workouts(createdBy, assignedTo, date, duration, workoutType, notes, routeID)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """.trimIndent(),
+                Statement.RETURN_GENERATED_KEYS,
+            )
 
         stmt.setInt(1, workout.createdBy)
         stmt.setObject(2, workout.assignedTo)
@@ -568,10 +630,10 @@ class DatabaseService{
     }
 
     fun findAllWorkouts(userID: Int): List<Workout> {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            "SELECT * FROM workouts WHERE assignedTo = ?"
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "SELECT * FROM workouts WHERE assignedTo = ?",
+            )
 
         stmt.setInt(1, userID)
 
@@ -579,16 +641,17 @@ class DatabaseService{
         val workouts = mutableListOf<Workout>()
 
         while (rs.next()) {
-            val workout = Workout(
-                workoutID = rs.getInt("workoutID"),
-                createdBy = rs.getInt("createdBy"),
-                assignedTo = rs.getInt("assignedTo"),
-                date = rs.getString("date"),
-                duration = rs.getObject("duration") as Int?,
-                workoutType = rs.getObject("workoutType") as String?,
-                notes = rs.getObject("notes") as String?,
-                routeID = rs.getObject("routeID") as Int?
-            )
+            val workout =
+                Workout(
+                    workoutID = rs.getInt("workoutID"),
+                    createdBy = rs.getInt("createdBy"),
+                    assignedTo = rs.getInt("assignedTo"),
+                    date = rs.getString("date"),
+                    duration = rs.getObject("duration") as Int?,
+                    workoutType = rs.getObject("workoutType") as String?,
+                    notes = rs.getObject("notes") as String?,
+                    routeID = rs.getObject("routeID") as Int?,
+                )
             workouts.add(workout)
         }
 
@@ -603,16 +666,21 @@ class DatabaseService{
         duration: Int?,
         workoutType: String?,
         notes: String?,
-        routeID: Int?
+        routeID: Int?,
     ): Boolean {
+        // Validation Checks
+        if (workoutID <= 0) return false
+        if (date.isBlank() || !date.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) return false
+        if (duration != null && duration <= 0) return false
 
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            """
-            UPDATE workouts
-            SET date = ?, duration = ?, workoutType = ?, notes = ?, routeID = ?
-            WHERE workoutID = ?
-            """.trimIndent()
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                """
+                UPDATE workouts
+                SET date = ?, duration = ?, workoutType = ?, notes = ?, routeID = ?
+                WHERE workoutID = ?
+                """.trimIndent(),
+            )
 
         stmt.setString(1, date)
         stmt.setObject(2, duration)
@@ -628,10 +696,10 @@ class DatabaseService{
     }
 
     fun deleteWorkout(workoutID: Int): Boolean {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            "DELETE FROM workouts WHERE workoutID = ?"
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "DELETE FROM workouts WHERE workoutID = ?",
+            )
 
         stmt.setInt(1, workoutID)
 
@@ -643,15 +711,21 @@ class DatabaseService{
 
     // Workout_exercise join table
 
-    fun addExerciseToWorkout(workout_exercise : WorkoutExercise): Int {
+    fun addExerciseToWorkout(workout_exercise: WorkoutExercise): Int {
+        // Validation Checks
+        if (workout_exercise.workoutID <= 0 || workout_exercise.exerciseID <= 0) return -1
+        if (workout_exercise.sets != null && workout_exercise.sets <= 0) return -1
+        if (workout_exercise.reps != null && workout_exercise.reps <= 0) return -1
+        if (workout_exercise.weight != null && workout_exercise.weight <= 0.0) return -1
 
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            """
-            INSERT INTO workout_exercises(workoutID, exerciseID, sets, reps, weight)
-            VALUES (?, ?, ?, ?, ?)
-            """.trimIndent(),
-            Statement.RETURN_GENERATED_KEYS
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                """
+                INSERT INTO workout_exercises(workoutID, exerciseID, sets, reps, weight)
+                VALUES (?, ?, ?, ?, ?)
+                """.trimIndent(),
+                Statement.RETURN_GENERATED_KEYS,
+            )
 
         stmt.setInt(1, workout_exercise.workoutID)
         stmt.setInt(2, workout_exercise.exerciseID)
@@ -676,24 +750,25 @@ class DatabaseService{
     }
 
     fun findAllWorkoutExercises(workoutID: Int): List<WorkoutExercise> {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            "SELECT * FROM workout_exercises WHERE workoutID = ?"
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "SELECT * FROM workout_exercises WHERE workoutID = ?",
+            )
 
         stmt.setInt(1, workoutID)
 
         val rs: ResultSet = stmt.executeQuery()
         val workoutExs = mutableListOf<WorkoutExercise>()
         while (rs.next()) {
-            val we = WorkoutExercise(
-                workoutExercisesID = rs.getInt("workoutExercisesID"),
-                workoutID = rs.getInt("workoutID"),
-                exerciseID = rs.getInt("exerciseID"),
-                sets = rs.getObject("sets") as Int?,
-                reps = rs.getObject("reps") as Int?,
-                weight = rs.getObject("weight") as Double?
-            )
+            val we =
+                WorkoutExercise(
+                    workoutExercisesID = rs.getInt("workoutExercisesID"),
+                    workoutID = rs.getInt("workoutID"),
+                    exerciseID = rs.getInt("exerciseID"),
+                    sets = rs.getObject("sets") as Int?,
+                    reps = rs.getObject("reps") as Int?,
+                    weight = rs.getObject("weight") as Double?,
+                )
             workoutExs.add(we)
         }
 
@@ -706,16 +781,22 @@ class DatabaseService{
         workoutExercisesID: Int,
         sets: Int?,
         reps: Int?,
-        weight: Double?
+        weight: Double?,
     ): Boolean {
+        // Validation Checks
+        if (workoutExercisesID <= 0) return false
+        if (sets != null && sets <= 0) return false
+        if (reps != null && reps <= 0) return false
+        if (weight != null && weight <= 0.0) return false
 
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            """
-            UPDATE workout_exercises
-            SET sets = ?, reps = ?, weight = ?
-            WHERE workoutExercisesID = ?
-            """.trimIndent()
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                """
+                UPDATE workout_exercises
+                SET sets = ?, reps = ?, weight = ?
+                WHERE workoutExercisesID = ?
+                """.trimIndent(),
+            )
 
         stmt.setObject(1, sets)
         stmt.setObject(2, reps)
@@ -729,10 +810,10 @@ class DatabaseService{
     }
 
     fun deleteWorkoutExercise(workoutExercisesID: Int): Boolean {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            "DELETE FROM workout_exercises WHERE workoutExercisesID = ?"
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "DELETE FROM workout_exercises WHERE workoutExercisesID = ?",
+            )
 
         stmt.setInt(1, workoutExercisesID)
 
@@ -744,14 +825,19 @@ class DatabaseService{
 
     // Statistics DB
     fun addStatistic(stat: Statistic): Int {
+        // Validation Checks
+        if (stat.userID <= 0 || stat.exerciseID <= 0) return -1
+        if (stat.scoreValue <= 0.0) return -1
+        if (stat.date.isBlank() || !stat.date.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) return -1
 
-        val stmt = db.connection.prepareStatement(
-            """
-            INSERT INTO statistics(userID, exerciseID, scoreValue, date)
-            VALUES (?, ?, ?, ?)
-            """.trimIndent(),
-            Statement.RETURN_GENERATED_KEYS
-        )
+        val stmt =
+            db.connection.prepareStatement(
+                """
+                INSERT INTO statistics(userID, exerciseID, scoreValue, date)
+                VALUES (?, ?, ?, ?)
+                """.trimIndent(),
+                Statement.RETURN_GENERATED_KEYS,
+            )
 
         stmt.setInt(1, stat.userID)
         stmt.setInt(2, stat.exerciseID)
@@ -774,11 +860,14 @@ class DatabaseService{
         return id
     }
 
-    fun findAllStatistics(userID: Int, exerciseID: Int): List<Statistic> {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            "SELECT * FROM statistics WHERE userID = ? AND exerciseID = ?"
-        )
+    fun findAllStatistics(
+        userID: Int,
+        exerciseID: Int,
+    ): List<Statistic> {
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "SELECT * FROM statistics WHERE userID = ? AND exerciseID = ?",
+            )
 
         stmt.setInt(1, userID)
         stmt.setInt(2, exerciseID)
@@ -786,13 +875,14 @@ class DatabaseService{
         val rs: ResultSet = stmt.executeQuery()
         val stats = mutableListOf<Statistic>()
         while (rs.next()) {
-            val stat = Statistic(
-                statisticID = rs.getInt("statisticID"),
-                userID = rs.getInt("userID"),
-                exerciseID = rs.getInt("exerciseID"),
-                scoreValue = rs.getDouble("scoreValue"),
-                date = rs.getString("date")
-            )
+            val stat =
+                Statistic(
+                    statisticID = rs.getInt("statisticID"),
+                    userID = rs.getInt("userID"),
+                    exerciseID = rs.getInt("exerciseID"),
+                    scoreValue = rs.getDouble("scoreValue"),
+                    date = rs.getString("date"),
+                )
             stats.add(stat)
         }
 
@@ -801,31 +891,37 @@ class DatabaseService{
         return stats
     }
 
-    fun getBestStat(userID: Int, exerciseID: Int): Statistic? {
-
-        val stmt = db.connection.prepareStatement(
-            """
-            SELECT * FROM statistics
-            WHERE userID = ? AND exerciseID = ?
-            ORDER BY scoreValue DESC
-            LIMIT 1
-            """.trimIndent()
-        )
+    fun getBestStat(
+        userID: Int,
+        exerciseID: Int,
+    ): Statistic? {
+        val stmt =
+            db.connection.prepareStatement(
+                """
+                SELECT * FROM statistics
+                WHERE userID = ? AND exerciseID = ?
+                ORDER BY scoreValue DESC
+                LIMIT 1
+                """.trimIndent(),
+            )
 
         stmt.setInt(1, userID)
         stmt.setInt(2, exerciseID)
 
         val rs = stmt.executeQuery()
 
-        val stat = if (rs.next()) {
-            Statistic(
-                rs.getInt("statisticID"),
-                rs.getInt("userID"),
-                rs.getInt("exerciseID"),
-                rs.getDouble("scoreValue"),
-                rs.getString("date")
-            )
-        } else null
+        val stat =
+            if (rs.next()) {
+                Statistic(
+                    rs.getInt("statisticID"),
+                    rs.getInt("userID"),
+                    rs.getInt("exerciseID"),
+                    rs.getDouble("scoreValue"),
+                    rs.getString("date"),
+                )
+            } else {
+                null
+            }
 
         rs.close()
         stmt.close()
@@ -836,16 +932,20 @@ class DatabaseService{
     fun updateStatistic(
         statisticID: Int,
         scoreValue: Double,
-        date: String
+        date: String,
     ): Boolean {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            """
-            UPDATE statistics
-            SET scoreValue = ?, date = ?
-            WHERE statisticID = ?
-            """.trimIndent()
-        )
+        // Validation Checks
+        if (statisticID <= 0) return false
+        if (scoreValue <= 0.0) return false
+        if (date.isBlank() || !date.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) return false
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                """
+                UPDATE statistics
+                SET scoreValue = ?, date = ?
+                WHERE statisticID = ?
+                """.trimIndent(),
+            )
 
         stmt.setDouble(1, scoreValue)
         stmt.setString(2, date)
@@ -858,10 +958,10 @@ class DatabaseService{
     }
 
     fun deleteStatistic(statisticID: Int): Boolean {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            "DELETE FROM statistics WHERE statisticID = ?"
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "DELETE FROM statistics WHERE statisticID = ?",
+            )
 
         stmt.setInt(1, statisticID)
 
@@ -873,14 +973,20 @@ class DatabaseService{
 
     // Competitions DB
     fun addComp(comp: Competition): Int {
+        // Validation Checks
+        if (comp.name.isBlank()) return -1
+        if (comp.date.isBlank() || !comp.date.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) return -1
+        if (comp.rank != null && comp.rank <= 0) return -1
+        if (comp.result != null && comp.result <= 0) return -1
 
-        val stmt = db.connection.prepareStatement(
-            """
-            INSERT INTO competitions(userID, name, date, rank, result)
-            VALUES (?, ?, ?, ?, ?)
-            """.trimIndent(),
-            Statement.RETURN_GENERATED_KEYS
-        )
+        val stmt =
+            db.connection.prepareStatement(
+                """
+                INSERT INTO competitions(userID, name, date, rank, result)
+                VALUES (?, ?, ?, ?, ?)
+                """.trimIndent(),
+                Statement.RETURN_GENERATED_KEYS,
+            )
 
         stmt.setInt(1, comp.userID)
         stmt.setString(2, comp.name)
@@ -905,24 +1011,25 @@ class DatabaseService{
     }
 
     fun findAllCompetitions(userID: Int): List<Competition> {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            "SELECT * FROM competitions WHERE userID = ?"
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "SELECT * FROM competitions WHERE userID = ?",
+            )
 
         stmt.setInt(1, userID)
 
         val rs: ResultSet = stmt.executeQuery()
         val comps = mutableListOf<Competition>()
         while (rs.next()) {
-            val comp = Competition(
-                competitionID = rs.getInt("competitionID"),
-                userID = rs.getInt("userID"),
-                name = rs.getString("name"),
-                date = rs.getString("date"),
-                rank = rs.getObject("rank") as Int?,
-                result = rs.getObject("result") as Int?
-            )
+            val comp =
+                Competition(
+                    competitionID = rs.getInt("competitionID"),
+                    userID = rs.getInt("userID"),
+                    name = rs.getString("name"),
+                    date = rs.getString("date"),
+                    rank = rs.getObject("rank") as Int?,
+                    result = rs.getObject("result") as Int?,
+                )
             comps.add(comp)
         }
 
@@ -936,16 +1043,22 @@ class DatabaseService{
         name: String,
         date: String,
         rank: Int? = null,
-        result: Int? = null
+        result: Int? = null,
     ): Boolean {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            """
-            UPDATE competitions
-            SET name = ?, date = ?, rank = ?, result = ?
-            WHERE competitionID = ?
-            """.trimIndent()
-        )
+        // Validation Checks
+        if (competitionID <= 0) return false
+        if (name.isBlank()) return false
+        if (date.isBlank() || !date.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) return false
+        if (rank != null && rank <= 0) return false
+        if (result != null && result <= 0) return false
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                """
+                UPDATE competitions
+                SET name = ?, date = ?, rank = ?, result = ?
+                WHERE competitionID = ?
+                """.trimIndent(),
+            )
 
         stmt.setString(1, name)
         stmt.setString(2, date)
@@ -960,10 +1073,10 @@ class DatabaseService{
     }
 
     fun deleteCompetition(competitionID: Int): Boolean {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            "DELETE FROM competitions WHERE competitionID = ?"
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "DELETE FROM competitions WHERE competitionID = ?",
+            )
 
         stmt.setInt(1, competitionID)
 
@@ -975,14 +1088,14 @@ class DatabaseService{
 
     // CompetitionsAndExercise DB
     fun addCompExercise(compEx: CompetitionExercise): Int {
-
-        val stmt = db.connection.prepareStatement(
-            """
-            INSERT INTO competition_exercises(competitionID, exerciseID, performance)
-            VALUES (?, ?, ?)
-            """.trimIndent(),
-            Statement.RETURN_GENERATED_KEYS
-        )
+        val stmt =
+            db.connection.prepareStatement(
+                """
+                INSERT INTO competition_exercises(competitionID, exerciseID, performance)
+                VALUES (?, ?, ?)
+                """.trimIndent(),
+                Statement.RETURN_GENERATED_KEYS,
+            )
 
         stmt.setInt(1, compEx.competitionID)
         stmt.setInt(2, compEx.exerciseID)
@@ -1005,22 +1118,23 @@ class DatabaseService{
     }
 
     fun findAllCompetitionExercises(competitionID: Int): List<CompetitionExercise> {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            "SELECT * FROM competition_exercises WHERE competitionID = ?"
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "SELECT * FROM competition_exercises WHERE competitionID = ?",
+            )
 
         stmt.setInt(1, competitionID)
 
         val rs: ResultSet = stmt.executeQuery()
         val compExs = mutableListOf<CompetitionExercise>()
         while (rs.next()) {
-            val compEx = CompetitionExercise(
-                competitionExerciseID = rs.getInt("competitionExerciseID"),
-                competitionID = rs.getInt("competitionID"),
-                exerciseID = rs.getInt("exerciseID"),
-                performance = rs.getObject("performance") as Double?
-            )
+            val compEx =
+                CompetitionExercise(
+                    competitionExerciseID = rs.getInt("competitionExerciseID"),
+                    competitionID = rs.getInt("competitionID"),
+                    exerciseID = rs.getInt("exerciseID"),
+                    performance = rs.getObject("performance") as Double?,
+                )
             compExs.add(compEx)
         }
 
@@ -1031,16 +1145,16 @@ class DatabaseService{
 
     fun updateCompetitionExercise(
         competitionExerciseID: Int,
-        performance: Double?
+        performance: Double?,
     ): Boolean {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            """
-            UPDATE competition_exercises
-            SET performance = ?
-            WHERE competitionExerciseID = ?
-            """.trimIndent()
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                """
+                UPDATE competition_exercises
+                SET performance = ?
+                WHERE competitionExerciseID = ?
+                """.trimIndent(),
+            )
 
         stmt.setObject(1, performance)
         stmt.setInt(2, competitionExerciseID)
@@ -1052,10 +1166,10 @@ class DatabaseService{
     }
 
     fun deleteCompetitionExercise(competitionExerciseID: Int): Boolean {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            "DELETE FROM competition_exercises WHERE competitionExerciseID = ?"
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "DELETE FROM competition_exercises WHERE competitionExerciseID = ?",
+            )
 
         stmt.setInt(1, competitionExerciseID)
 
@@ -1068,14 +1182,20 @@ class DatabaseService{
     // Routes DB
 
     fun addRoute(route: Route): Int {
+        // Validation Checks
+        if (route.name.isBlank()) return -1
+        if (route.distance <= 0.0) return -1
+        if (route.estimatedTime != null && route.estimatedTime <= 0.0) return -1
+        if (route.date.isBlank() || !route.date.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) return -1
 
-        val stmt = db.connection.prepareStatement(
-            """
-            INSERT INTO routes(userID, name, distance, estimatedTime, date, isPublic, routeData)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """.trimIndent(),
-            Statement.RETURN_GENERATED_KEYS
-        )
+        val stmt =
+            db.connection.prepareStatement(
+                """
+                INSERT INTO routes(userID, name, distance, estimatedTime, date, isPublic, routeData)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """.trimIndent(),
+                Statement.RETURN_GENERATED_KEYS,
+            )
 
         stmt.setInt(1, route.userID)
         stmt.setString(2, route.name)
@@ -1102,26 +1222,27 @@ class DatabaseService{
     }
 
     fun findAllRoutes(userID: Int): List<Route> {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            "SELECT * FROM routes WHERE userID = ? or isPublic = 1"
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "SELECT * FROM routes WHERE userID = ? or isPublic = 1",
+            )
 
         stmt.setInt(1, userID)
 
         val rs: ResultSet = stmt.executeQuery()
         val routes = mutableListOf<Route>()
         while (rs.next()) {
-            val route = Route(
-                routeID = rs.getInt("routeID"),
-                userID = rs.getInt("userID"),
-                name = rs.getString("name"),
-                distance = rs.getDouble("distance"),
-                estimatedTime = rs.getObject("estimatedTime") as Double?,
-                date = rs.getString("date"),
-                isPublic = rs.getBoolean("isPublic"),
-                routeData = rs.getString("routeData")
-            )
+            val route =
+                Route(
+                    routeID = rs.getInt("routeID"),
+                    userID = rs.getInt("userID"),
+                    name = rs.getString("name"),
+                    distance = rs.getDouble("distance"),
+                    estimatedTime = rs.getObject("estimatedTime") as Double?,
+                    date = rs.getString("date"),
+                    isPublic = rs.getBoolean("isPublic"),
+                    routeData = rs.getString("routeData"),
+                )
             routes.add(route)
         }
 
@@ -1137,16 +1258,23 @@ class DatabaseService{
         estimatedTime: Double?,
         date: String?,
         isPublic: Boolean,
-        routeData: String
+        routeData: String,
     ): Boolean {
+        // Validation Checks
+        if (name.isBlank()) return false
+        if (distance <= 0.0) return false
+        if (estimatedTime != null && estimatedTime <= 0.0) return false
+        if (date != null && (date.isBlank() || !date.matches(Regex("\\d{4}-\\d{2}-\\d{2}")))) return false
+        if (routeID <= 0) return false
 
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            """
-            UPDATE routes
-            SET name = ?, distance = ?, estimatedTime = ?, date = ?, isPublic = ?, routeData = ?
-            WHERE routeID = ?
-            """.trimIndent()
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                """
+                UPDATE routes
+                SET name = ?, distance = ?, estimatedTime = ?, date = ?, isPublic = ?, routeData = ?
+                WHERE routeID = ?
+                """.trimIndent(),
+            )
 
         stmt.setString(1, name)
         stmt.setDouble(2, distance)
@@ -1163,10 +1291,10 @@ class DatabaseService{
     }
 
     fun deleteRoute(routeID: Int): Boolean {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            "DELETE FROM routes WHERE routeID = ?"
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "DELETE FROM routes WHERE routeID = ?",
+            )
 
         stmt.setInt(1, routeID)
 
@@ -1179,14 +1307,14 @@ class DatabaseService{
     // Calendar DB
 
     fun addCalendarEvent(event: CalendarEvent): Int {
-
-        val stmt = db.connection.prepareStatement(
-            """
-            INSERT INTO calendar_events(userID,eventType,eventID,status,scheduledDate,name)
-            VALUES (?, ?, ?, ?, ?, ?)
-            """.trimIndent(),
-            Statement.RETURN_GENERATED_KEYS
-        )
+        val stmt =
+            db.connection.prepareStatement(
+                """
+                INSERT INTO calendar_events(userID,eventType,eventID,status,scheduledDate,name)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """.trimIndent(),
+                Statement.RETURN_GENERATED_KEYS,
+            )
 
         stmt.setInt(1, event.userID)
         stmt.setString(2, event.eventType)
@@ -1211,11 +1339,14 @@ class DatabaseService{
         return id
     }
 
-    fun findAllCalendarEvents(userID: Int, scheduledDate: String): List<CalendarEvent> {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            "SELECT * FROM calendar_events WHERE userID = ? AND scheduledDate = ?"
-        )
+    fun findAllCalendarEvents(
+        userID: Int,
+        scheduledDate: String,
+    ): List<CalendarEvent> {
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "SELECT * FROM calendar_events WHERE userID = ? AND scheduledDate = ?",
+            )
 
         stmt.setInt(1, userID)
         stmt.setString(2, scheduledDate)
@@ -1223,15 +1354,16 @@ class DatabaseService{
         val rs: ResultSet = stmt.executeQuery()
         val events = mutableListOf<CalendarEvent>()
         while (rs.next()) {
-            val event = CalendarEvent(
-                calendarID = rs.getInt("calendarID"),
-                userID = rs.getInt("userID"),
-                eventType = rs.getString("eventType"),
-                eventID = rs.getInt("eventID"),
-                status = rs.getString("status"),
-                scheduledDate = rs.getString("scheduledDate"),
-                name = rs.getString("name")
-            )
+            val event =
+                CalendarEvent(
+                    calendarID = rs.getInt("calendarID"),
+                    userID = rs.getInt("userID"),
+                    eventType = rs.getString("eventType"),
+                    eventID = rs.getInt("eventID"),
+                    status = rs.getString("status"),
+                    scheduledDate = rs.getString("scheduledDate"),
+                    name = rs.getString("name"),
+                )
             events.add(event)
         }
 
@@ -1244,16 +1376,16 @@ class DatabaseService{
         calendarID: Int,
         status: String,
         scheduledDate: String,
-        name: String
+        name: String,
     ): Boolean {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            """
-            UPDATE calendar_events
-            SET status = ?, scheduledDate = ?, name = ?
-            WHERE calendarID = ?
-            """.trimIndent()
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                """
+                UPDATE calendar_events
+                SET status = ?, scheduledDate = ?, name = ?
+                WHERE calendarID = ?
+                """.trimIndent(),
+            )
 
         stmt.setString(1, status)
         stmt.setString(2, scheduledDate)
@@ -1267,10 +1399,10 @@ class DatabaseService{
     }
 
     fun deleteCalendarEvent(calendarID: Int): Boolean {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            "DELETE FROM calendar_events WHERE calendarID = ?"
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "DELETE FROM calendar_events WHERE calendarID = ?",
+            )
 
         stmt.setInt(1, calendarID)
 
@@ -1283,27 +1415,30 @@ class DatabaseService{
     // Individual find functions
 
     fun findRoute(routeID: Int): Route? {
-
-        val stmt = db.connection.prepareStatement(
-            "SELECT * FROM routes WHERE routeID = ?"
-        )
+        val stmt =
+            db.connection.prepareStatement(
+                "SELECT * FROM routes WHERE routeID = ?",
+            )
 
         stmt.setInt(1, routeID)
 
         val rs = stmt.executeQuery()
 
-        val route = if (rs.next()) {
-            Route(
-                routeID = rs.getInt("routeID"),
-                userID = rs.getInt("userID"),
-                name = rs.getString("name"),
-                distance = rs.getDouble("distance"),
-                estimatedTime = rs.getObject("estimatedTime") as Double?,
-                date = rs.getString("date"),
-                isPublic = rs.getBoolean("isPublic"),
-                routeData = rs.getString("routeData")
-            )
-        } else null
+        val route =
+            if (rs.next()) {
+                Route(
+                    routeID = rs.getInt("routeID"),
+                    userID = rs.getInt("userID"),
+                    name = rs.getString("name"),
+                    distance = rs.getDouble("distance"),
+                    estimatedTime = rs.getObject("estimatedTime") as Double?,
+                    date = rs.getString("date"),
+                    isPublic = rs.getBoolean("isPublic"),
+                    routeData = rs.getString("routeData"),
+                )
+            } else {
+                null
+            }
 
         rs.close()
         stmt.close()
@@ -1312,24 +1447,25 @@ class DatabaseService{
     }
 
     fun findCalendarEvent(calendarID: Int): CalendarEvent? {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            "SELECT * FROM calendar_events WHERE calendarID = ?"
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "SELECT * FROM calendar_events WHERE calendarID = ?",
+            )
 
         stmt.setInt(1, calendarID)
 
         val rs: ResultSet = stmt.executeQuery()
         if (rs.next()) {
-            val event = CalendarEvent(
-                calendarID = rs.getInt("calendarID"),
-                userID = rs.getInt("userID"),
-                eventType = rs.getString("eventType"),
-                eventID = rs.getInt("eventID"),
-                status = rs.getString("status"),
-                scheduledDate = rs.getString("scheduledDate"),
-                name = rs.getString("name")
-            )
+            val event =
+                CalendarEvent(
+                    calendarID = rs.getInt("calendarID"),
+                    userID = rs.getInt("userID"),
+                    eventType = rs.getString("eventType"),
+                    eventID = rs.getInt("eventID"),
+                    status = rs.getString("status"),
+                    scheduledDate = rs.getString("scheduledDate"),
+                    name = rs.getString("name"),
+                )
             rs.close()
             stmt.close()
             return event
@@ -1341,26 +1477,27 @@ class DatabaseService{
     }
 
     fun findWorkout(workoutID: Int): Workout? {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            "SELECT * FROM workouts WHERE workoutID = ?"
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "SELECT * FROM workouts WHERE workoutID = ?",
+            )
 
         stmt.setInt(1, workoutID)
 
         val rs: ResultSet = stmt.executeQuery()
 
         if (rs.next()) {
-            val workout = Workout(
-                workoutID = rs.getInt("workoutID"),
-                createdBy = rs.getInt("createdBy"),
-                assignedTo = rs.getInt("assignedTo"),
-                date = rs.getString("date"),
-                duration = rs.getObject("duration") as Int?,
-                workoutType = rs.getObject("workoutType") as String?,
-                notes = rs.getObject("notes") as String?,
-                routeID = rs.getObject("routeID") as Int?
-            )
+            val workout =
+                Workout(
+                    workoutID = rs.getInt("workoutID"),
+                    createdBy = rs.getInt("createdBy"),
+                    assignedTo = rs.getInt("assignedTo"),
+                    date = rs.getString("date"),
+                    duration = rs.getObject("duration") as Int?,
+                    workoutType = rs.getObject("workoutType") as String?,
+                    notes = rs.getObject("notes") as String?,
+                    routeID = rs.getObject("routeID") as Int?,
+                )
             rs.close()
             stmt.close()
             return workout
@@ -1372,23 +1509,24 @@ class DatabaseService{
     }
 
     fun findWorkoutExercise(workoutExercisesID: Int): WorkoutExercise? {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            "SELECT * FROM workout_exercises WHERE workoutExercisesID = ?"
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "SELECT * FROM workout_exercises WHERE workoutExercisesID = ?",
+            )
 
         stmt.setInt(1, workoutExercisesID)
 
         val rs: ResultSet = stmt.executeQuery()
         if (rs.next()) {
-            val we = WorkoutExercise(
-                workoutExercisesID = rs.getInt("workoutExercisesID"),
-                workoutID = rs.getInt("workoutID"),
-                exerciseID = rs.getInt("exerciseID"),
-                sets = rs.getObject("sets") as Int?,
-                reps = rs.getObject("reps") as Int?,
-                weight = rs.getObject("weight") as Double?
-            )
+            val we =
+                WorkoutExercise(
+                    workoutExercisesID = rs.getInt("workoutExercisesID"),
+                    workoutID = rs.getInt("workoutID"),
+                    exerciseID = rs.getInt("exerciseID"),
+                    sets = rs.getObject("sets") as Int?,
+                    reps = rs.getObject("reps") as Int?,
+                    weight = rs.getObject("weight") as Double?,
+                )
             rs.close()
             stmt.close()
             return we
@@ -1400,23 +1538,24 @@ class DatabaseService{
     }
 
     fun findStatistic(statisticID: Int): Statistic? {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            "SELECT * FROM statistics WHERE statisticID = ?"
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "SELECT * FROM statistics WHERE statisticID = ?",
+            )
 
         stmt.setInt(1, statisticID)
 
         val rs: ResultSet = stmt.executeQuery()
 
         if (rs.next()) {
-            val stat = Statistic(
-                statisticID = rs.getInt("statisticID"),
-                userID = rs.getInt("userID"),
-                exerciseID = rs.getInt("exerciseID"),
-                scoreValue = rs.getDouble("scoreValue"),
-                date = rs.getString("date")
-            )
+            val stat =
+                Statistic(
+                    statisticID = rs.getInt("statisticID"),
+                    userID = rs.getInt("userID"),
+                    exerciseID = rs.getInt("exerciseID"),
+                    scoreValue = rs.getDouble("scoreValue"),
+                    date = rs.getString("date"),
+                )
             rs.close()
             stmt.close()
             return stat
@@ -1428,23 +1567,24 @@ class DatabaseService{
     }
 
     fun findCompetition(competitionID: Int): Competition? {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            "SELECT * FROM competitions WHERE competitionID = ?"
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "SELECT * FROM competitions WHERE competitionID = ?",
+            )
 
         stmt.setInt(1, competitionID)
 
         val rs: ResultSet = stmt.executeQuery()
         if (rs.next()) {
-            val comp = Competition(
-                competitionID = rs.getInt("competitionID"),
-                userID = rs.getInt("userID"),
-                name = rs.getString("name"),
-                date = rs.getString("date"),
-                rank = rs.getObject("rank") as Int?,
-                result = rs.getObject("result") as Int?
-            )
+            val comp =
+                Competition(
+                    competitionID = rs.getInt("competitionID"),
+                    userID = rs.getInt("userID"),
+                    name = rs.getString("name"),
+                    date = rs.getString("date"),
+                    rank = rs.getObject("rank") as Int?,
+                    result = rs.getObject("result") as Int?,
+                )
             rs.close()
             stmt.close()
             return comp
@@ -1456,21 +1596,22 @@ class DatabaseService{
     }
 
     fun findCompetitionExercise(competitionExerciseID: Int): CompetitionExercise? {
-
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            "SELECT * FROM competition_exercises WHERE competitionExerciseID = ?"
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "SELECT * FROM competition_exercises WHERE competitionExerciseID = ?",
+            )
 
         stmt.setInt(1, competitionExerciseID)
 
         val rs: ResultSet = stmt.executeQuery()
         if (rs.next()) {
-            val compEx = CompetitionExercise(
-                competitionExerciseID = rs.getInt("competitionExerciseID"),
-                competitionID = rs.getInt("competitionID"),
-                exerciseID = rs.getInt("exerciseID"),
-                performance = rs.getObject("performance") as Double?
-            )
+            val compEx =
+                CompetitionExercise(
+                    competitionExerciseID = rs.getInt("competitionExerciseID"),
+                    competitionID = rs.getInt("competitionID"),
+                    exerciseID = rs.getInt("exerciseID"),
+                    performance = rs.getObject("performance") as Double?,
+                )
             rs.close()
             stmt.close()
             return compEx
@@ -1481,19 +1622,24 @@ class DatabaseService{
         return null
     }
 
-    
     // Training groups
 
     fun createGroup(group: TrainingGroup): Int {
         db.connection.autoCommit = false // stops db from saving each statting - keeps atomicty
+        // Validation checks
+        if (group.name.isBlank()) return -1
+        if (group.description != null && group.description.length > 500) return -1
+        if (group.goal != null && group.goal.length > 500) return -1
+
         try {
-            val stmt = db.connection.prepareStatement(
-                """
-                INSERT INTO training_groups(createdBy, name, description, goal)
-                VALUES (?, ?, ?, ?)
-                """.trimIndent(),
-                Statement.RETURN_GENERATED_KEYS
-            )
+            val stmt =
+                db.connection.prepareStatement(
+                    """
+                    INSERT INTO training_groups(createdBy, name, description, goal)
+                    VALUES (?, ?, ?, ?)
+                    """.trimIndent(),
+                    Statement.RETURN_GENERATED_KEYS,
+                )
             stmt.setInt(1, group.createdBy)
             stmt.setString(2, group.name)
             stmt.setObject(3, group.description)
@@ -1501,10 +1647,10 @@ class DatabaseService{
 
             val rowsInserted = stmt.executeUpdate()
             // If group creation failed undo everything
-            if (rowsInserted == 0) { 
+            if (rowsInserted == 0) {
                 db.connection.rollback()
-                stmt.close() 
-                return -1 
+                stmt.close()
+                return -1
             }
 
             val rs = stmt.generatedKeys
@@ -1521,26 +1667,29 @@ class DatabaseService{
             }
 
             // Add creator to group
-            if (!joinGroup(groupID, group.createdBy)){
+            if (!joinGroup(groupID, group.createdBy)) {
                 // If fails undo the group creation too
                 db.connection.rollback()
                 return -1
             }
-             //Group and member all successful
+            // Group and member all successful
             db.connection.commit()
             return groupID
-        } catch (error: Exception) { // If unexpected error undo everything
+        } catch (error: Exception) {
+            // If unexpected error undo everything
             db.connection.rollback()
             return -1
-        } finally { // Always restore autocommit if failur eor success
+        } finally {
+            // Always restore autocommit if failur eor success
             db.connection.autoCommit = true
         }
     }
 
     fun deleteGroup(groupID: Int): Boolean {
-        val stmt = db.connection.prepareStatement(
-            "DELETE FROM training_groups WHERE groupID = ?"
-        )
+        val stmt =
+            db.connection.prepareStatement(
+                "DELETE FROM training_groups WHERE groupID = ?",
+            )
         stmt.setInt(1, groupID)
 
         val rows = stmt.executeUpdate()
@@ -1550,22 +1699,26 @@ class DatabaseService{
     }
 
     fun findGroup(groupID: Int): TrainingGroup? {
-        val stmt = db.connection.prepareStatement(
-            "SELECT * FROM training_groups WHERE groupID = ?"
-        )
+        val stmt =
+            db.connection.prepareStatement(
+                "SELECT * FROM training_groups WHERE groupID = ?",
+            )
         stmt.setInt(1, groupID)
 
         val rs = stmt.executeQuery()
 
-        val group = if (rs.next()) {
-            TrainingGroup(
-                groupID = rs.getInt("groupID"),
-                createdBy = rs.getInt("createdBy"),
-                name = rs.getString("name"),
-                description = rs.getObject("description") as String?,
-                goal = rs.getObject("goal") as String?
-            )
-        } else null
+        val group =
+            if (rs.next()) {
+                TrainingGroup(
+                    groupID = rs.getInt("groupID"),
+                    createdBy = rs.getInt("createdBy"),
+                    name = rs.getString("name"),
+                    description = rs.getObject("description") as String?,
+                    goal = rs.getObject("goal") as String?,
+                )
+            } else {
+                null
+            }
 
         rs.close()
         stmt.close()
@@ -1574,13 +1727,14 @@ class DatabaseService{
     }
 
     fun findAllGroups(userID: Int): List<TrainingGroup> {
-        val stmt = db.connection.prepareStatement(
-            """
-            SELECT training_groups.* FROM training_groups
-            JOIN group_members ON training_groups.groupID = group_members.groupID
-            WHERE group_members.userID = ?
-            """.trimIndent()
-        )
+        val stmt =
+            db.connection.prepareStatement(
+                """
+                SELECT training_groups.* FROM training_groups
+                JOIN group_members ON training_groups.groupID = group_members.groupID
+                WHERE group_members.userID = ?
+                """.trimIndent(),
+            )
         stmt.setInt(1, userID)
 
         val rs = stmt.executeQuery()
@@ -1593,8 +1747,8 @@ class DatabaseService{
                     createdBy = rs.getInt("createdBy"),
                     name = rs.getString("name"),
                     description = rs.getObject("description") as String?,
-                    goal = rs.getObject("goal") as String?
-                )
+                    goal = rs.getObject("goal") as String?,
+                ),
             )
         }
         rs.close()
@@ -1603,13 +1757,24 @@ class DatabaseService{
         return groups
     }
 
-    fun updateGroup(groupID: Int, name: String, description: String?, goal: String?): Boolean {
-        val stmt = db.connection.prepareStatement(
-            """
-            UPDATE training_groups SET name = ?, description = ?, goal = ?
-            WHERE groupID = ?
-            """.trimIndent()
-        )
+    fun updateGroup(
+        groupID: Int,
+        name: String,
+        description: String?,
+        goal: String?,
+    ): Boolean {
+        // Validation Checks
+        if (name.isBlank()) return false
+        if (description != null && description.length > 500) return false
+        if (goal != null && goal.length > 500) return false
+        if (groupID <= 0) return false
+        val stmt =
+            db.connection.prepareStatement(
+                """
+                UPDATE training_groups SET name = ?, description = ?, goal = ?
+                WHERE groupID = ?
+                """.trimIndent(),
+            )
         stmt.setString(1, name)
         stmt.setString(2, description)
         stmt.setObject(3, goal)
@@ -1623,24 +1788,37 @@ class DatabaseService{
 
     // Group members
 
-    fun joinGroup(groupID: Int, userID: Int): Boolean {
-        val stmt = db.connection.prepareStatement(
-            "INSERT INTO group_members(groupID, userID) VALUES (?, ?)"
-        )
+    fun joinGroup(
+        groupID: Int,
+        userID: Int,
+    ): Boolean {
+        // Validation Checks
+        if (groupID <= 0 || userID <= 0) return false
+        val members = getGroupMembers(groupID)
+        if (members.any { it.userID == userID }) return false
+
+        val stmt =
+            db.connection.prepareStatement(
+                "INSERT INTO group_members(groupID, userID) VALUES (?, ?)",
+            )
 
         stmt.setInt(1, groupID)
         stmt.setInt(2, userID)
 
         val rows = stmt.executeUpdate()
         stmt.close()
-        
+
         return rows > 0
     }
 
-    fun leaveGroup(groupID: Int, userID: Int): Boolean {
-        val stmt = db.connection.prepareStatement(
-            "DELETE FROM group_members WHERE groupID = ? AND userID = ?"
-        )
+    fun leaveGroup(
+        groupID: Int,
+        userID: Int,
+    ): Boolean {
+        val stmt =
+            db.connection.prepareStatement(
+                "DELETE FROM group_members WHERE groupID = ? AND userID = ?",
+            )
         stmt.setInt(1, groupID)
         stmt.setInt(2, userID)
 
@@ -1651,13 +1829,14 @@ class DatabaseService{
     }
 
     fun getGroupMembers(groupID: Int): List<User> {
-        val stmt = db.connection.prepareStatement(
-            """
-            SELECT users.* FROM users
-            JOIN group_members ON users.userID = group_members.userID
-            WHERE group_members.groupID = ?
-            """.trimIndent()
-        )
+        val stmt =
+            db.connection.prepareStatement(
+                """
+                SELECT users.* FROM users
+                JOIN group_members ON users.userID = group_members.userID
+                WHERE group_members.groupID = ?
+                """.trimIndent(),
+            )
         stmt.setInt(1, groupID)
 
         val rs = stmt.executeQuery()
@@ -1675,8 +1854,8 @@ class DatabaseService{
                     age = rs.getObject("age") as Int?,
                     height = rs.getObject("height") as Double?,
                     weight = rs.getObject("weight") as Double?,
-                    accountType = rs.getBoolean("accountType")
-                )
+                    accountType = rs.getBoolean("accountType"),
+                ),
             )
         }
 
@@ -1689,26 +1868,36 @@ class DatabaseService{
     // Group training sessions
 
     fun addGroupSession(session: GroupSession): Int {
-        val stmt = db.connection.prepareStatement(
-            """
-            INSERT INTO group_sessions(groupID, workoutID, scheduledDate)
-            VALUES (?, ?, ?)
-            """.trimIndent(),
-            Statement.RETURN_GENERATED_KEYS
-        )
+        // Validation Checks
+        if (session.groupID <= 0 || session.workoutID <= 0) return -1
+        if (session.scheduledDate.isBlank() || !session.scheduledDate.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) return -1
+
+        val stmt =
+            db.connection.prepareStatement(
+                """
+                INSERT INTO group_sessions(groupID, workoutID, scheduledDate)
+                VALUES (?, ?, ?)
+                """.trimIndent(),
+                Statement.RETURN_GENERATED_KEYS,
+            )
         stmt.setInt(1, session.groupID)
         stmt.setInt(2, session.workoutID)
         stmt.setString(3, session.scheduledDate)
 
         val rowsInserted = stmt.executeUpdate()
 
-        if (rowsInserted == 0) { 
+        if (rowsInserted == 0) {
             stmt.close()
-            return -1 
+            return -1
         }
 
         val rs = stmt.generatedKeys
-        val id = if (rs.next()){rs.getInt(1)} else -1
+        val id =
+            if (rs.next()) {
+                rs.getInt(1)
+            } else {
+                -1
+            }
 
         rs.close()
         stmt.close()
@@ -1717,15 +1906,15 @@ class DatabaseService{
     }
 
     fun getUpcomingGroupSessions(groupID: Int): List<GroupSession> {
-
         val today = LocalDate.now().toString()
-        val stmt = db.connection.prepareStatement(
-            """
-            SELECT * FROM group_sessions
-            WHERE groupID = ? AND scheduledDate >= ?
-            ORDER BY scheduledDate ASC
-            """.trimIndent()
-        )
+        val stmt =
+            db.connection.prepareStatement(
+                """
+                SELECT * FROM group_sessions
+                WHERE groupID = ? AND scheduledDate >= ?
+                ORDER BY scheduledDate ASC
+                """.trimIndent(),
+            )
 
         stmt.setInt(1, groupID)
         stmt.setString(2, today)
@@ -1739,8 +1928,8 @@ class DatabaseService{
                     sessionID = rs.getInt("sessionID"),
                     groupID = rs.getInt("groupID"),
                     workoutID = rs.getInt("workoutID"),
-                    scheduledDate = rs.getString("scheduledDate")
-                )
+                    scheduledDate = rs.getString("scheduledDate"),
+                ),
             )
         }
         rs.close()
@@ -1751,13 +1940,14 @@ class DatabaseService{
 
     fun getPastGroupSessions(groupID: Int): List<GroupSession> {
         val today = LocalDate.now().toString()
-        val stmt = db.connection.prepareStatement(
-            """
-            SELECT * FROM group_sessions
-            WHERE groupID = ? AND scheduledDate < ?
-            ORDER BY scheduledDate DESC
-            """.trimIndent()
-        )
+        val stmt =
+            db.connection.prepareStatement(
+                """
+                SELECT * FROM group_sessions
+                WHERE groupID = ? AND scheduledDate < ?
+                ORDER BY scheduledDate DESC
+                """.trimIndent(),
+            )
         stmt.setInt(1, groupID)
         stmt.setString(2, today)
 
@@ -1770,8 +1960,8 @@ class DatabaseService{
                     sessionID = rs.getInt("sessionID"),
                     groupID = rs.getInt("groupID"),
                     workoutID = rs.getInt("workoutID"),
-                    scheduledDate = rs.getString("scheduledDate")
-                )
+                    scheduledDate = rs.getString("scheduledDate"),
+                ),
             )
         }
         rs.close()
@@ -1781,9 +1971,10 @@ class DatabaseService{
     }
 
     fun deleteGroupSession(sessionID: Int): Boolean {
-        val stmt = db.connection.prepareStatement(
-            "DELETE FROM group_sessions WHERE sessionID = ?"
-        )
+        val stmt =
+            db.connection.prepareStatement(
+                "DELETE FROM group_sessions WHERE sessionID = ?",
+            )
         stmt.setInt(1, sessionID)
 
         val rows = stmt.executeUpdate()
@@ -1792,10 +1983,9 @@ class DatabaseService{
         return rows > 0
     }
 
-    //Functions for the dashboard of the frontend
+    // Functions for the dashboard of the frontend
 
-    fun getRecentWorkouts(email: String): List<Workout>{
-
+    fun getRecentWorkouts(email: String): List<Workout> {
         val user = findUser(email) ?: return emptyList()
         val results = mutableListOf<Workout>()
 
@@ -1821,8 +2011,8 @@ class DatabaseService{
                     duration = rs.getObject("duration") as Int?,
                     workoutType = rs.getObject("workoutType") as String?,
                     notes = rs.getObject("notes") as String?,
-                    routeID = rs.getObject("routeID") as Int?
-                )
+                    routeID = rs.getObject("routeID") as Int?,
+                ),
             )
         }
         rs.close()
@@ -1833,11 +2023,18 @@ class DatabaseService{
 
     // Frontend potentially want to split it into 3 most recent of each
     fun getRecentWorkoutsByType(userID: Int): Map<String, List<Workout>> {
-        return findAllWorkouts(userID).filter { it.workoutType != null }.sortedByDescending { it.date }.groupBy { it.workoutType!! }.mapValues { (_, workouts) -> workouts.take(3) }
+        return findAllWorkouts(
+            userID,
+        ).filter { it.workoutType != null }.sortedByDescending { it.date }.groupBy { it.workoutType!! }.mapValues {
+                (_, workouts) ->
+            workouts.take(3)
+        }
     }
 
-    fun getTodaysWorkout(email: String, today: LocalDate = LocalDate.now()): List<Workout>{
-
+    fun getTodaysWorkout(
+        email: String,
+        today: LocalDate = LocalDate.now(),
+    ): List<Workout> {
         val user = findUser(email) ?: return emptyList()
         val results = mutableListOf<Workout>()
 
@@ -1862,18 +2059,17 @@ class DatabaseService{
                     duration = rs.getObject("duration") as Int?,
                     workoutType = rs.getObject("workoutType") as String?,
                     notes = rs.getObject("notes") as String?,
-                    routeID = rs.getObject("routeID") as Int?
-                )
+                    routeID = rs.getObject("routeID") as Int?,
+                ),
             )
         }
         rs.close()
         stmt.close()
-        
+
         return results
     }
-    
-    fun getUpcomingCompetitions(email: String): List<Competition>{
-        
+
+    fun getUpcomingCompetitions(email: String): List<Competition> {
         val user = findUser(email) ?: return emptyList()
 
         val results = mutableListOf<Competition>()
@@ -1898,18 +2094,17 @@ class DatabaseService{
                     name = rs.getString("name"),
                     date = rs.getString("date"),
                     rank = rs.getObject("rank") as Int?,
-                    result = rs.getObject("result") as Int?
-                )
+                    result = rs.getObject("result") as Int?,
+                ),
             )
         }
         rs.close()
         stmt.close()
-        
+
         return results
     }
 
     fun getRecentRoutes(email: String): List<Route> {
-
         val user = findUser(email) ?: return emptyList()
 
         val results = mutableListOf<Route>()
@@ -1936,18 +2131,17 @@ class DatabaseService{
                     estimatedTime = rs.getObject("estimatedTime") as Double?,
                     date = rs.getString("date"),
                     isPublic = rs.getBoolean("isPublic"),
-                    routeData = rs.getString("routeData")
-                )
+                    routeData = rs.getString("routeData"),
+                ),
             )
         }
         rs.close()
         stmt.close()
-        
+
         return results
     }
 
     fun getRecentCompetitions(email: String): List<Competition> {
-
         val user = findUser(email) ?: return emptyList()
 
         val results = mutableListOf<Competition>()
@@ -1972,20 +2166,22 @@ class DatabaseService{
                     name = rs.getString("name"),
                     date = rs.getString("date"),
                     rank = rs.getObject("rank") as Int?,
-                    result = rs.getObject("result") as Int?
-                )
+                    result = rs.getObject("result") as Int?,
+                ),
             )
         }
         rs.close()
         stmt.close()
-        
+
         return results
     }
 
     // Functions for the stats page
     fun getWorkoutProgression(userID: Int): Map<String, List<Workout>> {
         val today = LocalDate.now().toString()
-        return findAllWorkouts(userID).filter { it.workoutType != null && it.date < today}.sortedBy { it.date }.groupBy { it.workoutType!! }
+        return findAllWorkouts(
+            userID,
+        ).filter { it.workoutType != null && it.date < today }.sortedBy { it.date }.groupBy { it.workoutType!! }
     }
 
     fun getTotalWorkoutsCompleted(userID: Int): Int {
@@ -1995,13 +2191,18 @@ class DatabaseService{
 
     // Hours trained
     fun getHoursTrained(userID: Int): Double {
-        return findAllWorkouts(userID).filter { it.date < LocalDate.now().toString() && it.duration != null }.sumOf { it.duration ?: 0 }.div(60.0)
+        return findAllWorkouts(
+            userID,
+        ).filter { it.date < LocalDate.now().toString() && it.duration != null }.sumOf { it.duration ?: 0 }.div(60.0)
     }
 
     // Workout Streak
     fun getCurrentStreak(userID: Int): Int {
         val today = LocalDate.now()
-        val completed = findAllWorkouts(userID).filter { it.date < today.toString() }.map { LocalDate.parse(it.date) }.toSortedSet().reversed()
+        val completed =
+            findAllWorkouts(
+                userID,
+            ).filter { it.date < today.toString() }.map { LocalDate.parse(it.date) }.toSortedSet().reversed()
 
         var streak = 0
         var current = today.minusDays(1)
@@ -2020,7 +2221,7 @@ class DatabaseService{
     // Weekly training history
     fun getWeeklyTrainingHistory(userID: Int): Map<String, Map<String, Any>> {
         val today = LocalDate.now()
-        return findAllWorkouts(userID).filter { it.date < today.toString() && it.duration != null }
+        return findAllWorkouts(userID).filter { LocalDate.parse(it.date).isBefore(today) && it.duration != null }
             .groupBy { workout ->
                 val date = LocalDate.parse(workout.date)
                 val weekStart = date.with(DayOfWeek.MONDAY).toString()
@@ -2029,7 +2230,7 @@ class DatabaseService{
             .mapValues { (_, workouts) ->
                 mapOf(
                     "sessions" to workouts.size,
-                    "totalDuration" to workouts.sumOf { it.duration ?: 0 }.div(60.0)
+                    "totalDuration" to workouts.sumOf { it.duration ?: 0 }.div(60.0),
                 )
             }
             .toSortedMap()
@@ -2039,17 +2240,20 @@ class DatabaseService{
     fun getExerciseBreakdown(userID: Int): Map<String, Map<String, Any>> {
         val workouts = findAllWorkouts(userID).filter { it.date < LocalDate.now().toString() }
         val workoutIDs: List<Int> = workouts.mapNotNull { it.workoutID }
-        
+
         if (workoutIDs.isEmpty()) return emptyMap()
 
         val categoryCounts = mutableMapOf<String, Int>()
-        
-        workoutIDs.forEach { workoutID ->
-            val stmt = db.connection.prepareStatement("""
+
+        for (workoutID in workoutIDs) {
+            val stmt =
+                db.connection.prepareStatement(
+                    """
                 SELECT exercises.category FROM workout_exercises
                 JOIN exercises ON workout_exercises.exerciseID = exercises.exerciseID
                 WHERE workout_exercises.workoutID = ?
-            """)
+            """,
+                )
 
             // Joins tables (above)
             stmt.setInt(1, workoutID)
@@ -2063,26 +2267,28 @@ class DatabaseService{
             stmt.close()
         }
 
-        //Total number
+        // Total number
         val total = categoryCounts.values.sum().toDouble()
 
-        //Returns counts and percentage for each category
+        // Returns counts and percentage for each category
         return categoryCounts.mapValues { (_, count) ->
             mapOf(
                 "sessions" to count,
-                "percentage" to ((count / total) * 100).toInt()
+                "percentage" to ((count / total) * 100).toInt(),
             )
         }
     }
 
     // For personal bests
     fun getPersonalBests(userID: Int): List<Statistic> {
-        return findAllExercises().mapNotNull { exercise ->getBestStat(userID, exercise.exerciseID!!)}
+        return findAllExercises().mapNotNull { exercise -> getBestStat(userID, exercise.exerciseID!!) }
     }
 
     // Log workout for workout logs page
-    fun logWorkout(workout: Workout, exercises: List<WorkoutExercise>): Int {
-
+    fun logWorkout(
+        workout: Workout,
+        exercises: List<WorkoutExercise>,
+    ): Int {
         db.connection.autoCommit = false // Allows grouping of statements (transactions) so atomic
         try {
             // Create workout, if fails undo everything
@@ -2092,15 +2298,16 @@ class DatabaseService{
                 return -1
             }
             // Link each exercise to the workout, if fails undo everything
-            exercises.forEach { exercise ->
-                val we = WorkoutExercise(
-                    workoutExercisesID = 0,
-                    workoutID = workoutID,
-                    exerciseID = exercise.exerciseID,
-                    sets = exercise.sets,
-                    reps = exercise.reps,
-                    weight = exercise.weight
-                )
+            for (exercise in exercises) {
+                val we =
+                    WorkoutExercise(
+                        workoutExercisesID = 0,
+                        workoutID = workoutID,
+                        exerciseID = exercise.exerciseID,
+                        sets = exercise.sets,
+                        reps = exercise.reps,
+                        weight = exercise.weight,
+                    )
                 if (addExerciseToWorkout(we) == -1) {
                     db.connection.rollback()
                     return -1
@@ -2109,8 +2316,8 @@ class DatabaseService{
             // Commit all this if success
             db.connection.commit()
             return workoutID
-        } catch (error: Exception) { // If any error undo everything
-            error.printStackTrace()
+        } catch (error: Exception) {
+            // If any error undo everything
             db.connection.rollback()
             return -1
         } finally {
@@ -2132,11 +2339,15 @@ class DatabaseService{
     }
 
     // Update a logged workout (in case of a changed exercise or another detail)
-    fun updateLoggedWorkout(workout: Workout, exercises: List<WorkoutExercise>): Boolean {
+    fun updateLoggedWorkout(
+        workout: Workout,
+        exercises: List<WorkoutExercise>,
+    ): Boolean {
         // As usual, turn off autocommit as multiple statement function
         db.connection.autoCommit = false
         try {
-            val updated = updateWorkout(workout.workoutID, workout.date, workout.duration, workout.workoutType, workout.notes, workout.routeID)
+            val updated =
+                updateWorkout(workout.workoutID, workout.date, workout.duration, workout.workoutType, workout.notes, workout.routeID)
             // Update workout failed so undo everything
             if (!updated) {
                 db.connection.rollback()
@@ -2146,12 +2357,14 @@ class DatabaseService{
             deleteAllExercisesInWorkout(workout.workoutID)
 
             // Add new exercise list
-            exercises.forEach { exercise -> if (addExerciseToWorkout(exercise.copy(workoutID = workout.workoutID)) == -1) {
-                //If link fails  undo everything
-                db.connection.rollback()
-                return false
+            for (exercise in exercises) {
+                val result = addExerciseToWorkout(exercise.copy(workoutID = workout.workoutID))
+                if (result == -1) {
+                    // If link fails  undo everything
+                    db.connection.rollback()
+                    return false
+                }
             }
-        }
             db.connection.commit()
             return true
         } catch (error: Exception) {
