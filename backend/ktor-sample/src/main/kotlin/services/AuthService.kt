@@ -54,6 +54,8 @@ class AuthService {
         password: String,
         accountType: Boolean,
     ): Int {
+        // Validation checks for users
+        if (name.isBlank() || !email.contains("@") || !email.contains(".") || password.isBlank() || password.length < 8) return -1
         val key = generateSalt()
         val hash = hashPassword(password, key)
 

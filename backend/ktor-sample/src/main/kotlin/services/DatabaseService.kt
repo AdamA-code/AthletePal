@@ -238,6 +238,11 @@ class DatabaseService {
     ): Boolean {
         // Connect to db, pepare query struct, use object that allows updating
         // and prevent SQL injection, store to set values and exec
+
+        //  Validation checks
+        if (email.isBlank() || !email.contains("@") || !email.contains(".")) return false
+        if (age != null && (age < 0 || age > 120)) return false
+
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
                 """
@@ -266,6 +271,8 @@ class DatabaseService {
         oldPassword: String,
         newPassword: String,
     ): Boolean {
+        // Validation checks
+        if (oldPassword.isBlank() || newPassword.isBlank() || newPassword.length < 8) return false
         val user = findUser(email) ?: return false
 
         val authService = AuthService()
@@ -299,6 +306,9 @@ class DatabaseService {
 
     // Forgot password (email token)
     fun generatePasswordResetToken(email: String): String? {
+        // Validation checks
+        if (!email.contains("@") || !email.contains(".")) return null
+
         val user = findUser(email) ?: return null
 
         // Generate a random unique token
@@ -333,6 +343,10 @@ class DatabaseService {
         token: String,
         newPassword: String,
     ): Boolean {
+        // Validation checks
+        if (token.isBlank() || newPassword.length < 8) return false
+
+        // Turn off autocommit for transactions
         db.connection.autoCommit = false
         try {
             // FInd unused token
@@ -444,6 +458,12 @@ class DatabaseService {
     // Exercise db
 
     fun createExercise(exercise: Exercise): Int {
+        
+        // Validation Checks
+        if (exercise.name.isBlank()) return -1
+        val validCategories = listOf("weights", "running", "cycling", "swimming", "walking")
+        if (exercise.category !in validCategories) return -1
+    
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
                 """
@@ -531,6 +551,10 @@ class DatabaseService {
         category: String,
         description: String?,
     ): Boolean {
+        // Validation Checks
+        if (name.isBlank()) return false
+        val validCategories = listOf("weights", "running", "cycling", "swimming", "walking")
+        if (category !in validCategories) return false
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
                 """
@@ -566,6 +590,12 @@ class DatabaseService {
 
     // Workout to DB
     fun createWorkout(workout: Workout): Int {
+        // Validation Checks
+        if (workout.date.isBlank() || !workout.date.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) return -1
+        if (workout.duration != null && workout.duration <= 0) return -1
+        val validTypes = listOf("cardio", "weights", "running", "cycling", "swimming")
+        if (workout.workoutType != null && workout.workoutType !in validTypes) return -1
+
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
                 """
@@ -638,6 +668,11 @@ class DatabaseService {
         notes: String?,
         routeID: Int?,
     ): Boolean {
+        // Validation Checks
+        if (workoutID <= 0) return false
+        if (date.isBlank() || !date.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) return false
+        if (duration != null && duration <= 0) return false
+
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
                 """
@@ -677,6 +712,12 @@ class DatabaseService {
     // Workout_exercise join table
 
     fun addExerciseToWorkout(workout_exercise: WorkoutExercise): Int {
+        // Validation Checks
+        if (workout_exercise.workoutID <= 0 || workout_exercise.exerciseID <= 0) return -1
+        if (workout_exercise.sets != null && workout_exercise.sets <= 0) return -1
+        if (workout_exercise.reps != null && workout_exercise.reps <= 0) return -1
+        if (workout_exercise.weight != null && workout_exercise.weight <= 0.0) return -1
+
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
                 """
@@ -742,6 +783,12 @@ class DatabaseService {
         reps: Int?,
         weight: Double?,
     ): Boolean {
+        // Validation Checks
+        if (workoutExercisesID <= 0) return false
+        if (sets != null && sets <= 0) return false
+        if (reps != null && reps <= 0) return false
+        if (weight != null && weight <= 0.0) return false
+
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
                 """
@@ -778,6 +825,11 @@ class DatabaseService {
 
     // Statistics DB
     fun addStatistic(stat: Statistic): Int {
+        // Validation Checks
+        if (stat.userID <= 0 || stat.exerciseID <= 0) return -1
+        if (stat.scoreValue <= 0.0) return -1
+        if (stat.date.isBlank() || !stat.date.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) return -1
+
         val stmt =
             db.connection.prepareStatement(
                 """
@@ -882,6 +934,10 @@ class DatabaseService {
         scoreValue: Double,
         date: String,
     ): Boolean {
+        // Validation Checks
+        if (statisticID <= 0) return false
+        if (scoreValue <= 0.0) return false
+        if (date.isBlank() || !date.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) return false
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
                 """
@@ -917,6 +973,12 @@ class DatabaseService {
 
     // Competitions DB
     fun addComp(comp: Competition): Int {
+        // Validation Checks
+        if (comp.name.isBlank()) return -1
+        if (comp.date.isBlank() || !comp.date.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) return -1
+        if (comp.rank != null && comp.rank <= 0) return -1
+        if (comp.result != null && comp.result <= 0) return -1
+
         val stmt =
             db.connection.prepareStatement(
                 """
@@ -983,6 +1045,12 @@ class DatabaseService {
         rank: Int? = null,
         result: Int? = null,
     ): Boolean {
+        // Validation Checks
+        if (competitionID <= 0) return false
+        if (name.isBlank()) return false
+        if (date.isBlank() || !date.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) return false
+        if (rank != null && rank <= 0) return false
+        if (result != null && result <= 0) return false
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
                 """
@@ -1114,6 +1182,12 @@ class DatabaseService {
     // Routes DB
 
     fun addRoute(route: Route): Int {
+        // Validation Checks
+        if (route.name.isBlank()) return -1
+        if (route.distance <= 0.0) return -1
+        if (route.estimatedTime != null && route.estimatedTime <= 0.0) return -1
+        if (route.date.isBlank() || !route.date.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) return -1
+
         val stmt =
             db.connection.prepareStatement(
                 """
@@ -1186,6 +1260,13 @@ class DatabaseService {
         isPublic: Boolean,
         routeData: String,
     ): Boolean {
+        // Validation Checks
+        if (name.isBlank()) return false
+        if (distance <= 0.0) return false
+        if (estimatedTime != null && estimatedTime <= 0.0) return false
+        if (date != null && (date.isBlank() || !date.matches(Regex("\\d{4}-\\d{2}-\\d{2}")))) return false
+        if (routeID <= 0) return false
+
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
                 """
@@ -1545,6 +1626,11 @@ class DatabaseService {
 
     fun createGroup(group: TrainingGroup): Int {
         db.connection.autoCommit = false // stops db from saving each statting - keeps atomicty
+        // Validation checks
+        if (group.name.isBlank()) return -1
+        if (group.description != null && group.description.length > 500) return -1
+        if (group.goal != null && group.goal.length > 500) return -1
+
         try {
             val stmt =
                 db.connection.prepareStatement(
@@ -1677,6 +1763,11 @@ class DatabaseService {
         description: String?,
         goal: String?,
     ): Boolean {
+        // Validation Checks
+        if (name.isBlank()) return false
+        if (description != null && description.length > 500) return false
+        if (goal != null && goal.length > 500) return false
+        if (groupID <= 0) return false
         val stmt =
             db.connection.prepareStatement(
                 """
@@ -1701,6 +1792,11 @@ class DatabaseService {
         groupID: Int,
         userID: Int,
     ): Boolean {
+        // Validation Checks
+        if (groupID <= 0 || userID <= 0) return false
+        val members = getGroupMembers(groupID)
+        if (members.any { it.userID == userID }) return false
+
         val stmt =
             db.connection.prepareStatement(
                 "INSERT INTO group_members(groupID, userID) VALUES (?, ?)",
@@ -1772,6 +1868,10 @@ class DatabaseService {
     // Group training sessions
 
     fun addGroupSession(session: GroupSession): Int {
+        // Validation Checks
+        if (session.groupID <= 0 || session.workoutID <= 0) return -1
+        if (session.scheduledDate.isBlank() || !session.scheduledDate.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) return -1
+
         val stmt =
             db.connection.prepareStatement(
                 """
@@ -2121,7 +2221,7 @@ class DatabaseService {
     // Weekly training history
     fun getWeeklyTrainingHistory(userID: Int): Map<String, Map<String, Any>> {
         val today = LocalDate.now()
-        return findAllWorkouts(userID).filter { it.date < today.toString() && it.duration != null }
+        return findAllWorkouts(userID).filter { LocalDate.parse(it.date).isBefore(today) && it.duration != null }
             .groupBy { workout ->
                 val date = LocalDate.parse(workout.date)
                 val weekStart = date.with(DayOfWeek.MONDAY).toString()
@@ -2145,7 +2245,7 @@ class DatabaseService {
 
         val categoryCounts = mutableMapOf<String, Int>()
 
-        workoutIDs.forEach { workoutID ->
+        for (workoutID in workoutIDs) {
             val stmt =
                 db.connection.prepareStatement(
                     """
@@ -2198,7 +2298,7 @@ class DatabaseService {
                 return -1
             }
             // Link each exercise to the workout, if fails undo everything
-            exercises.forEach { exercise ->
+            for (exercise in exercises) {
                 val we =
                     WorkoutExercise(
                         workoutExercisesID = 0,
@@ -2244,8 +2344,9 @@ class DatabaseService {
             deleteWorkoutExercise(workout.workoutID)
 
             // Add new exercise list
-            exercises.forEach { exercise ->
-                if (addExerciseToWorkout(exercise.copy(workoutID = workout.workoutID)) == -1) {
+            for (exercise in exercises) {
+                val result = addExerciseToWorkout(exercise.copy(workoutID = workout.workoutID))
+                if (result == -1) {
                     // If link fails  undo everything
                     db.connection.rollback()
                     return false

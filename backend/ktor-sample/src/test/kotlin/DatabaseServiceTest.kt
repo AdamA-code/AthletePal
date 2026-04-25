@@ -94,7 +94,7 @@ class DatabaseServiceTest {
                 Exercise(
                     exerciseID = 0,
                     name = "Bench Press",
-                    category = "Chest",
+                    category = "weights",
                     description = "Integration test exercise",
                 ),
             )
@@ -107,7 +107,7 @@ class DatabaseServiceTest {
         assertTrue(
             ds.updateExercise(
                 name = "Bench Press",
-                category = "Weights",
+                category = "weights",
                 description = "Updated",
             ),
         )
@@ -361,7 +361,7 @@ class DatabaseServiceTest {
 
         // Future
         ds.addComp(
-            Competition(0, userId, "Future Comp", future, 0, 0),
+            Competition(0, userId, "Future Comp", future, null, null),
         )
 
         // Competition (past)
