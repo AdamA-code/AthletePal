@@ -53,9 +53,9 @@ class DatabaseService {
         val workoutExercisesID: Int = 0,
         val workoutID: Int = 0, // Still a required field for adding workout exercise to workout
         val exerciseID: Int,
-        val sets: Int? = 0,
-        val reps: Int? = 0,
-        val weight: Double? = 0.0
+        val sets: Int? = 1,
+        val reps: Int? = 1,
+        val weight: Double? = 1.0
     )
 
     @Serializable
@@ -809,10 +809,10 @@ class DatabaseService {
         return rowsUpdated > 0
     }
 
-    fun deleteWorkoutExercise(workoutID: Int): Boolean {
+    fun deleteWorkoutExercise(workoutExercisesID: Int): Boolean {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
-                "DELETE FROM workout_exercises WHERE workoutID = ?",
+                "DELETE FROM workout_exercises WHERE workoutExercisesID = ?",
             )
 
         stmt.setInt(1, workoutExercisesID)
@@ -2281,7 +2281,7 @@ class DatabaseService {
 
     // For personal bests
     fun getPersonalBests(userID: Int): List<Statistic> {
-        return findAllExercises().mapNotNull { exercise -> getBestStat(userID, exercise.exerciseID) }
+        return findAllExercises().mapNotNull { exercise -> getBestStat(userID, exercise.exerciseID!!) }
     }
 
     // Log workout for workout logs page

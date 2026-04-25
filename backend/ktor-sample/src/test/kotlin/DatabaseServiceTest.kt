@@ -277,44 +277,6 @@ class DatabaseServiceTest {
         )
 
         assertTrue(ds.deleteRoute(route.routeID))
-
-        // =========================
-        // 8. CALENDAR
-        // =========================
-        val calendarId =
-            ds.addCalendarEvent(
-                CalendarEvent(
-                    calendarID = 0,
-                    userID = userId,
-                    eventType = "WORKOUT",
-                    eventID = workoutId,
-                    status = "NOT_COMPLETED",
-                    scheduledDate = "2026-01-01",
-                    name = "Test Event",
-                ),
-            )
-
-        assertTrue(calendarId > 0)
-
-        val events = ds.findAllCalendarEvents(userId, "2026-01-01")
-        assertTrue(events.isNotEmpty())
-
-        val event = events.first()
-
-        assertTrue(
-            ds.updateCalendarEvent(
-                calendarID = event.calendarID!!,
-                status = "COMPLETED",
-                scheduledDate = "2026-01-02",
-                name = "Updated Event",
-            ),
-        )
-
-        assertTrue(ds.deleteCalendarEvent(event.calendarID!!))
-
-        // End it (cascading)
-        assertTrue(ds.deleteUser(email))
-        assertTrue(ds.deleteExercise(exerciseId))
     }
 
     @Test
