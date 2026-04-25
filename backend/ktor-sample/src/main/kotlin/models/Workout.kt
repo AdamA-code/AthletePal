@@ -8,5 +8,5 @@ data class Workout(
     val createdBy: Int,
     val assignedTo: Int,
     val date: String,
-    val duration: Int?
+    val duration: Int?,
 )

@@ -1,25 +1,22 @@
 package routes
 
-import io.ktor.server.routing.*
-import io.ktor.server.application.*
-import io.ktor.server.request.* // Import functionalityy to read JSON requests
-import io.ktor.server.response.* // Import functionality to send responses to frontend
-import io.ktor.http.*
-
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.request.receive
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
+import io.ktor.server.routing.route
 import models.UpdateGroupRequest
-
-import services.DatabaseService.TrainingGroup as TrainingGroup
-import services.DatabaseService.GroupMember as GroupMember
-import services.DatabaseService.GroupSession as GroupSession
-import services.DatabaseService.User as User
-
 import services.DatabaseService
+import services.DatabaseService.GroupSession as GroupSession
+import services.DatabaseService.TrainingGroup as TrainingGroup
+import services.DatabaseService.User as User
 
 fun Route.socialRoutes() {
     val db = DatabaseService()
 
     route("/social") {
-
         // =====================
         // GROUP CRUD ENDPOINTS
         // =====================
@@ -32,12 +29,10 @@ fun Route.socialRoutes() {
 
                 if (id != -1) {
                     call.respond(HttpStatusCode.OK, mapOf("ID" to id))
-                }
-                else if (id == -1) {
+                } else if (id == -1) {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("message" to "Could not create group"))
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
         }
@@ -52,12 +47,10 @@ fun Route.socialRoutes() {
 
                 if (updated) {
                     call.respond(HttpStatusCode.OK, mapOf("message" to "Training group updated"))
-                }
-                else if (!updated) {
+                } else if (!updated) {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "Training group not found"))
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
         }
@@ -70,12 +63,10 @@ fun Route.socialRoutes() {
 
                 if (deleted) {
                     call.respond(HttpStatusCode.OK, mapOf("message" to "Training group deleted"))
-                }
-                else if (!deleted) {
+                } else if (!deleted) {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "Training group not found"))
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
         }
@@ -88,12 +79,10 @@ fun Route.socialRoutes() {
 
                 if (trainingGroup != null) {
                     call.respond(HttpStatusCode.OK, mapOf("Training Group" to trainingGroup))
-                }
-                else if (trainingGroup == null) {
+                } else if (trainingGroup == null) {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "Training group not found"))
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
         }
@@ -106,12 +95,10 @@ fun Route.socialRoutes() {
 
                 if (!trainingGroups.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.OK, mapOf("Training Groups" to trainingGroups))
-                }
-                else if (trainingGroups.isNullOrEmpty()) {
+                } else if (trainingGroups.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "No training groups found for user"))
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
         }
@@ -126,12 +113,10 @@ fun Route.socialRoutes() {
 
                 if (userAdded) {
                     call.respond(HttpStatusCode.OK, mapOf("message" to "User added to group"))
-                }
-                else if (!userAdded) {
+                } else if (!userAdded) {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "Group not found"))
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
         }
@@ -146,12 +131,10 @@ fun Route.socialRoutes() {
 
                 if (userRemoved) {
                     call.respond(HttpStatusCode.OK, mapOf("message" to "User removed from group"))
-                }
-                else if (!userRemoved) {
+                } else if (!userRemoved) {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "User OR Group not found"))
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
         }
@@ -164,16 +147,13 @@ fun Route.socialRoutes() {
 
                 if (!groupMembers.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.OK, mapOf("Group Members" to groupMembers))
-                }
-                else if (groupMembers.isNullOrEmpty()) {
+                } else if (groupMembers.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "No group members found"))
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
         }
-
 
         // ========================
         // GROUP SESSION ENDPOINTS
@@ -187,12 +167,10 @@ fun Route.socialRoutes() {
 
                 if (id != -1) {
                     call.respond(HttpStatusCode.OK, mapOf("ID" to id))
-                }
-                else if (id == -1) {
+                } else if (id == -1) {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("message" to "Group session couldn't be created"))
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
         }
@@ -205,12 +183,10 @@ fun Route.socialRoutes() {
 
                 if (!upcomingSessions.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.OK, mapOf("Upcoming Sessions" to upcomingSessions))
-                }
-                else if (upcomingSessions.isNullOrEmpty()) {
+                } else if (upcomingSessions.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "No upcoming sessions found for group"))
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
         }
@@ -223,12 +199,10 @@ fun Route.socialRoutes() {
 
                 if (!pastSessions.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.OK, mapOf("Past Sessions" to pastSessions))
-                }
-                else if (pastSessions.isNullOrEmpty()) {
+                } else if (pastSessions.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "No past sessions found for group"))
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
         }
@@ -241,15 +215,12 @@ fun Route.socialRoutes() {
 
                 if (deleted) {
                     call.respond(HttpStatusCode.OK, mapOf("message" to "Group session deleted"))
-                }
-                else if (!deleted) {
+                } else if (!deleted) {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "Group session not found"))
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
         }
-
     }
 }

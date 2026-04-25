@@ -3,6 +3,6 @@ package models
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ForgotPasswordRequest (
+data class ForgotPasswordRequest(
     val email: String,
 )

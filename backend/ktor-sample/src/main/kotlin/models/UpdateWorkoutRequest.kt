@@ -8,5 +8,5 @@ data class UpdateWorkoutRequest(
     val duration: Int,
     val workoutType: String,
     val notes: String?,
-    val routeID: Int?
+    val routeID: Int?,
 )

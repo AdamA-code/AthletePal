@@ -1,45 +1,42 @@
 package routes
 
-import io.ktor.server.routing.*
-import io.ktor.server.application.*
-import io.ktor.server.request.* // Import functionalityy to read JSON requests
-import io.ktor.server.response.* // Import functionality to send responses to frontend
-import io.ktor.http.*
-
-import services.DatabaseService.Statistic as Statistic // Import model for a statistic
-import models.UpdateStatisticRequest as UpdateStatisticRequest
-
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.request.receive
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
+import io.ktor.server.routing.route
 import services.DatabaseService // Import the database service
+import models.UpdateStatisticRequest as UpdateStatisticRequest
+import services.DatabaseService.Statistic as Statistic // Import model for a statistic
 
 fun Route.statisticsRoutes() {
     val db = DatabaseService() // Clone the database to the variable db
 
-    route("/api"){
-
+    route("/api") {
         // ========================================
         // STAT WRITE ROUTES (ADD, UPDATE, DELETE)
         // ========================================
 
         // Add new statistic route
-        post("/statistics"){
+        post("/statistics") {
             try {
                 val stat = call.receive<Statistic>()
                 val id = db.addStatistic(stat)
 
                 if (id != -1) {
                     call.respond(HttpStatusCode.OK, mapOf("ID" to id))
-                }
-                else if (id == -1) {
+                } else if (id == -1) {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("message" to "Internal Server Error occured"))
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid HTTP request"))
             }
         }
-        
+
         // Update a given statistic
-        put("/statistics/{statisticID}"){
+        put("/statistics/{statisticID}") {
             try {
                 val id = call.parameters["statisticID"]!!.toInt()
                 val body = call.receive<UpdateStatisticRequest>()
@@ -48,18 +45,16 @@ fun Route.statisticsRoutes() {
 
                 if (updated) {
                     call.respond(HttpStatusCode.OK, mapOf("message" to "Statistic updated"))
-                }
-                else {
+                } else {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "Statistic not found"))
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid HTTP request"))
             }
         }
 
         // Delete a specific statistic
-        delete("/statistics/{statisticID}"){
+        delete("/statistics/{statisticID}") {
             try {
                 val id = call.parameters["statisticID"]!!.toInt()
 
@@ -67,12 +62,10 @@ fun Route.statisticsRoutes() {
 
                 if (deleted) {
                     call.respond(HttpStatusCode.OK, mapOf("message" to "Statistic deleted"))
-                }
-                else {
+                } else {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "Statistic not found"))
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid HTTP request"))
             }
         }
@@ -92,12 +85,10 @@ fun Route.statisticsRoutes() {
 
                 if (bestStat != null) {
                     call.respond(HttpStatusCode.OK, mapOf("Best Stat" to bestStat))
-                }
-                else if (bestStat == null) {
+                } else if (bestStat == null) {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "No statistic found"))
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid HTTP request"))
             }
         }
@@ -112,13 +103,10 @@ fun Route.statisticsRoutes() {
 
                 if (stat != null) {
                     call.respond(HttpStatusCode.OK, mapOf("Statistic" to stat))
-                }
-
-                else if (stat == null) {
+                } else if (stat == null) {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "No statistic found"))
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid HTTP request"))
             }
         }
@@ -132,13 +120,10 @@ fun Route.statisticsRoutes() {
 
                 if (progression.isNullOrEmpty() == false) {
                     call.respond(HttpStatusCode.OK, mapOf("Progression" to progression))
-                }
-
-                else if (progression.isNullOrEmpty()) {
+                } else if (progression.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "No progression found for user"))
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid HTTP request"))
             }
         }
@@ -152,12 +137,10 @@ fun Route.statisticsRoutes() {
 
                 if (completedWorkouts > 0) {
                     call.respond(HttpStatusCode.OK, mapOf("Completed Workouts" to completedWorkouts))
-                }
-                else {
+                } else {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "No completed workouts found"))
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid HTTP request"))
             }
         }
@@ -170,8 +153,7 @@ fun Route.statisticsRoutes() {
                 val hoursTrained = db.getHoursTrained(userID)
 
                 call.respond(HttpStatusCode.OK, mapOf("Hours Trained" to hoursTrained))
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid HTTP request"))
             }
         }
@@ -184,8 +166,7 @@ fun Route.statisticsRoutes() {
                 val streak = db.getCurrentStreak(userID)
 
                 call.respond(HttpStatusCode.OK, mapOf("Current Streak" to streak))
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid HTTP request"))
             }
         }
@@ -199,12 +180,10 @@ fun Route.statisticsRoutes() {
 
                 if (trainingHistory.isNullOrEmpty() == false) {
                     call.respond(HttpStatusCode.OK, mapOf("Training History" to trainingHistory))
-                }
-                else if (trainingHistory.isNullOrEmpty()) {
+                } else if (trainingHistory.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "No history found"))
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid HTTP request"))
             }
         }
@@ -218,12 +197,10 @@ fun Route.statisticsRoutes() {
 
                 if (exerciseBreakdown.isEmpty() == false) {
                     call.respond(HttpStatusCode.OK, mapOf("Exercise Breakdown" to exerciseBreakdown))
-                }
-                else if (exerciseBreakdown.isEmpty()) {
+                } else if (exerciseBreakdown.isEmpty()) {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "No exercise breakdown found"))
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid HTTP request"))
             }
         }
@@ -237,12 +214,10 @@ fun Route.statisticsRoutes() {
 
                 if (personalBests.isNullOrEmpty() == false) {
                     call.respond(HttpStatusCode.OK, mapOf("Personal Bests" to personalBests))
-                }
-                else if (personalBests.isNullOrEmpty()) {
+                } else if (personalBests.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "No personal bests found"))
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid HTTP request"))
             }
         }
@@ -255,17 +230,14 @@ fun Route.statisticsRoutes() {
 
                 val stats = db.findAllStatistics(userID, exerciseID)
 
-                if (stats.isNullOrEmpty() == false){
+                if (stats.isNullOrEmpty() == false) {
                     call.respond(HttpStatusCode.OK, mapOf("Statistics" to stats))
-                }
-                else if (stats.isNullOrEmpty()) {
+                } else if (stats.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "Statistics not found"))
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid HTTP request"))
             }
         }
-
     }
 }

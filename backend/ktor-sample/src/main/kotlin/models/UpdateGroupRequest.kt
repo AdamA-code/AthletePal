@@ -6,5 +6,5 @@ import kotlinx.serialization.Serializable
 data class UpdateGroupRequest(
     val name: String,
     val description: String? = null,
-    val goal: String? = null
+    val goal: String? = null,
 )

@@ -6,5 +6,5 @@ data class WorkoutExerciseResponse(
     val exerciseID: Int,
     val sets: Int?,
     val reps: Int?,
-    val weight: Double?
+    val weight: Double?,
 )
