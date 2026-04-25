@@ -30,7 +30,7 @@ class DatabaseService {
 
     @Serializable
     data class Exercise(
-        val exerciseID: Int,
+        val exerciseID: Int? = 0,
         val name: String,
         val category: String,
         val description: String?,
@@ -50,17 +50,17 @@ class DatabaseService {
 
     @Serializable
     data class WorkoutExercise(
-        val workoutExercisesID: Int,
-        val workoutID: Int,
+        val workoutExercisesID: Int = 0,
+        val workoutID: Int = 0, // Still a required field for adding workout exercise to workout
         val exerciseID: Int,
-        val sets: Int?,
-        val reps: Int?,
-        val weight: Double?,
+        val sets: Int? = 0,
+        val reps: Int? = 0,
+        val weight: Double? = 0.0
     )
 
     @Serializable
     data class Statistic(
-        val statisticID: Int? = null,
+        val statisticID: Int? = 0,
         val userID: Int,
         val exerciseID: Int,
         val scoreValue: Double,
@@ -69,7 +69,7 @@ class DatabaseService {
 
     @Serializable
     data class Competition(
-        val competitionID: Int? = null,
+        val competitionID: Int? = 0,
         val userID: Int,
         val name: String,
         val date: String,
@@ -79,7 +79,7 @@ class DatabaseService {
 
     @Serializable
     data class CompetitionExercise(
-        val competitionExerciseID: Int,
+        val competitionExerciseID: Int? = 0,
         val competitionID: Int,
         val exerciseID: Int,
         val performance: Double?,
@@ -87,7 +87,7 @@ class DatabaseService {
 
     @Serializable
     data class Route(
-        val routeID: Int? = null,
+        val routeID: Int? = 0,
         val userID: Int,
         val name: String,
         val distance: Double,
@@ -99,7 +99,7 @@ class DatabaseService {
 
     @Serializable
     data class CalendarEvent(
-        val calendarID: Int,
+        val calendarID: Int? = 0,
         val userID: Int,
         val eventType: String,
         val eventID: Int,
@@ -110,23 +110,23 @@ class DatabaseService {
 
     @Serializable
     data class TrainingGroup(
-        val groupID: Int,
+        val groupID: Int? = 0,
         val createdBy: Int,
         val name: String,
-        val description: String?,
-        val goal: String?,
+        val description: String? = null,
+        val goal: String? = null
     )
 
     @Serializable
     data class GroupMember(
-        val memberID: Int,
+        val memberID: Int? = 0,
         val groupID: Int,
         val userID: Int,
     )
 
     @Serializable
     data class GroupSession(
-        val sessionID: Int,
+        val sessionID: Int? = 0,
         val groupID: Int,
         val workoutID: Int,
         val scheduledDate: String,
@@ -815,7 +815,7 @@ class DatabaseService {
                 "DELETE FROM workout_exercises WHERE workoutID = ?",
             )
 
-        stmt.setInt(1, workoutID)
+        stmt.setInt(1, workoutExercisesID)
 
         val rowsDeleted = stmt.executeUpdate()
         stmt.close()
@@ -2325,6 +2325,19 @@ class DatabaseService {
         }
     }
 
+    fun deleteAllExercisesInWorkout(workoutID: Int): Boolean {
+        val stmt: PreparedStatement = db.connection.prepareStatement(
+            "DELETE FROM workout_exercises WHERE workoutID = ?"
+        )
+
+        stmt.setInt(1, workoutID)
+
+        val rowsDeleted = stmt.executeUpdate()
+        stmt.close()
+
+        return rowsDeleted > 0
+    }
+
     // Update a logged workout (in case of a changed exercise or another detail)
     fun updateLoggedWorkout(
         workout: Workout,
@@ -2341,7 +2354,7 @@ class DatabaseService {
                 return false
             }
             // Delete all exercise links
-            deleteWorkoutExercise(workout.workoutID)
+            deleteAllExercisesInWorkout(workout.workoutID)
 
             // Add new exercise list
             for (exercise in exercises) {
