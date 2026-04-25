@@ -6,6 +6,8 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
+import io.ktor.server.routing.put
+import io.ktor.server.routing.delete
 import io.ktor.server.routing.route
 import services.DatabaseService // Import the database service
 import models.UpdateStatisticRequest as UpdateStatisticRequest
