@@ -10,6 +10,8 @@ import models.UpdateAccountRequest
 import services.AuthService // Import service (logic) for validating a login
 import services.DatabaseService // Import service for storing to database
 import models.CreateAccountRequest as CreateAccountRequest
+import models.PasswordUpdateRequest as PasswordUpdateRequest
+import models.ForgotPasswordRequest as ForgotPasswordRequest
 
 fun Route.authRoutes() {
     val authService = AuthService() // Initialise AuthService in routes
@@ -84,6 +86,65 @@ fun Route.authRoutes() {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "Account not found"))
                 }
             } catch (e: Exception) {
+                e.printStackTrace()
+                call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
+            }
+        }
+
+        // Route for changing password (when current password is known)
+        put("/password/{email}") {
+            try {
+                val email: String = call.parameters["email"]!!
+                val body = call.receive<PasswordUpdateRequest>()
+
+                val updated: Boolean = db.updatePassword(email, body.oldPassword, body.newPassword)
+
+                if (updated) {
+                    call.respond(HttpStatusCode.OK, mapOf("message" to "Password successfully updated"))
+                }
+                else if (!updated) {
+                    call.respond(HttpStatusCode.NotFound, mapOf("message" to "Password not valid for user email"))
+                }
+            }
+            catch (e: Exception) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
+            }
+        }
+
+        // Route for reseting a password (when current is not known, i.e. forgot password)
+        get("/forgot-password/get-reset-email/{email}") {
+            try {
+                val email: String = call.parameters["email"]!!
+
+                val emailSent: Boolean = db.sendResetEmail(email)
+
+                if (emailSent) {
+                    call.respond(HttpStatusCode.OK, mapOf("message" to "Check inbox"))
+                }
+                else if (!emailSent) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("message" to "Request could not be fulfilled"))
+                }
+
+            }
+            catch (e: Exception) {
+                call.respond("message" to "Invalid Request")
+            }
+        }
+
+        put("/forgot-password/enter-token") {
+            try {
+                val body = call.receive<ForgotPasswordRequest>()
+
+                val updated: Boolean = db.resetPasswordWithToken(body.token, body.newPassword)
+
+                if (updated) {
+                    call.respond(HttpStatusCode.OK, mapOf("message" to "Password updated"))
+                }
+                else if (!updated) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("message" to "Password couldn't be updated"))
+                }
+            }
+            catch (e: Exception) {
                 e.printStackTrace()
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid request"))
             }

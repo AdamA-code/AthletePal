@@ -11,6 +11,12 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID // Univversal unique identifier for reset tokens
 
+// Imports for sending reset emails to API for sending to user(s)
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+
 // data classes to finitely store inputs (and potentially outputs) to database
 
 class DatabaseService {
@@ -435,6 +441,44 @@ class DatabaseService {
             return false
         } finally {
             db.connection.autoCommit = true
+        }
+    }
+
+    fun sendResetEmail(email: String): Boolean {
+        try {
+            val token: String? = generatePasswordResetToken(email)
+
+            if (token == null) { // If token couldn't be generated return false
+                return false
+            }
+
+            val client = OkHttpClient() // create HTTP client instance
+            val postmarkAPIToken = "28ac09e0-0c09-462f-9438-ccabc99a56e2"
+
+            val json = """
+                {
+                    "From": "dwbt7640@leeds.ac.uk",
+                    "To": "${email}",
+                    "Subject": "Password Reset Code",
+                    "TextBody": "Your password reset code is: ${token}",
+                    "MessageStream": "outbound"
+                }
+            """.trimIndent() // Defines body of API email request
+
+            val request = Request.Builder() // Begin building HTTP request for API
+                .url("https://api.postmarkapp.com/email") // Send to API (Postmark)
+                .post(json.toRequestBody("application/json".toMediaType())) // Attach JSON body defined above as POST request
+                .header("Accept", "application/json")
+                .header("Content-Type", "application/json")
+                .header("X-Postmark-Server-Token", postmarkAPIToken) // Add Postmark Server API token for authentication
+                .build()
+
+            client.newCall(request).execute().use { response ->
+                return response.isSuccessful // Returns true if confirmation recieved from API that email was accepted for sending
+            }
+        }
+        catch(e: Exception) { // If an exception is hit at any point, return false
+            return false
         }
     }
 
