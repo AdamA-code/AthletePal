@@ -159,7 +159,18 @@ fun Route.authRoutes() {
             }
         }
 
-        // Route for changing password (when current password is known)
+        /*
+        Updates the password for an account (specified by email), when the current password is known.
+        (i.e. the change to password is 'willing')
+
+        Expects the email of the target account given in the route parameters, and the old password (oldPassword)
+        and new password (newPassword) given in the HTTP request's body.
+
+        The operation returns:
+            - OK (200), and a relevant message, if the user's password is successfully updated
+            - NotFound (404), and a relevant error message, if the account doesn't exist or the oldPassword is wrong
+            - BadRequest (400), and a relevant error message, if provided with a malformed HTTP request
+        */
         put("/password/{email}") {
             try {
                 val email: String = call.parameters["email"]!!
@@ -179,7 +190,19 @@ fun Route.authRoutes() {
             }
         }
 
-        // Route for reseting a password (when current is not known, i.e. forgot password)
+        /*
+        Makes a request to the API, to send a password reset token to the target account's email, thus
+        verifying that the user has access to the account's email (for verification before allowing password
+        resetting).
+
+        Expects a GET HTTP request made to the specified route, with the email of the target account given
+        as a parameter at the end of the route (in serialisable JSON formatting).
+
+        The endpoint returns:
+            - OK (200) and an informative message, if confirmation from the API is given indicating an email is sent
+            - InternalServerError (500) and an infromative message, if the API does not give confirmation the email was sent
+            - BadRequest (400) and an informative message, if given a malformed HTTP request which cannot be handled
+        */
         get("/forgot-password/get-reset-email/{email}") {
             try {
                 val email: String = call.parameters["email"]!!
@@ -195,10 +218,22 @@ fun Route.authRoutes() {
 
             }
             catch (e: Exception) {
-                call.respond("message" to "Invalid Request")
+                call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
         }
 
+        /*
+        Allows for a new password to be given and overwritten with the old password in the database, ONLY IF the correct
+        token (emailed to them in '../forgot-password/get-reset-email/{email}' endpoint) is also provided with the request.
+
+        Expects a HTTP request, with the body of the request containing the token emailed to them, and the newPassword which
+        they want to set to the account.
+
+        The endpoint returns:
+            - OK (200) and a relevent message, if the token is correct and the password is updated
+            - InternalServerError (500) and a relevent message, if the token is incorrect or has expired
+            - BadRequest (400) and a relevent message, if a malformed HTTP request if provided to the endpoint
+        */
         put("/forgot-password/enter-token") {
             try {
                 val body = call.receive<ForgotPasswordRequest>()
@@ -212,8 +247,6 @@ fun Route.authRoutes() {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("message" to "Password couldn't be updated"))
                 }
             }
-            catch (e: Exception) {
-                e.printStackTrace()
             } catch (e: Exception) {
                 // Response message for an invalid HTTP request made to backend server
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid request"))
