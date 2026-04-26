@@ -10,6 +10,8 @@ import models.UpdateAccountRequest
 import services.AuthService // Import service (logic) for validating a login
 import services.DatabaseService // Import service for storing to database
 import models.CreateAccountRequest as CreateAccountRequest
+import models.PasswordUpdateRequest as PasswordUpdateRequest
+import models.ForgotPasswordRequest as ForgotPasswordRequest
 
 fun Route.authRoutes() {
     val authService = AuthService() // Initialise AuthService in routes
