@@ -1,19 +1,6 @@
 package test
 
-import services.DatabaseService
-import services.*
-import kotlin.test.*
-//Import classes
-import services.DatabaseService.User
-import services.DatabaseService.Exercise
-import services.DatabaseService.Workout
-import services.DatabaseService.WorkoutExercise
-import services.DatabaseService.Statistic
-import services.DatabaseService.Competition
-import services.DatabaseService.Route
-import services.DatabaseService.CalendarEvent
-import java.time.LocalDate
-import java.time.DayOfWeek
+// Import classes
 
 /*
 class StatsTest {

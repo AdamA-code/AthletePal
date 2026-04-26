@@ -104,7 +104,7 @@ class ActivityRoutesTest {
                         "assignedTo": ${userID!!},
                         "date": "2026-01-01",
                         "duration": 60,
-                        "workoutType": "Weight Training",
+                        "workoutType": "weights",
                         "notes": "TEST WORKOUT"},
                     exercises: [{"exerciseID": 2, "sets": 3, "reps": 10, "weight": 45.0},
                         {"exerciseID": 4, "sets": 2, "reps": 8, "weight": 50.5}]
@@ -169,7 +169,7 @@ class ActivityRoutesTest {
             setBody("""
                 {
                     workout: {"duration": 60,
-                        "workoutType": "Weight Training",
+                        "workoutType": "weights",
                         "notes": "TEST WORKOUT"},
                     exercises: [{"sets": 3, "reps": 10, "weight": 45.0},
                         {"sets": 2, "reps": 8, "weight": 50.5}]
@@ -193,7 +193,7 @@ class ActivityRoutesTest {
                         "assignedTo": ${userID!!},
                         "date": "2027-01-01",
                         "duration": 60,
-                        "workoutType": "Traditional Weight Training",
+                        "workoutType": "swimming",
                         "notes": "Test Workout"},
                     exercises: [{"exerciseID": 4, "sets": 4, "reps": 15, "weight": 50.25},
                         {"exerciseID": 6, "sets": 2, "reps": 8, "weight": 20.5}]
@@ -217,7 +217,7 @@ class ActivityRoutesTest {
                         "assignedTo": ${userID!!},
                         "date": "2027-01-01",
                         "duration": 60,
-                        "workoutType": "Traditional Weight Training",
+                        "workoutType": "weights",
                         "notes": "Test Workout"},
                     exercises: [{"exerciseID": 4, "sets": 4, "reps": 15, "weight": 50.25},
                         {"exerciseID": 6, "sets": 2, "reps": 8, "weight": 20.5}]
@@ -249,7 +249,7 @@ class ActivityRoutesTest {
             setBody("""
                 {
                     workout: {"duration": 60,
-                        "workoutType": "Traditional Weight Training",
+                        "workoutType": "weights",
                         "notes": "Test Workout"},
                     exercises: [{"sets": 4, "reps": 15, "weight": 50.25},
                         {"sets": 2, "reps": 8, "weight": 20.5}]
@@ -294,7 +294,7 @@ class ActivityRoutesTest {
                         "assignedTo": ${userID!!},
                         "date": "2027-01-01",
                         "duration": 60,
-                        "workoutType": "Traditional Weight Training",
+                        "workoutType": "weights",
                         "notes": "Test Workout"},
                     exercises: []
                 }
