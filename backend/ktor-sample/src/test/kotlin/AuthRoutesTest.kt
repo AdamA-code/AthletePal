@@ -1,21 +1,17 @@
+import com.example.module
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import io.ktor.server.testing.*
-import kotlin.test.*
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import io.ktor.server.application.Application
+import io.ktor.server.testing.*
 import io.ktor.server.testing.testApplication
-import com.example.module
 import io.mockk.mockk
-
+import kotlinx.serialization.json.Json
 import services.AuthService
 import services.DatabaseService
+import kotlin.test.*
 
 class AuthRoutesTest {
-
     // ========================================
     // Pre-Test Setup
     // ========================================
@@ -41,7 +37,6 @@ class AuthRoutesTest {
     // CREATE ACCOUNT TESTS
     // =======================
 
-    @Test
     // Test function for 'happy case' where acccount successfully created
     fun createAccount_valid() = testApplication { 
         application {
@@ -71,12 +66,13 @@ class AuthRoutesTest {
         DatabaseService().deleteUser("testuser@test.com")
     }
 
-    @Test
     // Test function for trying to create account which already exists
-    fun createAccount_alreadyExists() = testApplication {
-        application() {
-            module()
-        }
+    @Test
+    fun createAccount_alreadyExists() =
+        testApplication {
+            application {
+                module()
+            }
 
         // Make POST request to specified route, providing details for account creation
         val response = client.post("/auth/create-account"){
@@ -99,12 +95,13 @@ class AuthRoutesTest {
 
     }
 
-    @Test
     // Test function for a HTTP request not given in correct JSON formatting
-    fun createAccount_invalidJSON() = testApplication{
-        application {
-            module()
-        }
+    @Test
+    fun createAccount_invalidJSON() =
+        testApplication {
+            application {
+                module()
+            }
 
         // Make POST request to specified route, providing details for account creation
         val response = client.post("/auth/create-account") {
@@ -116,12 +113,13 @@ class AuthRoutesTest {
         assertEquals(HttpStatusCode.BadRequest, response.status)
     }
 
-    @Test
     // Test function for create account attempt with missing values
-    fun createAccount_missingRequiredFields() = testApplication {
-        application {
-            module()
-        }
+    @Test
+    fun createAccount_missingRequiredFields() =
+        testApplication {
+            application {
+                module()
+            }
 
         // Make POST request to specified route, providing details for account creation
         val response = client.post("/auth/create-account") {
@@ -142,12 +140,13 @@ class AuthRoutesTest {
     // LOGIN ROUTE TESTS
     // =======================
 
-    @Test
     // Test function for 'happy case' where login done successfully
-    fun accountLogin_Success() = testApplication {
-        application {
-            module()
-        }
+    @Test
+    fun accountLogin_Success() =
+        testApplication {
+            application {
+                module()
+            }
 
         // Make POST request to specified login route, providing login details for verification
         val response = client.post("/auth/login") { 
@@ -166,7 +165,6 @@ class AuthRoutesTest {
         assertTrue(response.bodyAsText().contains("Login Successful"))
     }
 
-    @Test
     // Test function for incorrect password given for a given account
     fun accountLogin_invalidPassword() = testApplication {
         application {
@@ -190,12 +188,13 @@ class AuthRoutesTest {
         assertTrue(response.bodyAsText().contains("Invalid Credentials")) 
     }
 
-    @Test
     // Test fucntion for trying to login to an account which doesn't exist
-    fun accountLogin_nonexistentUser() = testApplication {
-        application {
-            module()
-        }
+    @Test
+    fun accountLogin_nonexistentUser() =
+        testApplication {
+            application {
+                module()
+            }
 
         // Make POST request to specified login route, providing login details for verification
         val response = client.post("/auth/login") { 
@@ -214,12 +213,13 @@ class AuthRoutesTest {
         assertTrue(response.bodyAsText().contains("Invalid Credentials"))
     }
 
-    @Test
     // Test function for login request being made using bad JSON
-    fun accountLogin_invalidJson() = testApplication {
-        application {
-            module()
-        }
+    @Test
+    fun accountLogin_invalidJson() =
+        testApplication {
+            application {
+                module()
+            }
 
         // Make POST request to specified login route, providing login details for verification
         val response = client.post("/auth/login") { 
@@ -231,12 +231,13 @@ class AuthRoutesTest {
         assertEquals(HttpStatusCode.BadRequest, response.status)
     }
 
-    @Test
     // Test function for a login request with insufficient fields for succesful login
-    fun accountLogin_missingFields() = testApplication {
-        application {
-            module()
-        }
+    @Test
+    fun accountLogin_missingFields() =
+        testApplication {
+            application {
+                module()
+            }
 
         // Make POST request to specified login route, providing login details for verification
         val response = client.post("/auth/login") { 
@@ -541,5 +542,5 @@ class AuthRoutesTest {
         // Delete test account 'TestingEmail@email.com' after use in tests
         DatabaseService().deleteUser("TestingEmail@email.com")
     }
-
 }
+

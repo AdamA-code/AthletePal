@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.ktor)
     alias(libs.plugins.kotlin.plugin.serialization)
     application
+    // id("org.jlleitschuh.gradle.ktlint") version "12.1.0"
 }
 
 group = "com.example"
