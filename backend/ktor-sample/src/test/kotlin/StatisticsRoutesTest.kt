@@ -1,18 +1,27 @@
 package routes
 
 import com.example.module
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
+import io.ktor.client.request.delete
+import io.ktor.client.request.get
+import io.ktor.client.request.post
+import io.ktor.client.request.put
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
 import io.ktor.server.application.Application
-import io.ktor.server.testing.*
+import io.ktor.server.testing.ApplicationTestBuilder
+import io.ktor.server.testing.application
 import io.ktor.server.testing.testApplication
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import services.AuthService
 import services.DatabaseService
-import kotlin.test.*
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class StatisticsRoutesTest {
     private fun ApplicationTestBuilder.setup() {
