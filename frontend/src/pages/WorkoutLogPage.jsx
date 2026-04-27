@@ -13,7 +13,7 @@ function WorkoutLogPage() {
             try {
                 const res = await fetch("/api/routines")
                 const data = await res.json()
-                setRoutines()
+                setRoutines(data)
             } catch (err) {
                 console.error("Error fetching routines:", err)
             }
