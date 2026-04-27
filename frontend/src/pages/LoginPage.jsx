@@ -33,6 +33,8 @@ function LoginPage () {
             if (data.message === "Login Successful") {
                 // Store the email in localStorage or context for future authenticated requests
                 localStorage.setItem("email", email)
+                localStorage.setItem("userID", data.userID)
+                localStorage.setItem("name", data.name)
                 setError("")
                 navigate("/dashboard")
             } else {
