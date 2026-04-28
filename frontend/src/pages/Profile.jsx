@@ -1,122 +1,291 @@
-import { Link } from "react-router-dom"
+// Frontend-backend connection logic generated with Claude Sonnet (claude.ai)
+import { useState, useEffect } from "react"
 import Sidebar from "../components/Sidebar"
 
 function ProfilePage() {
-    const user = {
-        fullName: "John Smith",
-        email: "email@email.com",
-        age: 20,
-        accountType: "User",
-        goal: "Build muscle",
-        height: "180cm",
-        weight: "75kg",
-        trainingStyle: "Strength Training"
+    const [user, setUser] = useState(null)
+    const [error, setError] = useState("")
+    const [success, setSuccess] = useState("")
+
+    const [isEditing, setIsEditing] = useState(false)
+    const [gender, setGender] = useState("")
+    const [age, setAge] = useState("")
+    const [height, setHeight] = useState("")
+    const [weight, setWeight] = useState("")
+
+    const [isChangingPassword, setIsChangingPassword] = useState(false)
+    const [oldPassword, setOldPassword] = useState("")
+    const [newPassword, setNewPassword] = useState("")
+    const [confirmPassword, setConfirmPassword] = useState("")
+
+    useEffect(() => {
+        const email = localStorage.getItem("email")
+        if (!email) {
+            setError("Not logged in. Please log in again.")
+            return
+        }
+
+        const fetchUser = async () => {
+            try {
+                const res = await fetch(`http://localhost:3000/auth/user/${email}`)
+                const data = await res.json()
+                if (res.ok) {
+                    setUser(data)
+                    setGender(data.gender || "")
+                    setAge(data.age || "")
+                    setHeight(data.height || "")
+                    setWeight(data.weight || "")
+                } else {
+                    setError("Could not load profile.")
+                }
+            } catch (err) {
+                console.error(err)
+                setError("Could not connect to server.")
+            }
+        }
+
+        fetchUser()
+    }, [])
+
+    const saveProfile = async () => {
+        const email = localStorage.getItem("email")
+        setError("")
+        setSuccess("")
+
+        try {
+            const res = await fetch("http://localhost:3000/update/account", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email: email,
+                    gender: gender || null,
+                    age: age ? parseInt(age) : null,
+                    height: height ? parseFloat(height) : null,
+                    weight: weight ? parseFloat(weight) : null
+                })
+            })
+            const data = await res.json()
+
+            if (res.ok) {
+                setSuccess("Profile updated successfully!")
+                setIsEditing(false)
+                setUser(prev => ({ ...prev, gender, age, height, weight }))
+            } else {
+                setError(data.message || "Failed to update profile.")
+            }
+        } catch (err) {
+            console.error(err)
+            setError("Could not connect to server.")
+        }
+    }
+
+    const savePassword = async () => {
+        const email = localStorage.getItem("email")
+        setError("")
+        setSuccess("")
+
+        if (newPassword !== confirmPassword) {
+            setError("New passwords do not match.")
+            return
+        }
+        if (newPassword.length < 6) {
+            setError("New password must be at least 6 characters.")
+            return
+        }
+
+        try {
+            const res = await fetch(`http://localhost:3000/update/password/${email}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    oldPassword: oldPassword,
+                    newPassword: newPassword
+                })
+            })
+            const data = await res.json()
+
+            if (res.ok) {
+                setSuccess("Password updated successfully!")
+                setIsChangingPassword(false)
+                setOldPassword("")
+                setNewPassword("")
+                setConfirmPassword("")
+            } else {
+                setError(data.message || "Failed to update password.")
+            }
+        } catch (err) {
+            console.error(err)
+            setError("Could not connect to server.")
+        }
     }
 
     return (
         <div className="min-h-screen bg-gray-100 flex">
             <Sidebar />
-
             <main className="flex-1 p-8">
-                <h1 className="text-3x1 font-bold text-blue-800 mb-6">
-                    Profile
-                </h1>
-                
-                <div className="bg-white rounded-x1 shadow-md p-8 max-w-3x1">
-                    <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
-                        <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
-                            Profile Picture
-                        </div>
+                <h1 className="text-3xl font-bold mb-6">Profile</h1>
 
-                        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
+                {error && <p className="text-red-600 mb-4">{error}</p>}
+                {success && <p className="text-green-600 mb-4">{success}</p>}
+
+                {!user ? (
+                    <p className="text-gray-500">Loading profile...</p>
+                ) : (
+                    <div className="bg-white rounded-lg shadow-md p-8 max-w-3xl">
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                             <div>
-                                <p className="text-sm text-gray-500">
-                                    Full Name
-                                </p>
+                                <p className="text-sm text-gray-500">Full Name</p>
+                                <p className="text-lg font-semibold">{user.name}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-500">Email</p>
+                                <p className="text-lg font-semibold">{user.email}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-500">Account Type</p>
                                 <p className="text-lg font-semibold">
-                                    {user.fullName}
+                                    {user.accountType ? "Personal Trainer" : "User"}
                                 </p>
                             </div>
-
                             <div>
-                                <p className="text-sm text-gray-500">
-                                    Email
-                                </p>
-                                <p className="text-lg font-semibold">
-                                    {user.email}
-                                </p>
+                                <p className="text-sm text-gray-500">Gender</p>
+                                <p className="text-lg font-semibold">{user.gender || "Not set"}</p>
                             </div>
-
                             <div>
-                                <p className="text-sm text-gray-500">
-                                    Age
-                                </p>
-                                <p className="text-lg font-semibold">
-                                    {user.age}
-                                </p>
+                                <p className="text-sm text-gray-500">Age</p>
+                                <p className="text-lg font-semibold">{user.age || "Not set"}</p>
                             </div>
-
                             <div>
-                                <p className="text-sm text-gray-500">
-                                    Account Type
-                                </p>
-                                <p className="text-lg font-semibold">
-                                    {user.accountType}
-                                </p>
+                                <p className="text-sm text-gray-500">Height (cm)</p>
+                                <p className="text-lg font-semibold">{user.height || "Not set"}</p>
                             </div>
-
                             <div>
-                                <p className="text-sm text-gray-500">
-                                    Fitness Goal
-                                </p>
-                                <p className="text-lg font-semibold">
-                                    {user.goal}
-                                </p>
-                            </div>
-
-                            <div>
-                                <p className="text-sm text-gray-500">
-                                    Height
-                                </p>
-                                <p className="text-lg font-semibold">
-                                    {user.height}
-                                </p>
-                            </div>
-
-                            <div>
-                                <p className="text-sm text-gray-500">
-                                    Weight
-                                </p>
-                                <p className="text-lg font-semibold">
-                                    {user.weight}
-                                </p>
-                            </div>
-
-                            <div>
-                                <p className="text-sm text-gray-500">
-                                    Training Style
-                                </p>
-                                <p className="text-lg font-semibold">
-                                    {user.trainingStyle}
-                                </p>
+                                <p className="text-sm text-gray-500">Weight (kg)</p>
+                                <p className="text-lg font-semibold">{user.weight || "Not set"}</p>
                             </div>
                         </div>
+
+                        {isEditing ? (
+                            <div className="border-t pt-6 mb-6">
+                                <h2 className="text-xl font-semibold mb-4">Edit Profile</h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label className="block text-sm text-gray-500 mb-1">Gender</label>
+                                        <select
+                                            value={gender}
+                                            onChange={(e) => setGender(e.target.value)}
+                                            className="border rounded p-2 w-full"
+                                        >
+                                            <option value="">Prefer not to say</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm text-gray-500 mb-1">Age</label>
+                                        <input
+                                            type="number"
+                                            value={age}
+                                            onChange={(e) => setAge(e.target.value)}
+                                            className="border rounded p-2 w-full"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm text-gray-500 mb-1">Height (cm)</label>
+                                        <input
+                                            type="number"
+                                            value={height}
+                                            onChange={(e) => setHeight(e.target.value)}
+                                            className="border rounded p-2 w-full"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm text-gray-500 mb-1">Weight (kg)</label>
+                                        <input
+                                            type="number"
+                                            value={weight}
+                                            onChange={(e) => setWeight(e.target.value)}
+                                            className="border rounded p-2 w-full"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex gap-4">
+                                    <button
+                                        onClick={saveProfile}
+                                        className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+                                    >
+                                        Save Changes
+                                    </button>
+                                    <button
+                                        onClick={() => setIsEditing(false)}
+                                        className="border border-gray-400 text-gray-600 px-6 py-2 rounded hover:bg-gray-100"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={() => setIsEditing(true)}
+                                className="bg-blue-700 text-white px-6 py-2 rounded-lg hover:bg-blue-800 mr-4"
+                            >
+                                Edit Profile
+                            </button>
+                        )}
+
+                        {isChangingPassword ? (
+                            <div className="border-t pt-6 mt-6">
+                                <h2 className="text-xl font-semibold mb-4">Change Password</h2>
+                                <div className="flex flex-col gap-4 max-w-sm mb-4">
+                                    <input
+                                        type="password"
+                                        placeholder="Current password"
+                                        value={oldPassword}
+                                        onChange={(e) => setOldPassword(e.target.value)}
+                                        className="border rounded p-2"
+                                    />
+                                    <input
+                                        type="password"
+                                        placeholder="New password"
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        className="border rounded p-2"
+                                    />
+                                    <input
+                                        type="password"
+                                        placeholder="Confirm new password"
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        className="border rounded p-2"
+                                    />
+                                </div>
+                                <div className="flex gap-4">
+                                    <button
+                                        onClick={savePassword}
+                                        className="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-800"
+                                    >
+                                        Update Password
+                                    </button>
+                                    <button
+                                        onClick={() => setIsChangingPassword(false)}
+                                        className="border border-gray-400 text-gray-600 px-6 py-2 rounded hover:bg-gray-100"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={() => setIsChangingPassword(true)}
+                                className="mt-4 bg-gray-700 text-white px-6 py-2 rounded-lg hover:bg-gray-800"
+                            >
+                                Change Password
+                            </button>
+                        )}
                     </div>
-
-                    <button 
-                        onClick={() => alert("Edit profile feature coming soon")}
-                        className="mt-8 bg-blue-700 text-white px-6 py-2 rounded-lg hover:bg-blue-800"
-                    >
-                        Edit Profile
-                    </button>
-
-                    <button 
-                        onClick={() => alert("Change password coming soon")}
-                        className="mt-4 bg-gray-700 text-white px-6 py-2 rounded-lg hover:bg-gray-800"
-                    >
-                        Change Password
-                    </button>
-                </div>
+                )}
             </main>
         </div>
     )
