@@ -631,7 +631,7 @@ fun Route.activityRoutes(){
         get("/exercises") {
             try {
                 val.exercises = db.findAllExercises()
-                call.respond(HttpStatusCode.OK, mapOf("Exercises to exercises"))
+                call.respond(HttpStatusCode.OK, mapOf("Exercises" to exercises))
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Could not fetch exercises"))
             }
