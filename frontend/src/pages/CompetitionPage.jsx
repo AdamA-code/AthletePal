@@ -1,4 +1,4 @@
-// Frontend-backend connection logic generated with Claude Sonnet (claude.ai)
+// frontend-backend connection logic done with claude sonnet AI
 import { useEffect, useState } from "react"
 import Sidebar from "../components/Sidebar"
 
