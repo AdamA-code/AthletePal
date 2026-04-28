@@ -31,8 +31,6 @@ fun Application.module() { // Function for config. of Ktor app.
 
     routing {
         get("/") {
-    routing {
-        get("/") {
             call.respond("")
         }
         get("/health") { // When GET HTTP request made for server health...

@@ -14,6 +14,8 @@ import models.UpdateAccountRequest // Import the model for a request to update a
 import services.AuthService // Import service (logic) for validating a login
 import services.DatabaseService // Import service for storing to database
 import models.CreateAccountRequest // Import model for request to create an account
+import models.PasswordUpdateRequest // Import model for request to update password
+import models.ForgotPasswordRequest // Import model for forgotten password requests
 
 /*
 Defines endpoints for authentication and account-related HTTP routes for the webapp.
@@ -83,13 +85,6 @@ fun Route.authRoutes() {
                 // Retrieve data from POST, and store in a class 'createAccountRequest'
                 val createAccountRequest = call.receive<CreateAccountRequest>()
 
-                val accountCreated =
-                    authService.registerUser(
-                        createAccountRequest.name,
-                        createAccountRequest.email,
-                        createAccountRequest.password,
-                        createAccountRequest.accountType,
-                    ) // Call function for account creation in authService, retrieve boolean confirmation
                 val accountCreated =
                     authService.registerUser(
                         createAccountRequest.name,
@@ -246,7 +241,6 @@ fun Route.authRoutes() {
                 else if (!updated) {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("message" to "Password couldn't be updated"))
                 }
-            }
             } catch (e: Exception) {
                 // Response message for an invalid HTTP request made to backend server
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid request"))
