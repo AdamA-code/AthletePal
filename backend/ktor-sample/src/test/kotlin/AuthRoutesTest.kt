@@ -252,6 +252,32 @@ class AuthRoutesTest {
     }
 
     // ========================================
+    // GET ACCOUNT ROUTES TESTS
+    // ========================================
+
+    @Test
+    fun getUserAccount_valid() = testApplication {
+        application { module() }
+
+        // Make valid GET request to server, providing a valid email parameter
+        val response = client.get("/auth/user/TestingEmail@email.com")
+
+        // Expect OK status code, as we can search and find the user details for provided email parameter
+        assertEquals(HttpStatusCode.OK, response.status)
+    }
+
+    @Test
+    fun getUserAccount_invalidEmail() = testApplication {
+        application { module() }
+
+        // Make syntactically valid GET request, however email parameter doesn't exist in db
+        val response = client.get("/auth/user/FalseEmail489612053072895602306@emailservice.com")
+
+        // Expect NotFound status code, as we cannot find provided email in the db (as non-existant)
+        assertEquals(HttpStatusCode.NotFound, response.status)
+    }
+
+    // ========================================
     // ACCOUNT UPDATE ROUTES TESTS
     // ========================================
 
