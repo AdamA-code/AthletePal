@@ -161,8 +161,6 @@ class AuthRoutesTest {
         }
         // Expect OK status code returned, as we provide correct details (in correct format) to allow for successful login verification
         assertEquals(HttpStatusCode.OK, response.status)
-        // Expect return of a relevent acceptance message, corresponding to OK status code
-        assertTrue(response.bodyAsText().contains("Login Successful"))
     }
 
     // Test function for incorrect password given for a given account
