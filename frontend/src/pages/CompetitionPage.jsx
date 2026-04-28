@@ -1,3 +1,4 @@
+// page structure and layout generated with chatgpt chat.openai.com
 // frontend-backend connection logic done with claude sonnet AI
 import { useEffect, useState } from "react"
 import Sidebar from "../components/Sidebar"

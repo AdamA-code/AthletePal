@@ -1,3 +1,4 @@
+// page structure and layout generated with chatgpt chat.openai.com
 // frontend-backend connection logic done with claude sonnet AI
 import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
