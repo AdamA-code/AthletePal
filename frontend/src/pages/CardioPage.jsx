@@ -1,3 +1,4 @@
+// frontend-backend connection logic done with claude sonnet AI
 import { useState, useEffect } from "react"
 import RouteMap from "../components/RouteMap"
 import Sidebar from "../components/Sidebar"
