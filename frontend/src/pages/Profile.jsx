@@ -1,5 +1,5 @@
 // page structure and layout generated with chatgpt chat.openai.com
-// frontend-backend connection logic done with claude sonnet AI
+// frontend-backend connection logic and accessibility improvements done with Claude Sonnet (claude.ai)
 import { useState, useEffect } from "react"
 import Sidebar from "../components/Sidebar"
 
@@ -126,43 +126,43 @@ function ProfilePage() {
             <main className="flex-1 p-8">
                 <h1 className="text-3xl font-bold mb-6">Profile</h1>
 
-                {error && <p className="text-red-600 mb-4">{error}</p>}
-                {success && <p className="text-green-600 mb-4">{success}</p>}
+                {error && <p className="text-red-700 mb-4" role="alert">{error}</p>}
+                {success && <p className="text-green-700 mb-4" role="status">{success}</p>}
 
                 {!user ? (
-                    <p className="text-gray-500">Loading profile...</p>
+                    <p className="text-gray-600">Loading profile...</p>
                 ) : (
                     <div className="bg-white rounded-lg shadow-md p-8 max-w-3xl">
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                             <div>
-                                <p className="text-sm text-gray-500">Full Name</p>
+                                <p className="text-sm text-gray-600">Full Name</p>
                                 <p className="text-lg font-semibold">{user.name}</p>
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">Email</p>
+                                <p className="text-sm text-gray-600">Email</p>
                                 <p className="text-lg font-semibold">{user.email}</p>
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">Account Type</p>
+                                <p className="text-sm text-gray-600">Account Type</p>
                                 <p className="text-lg font-semibold">
                                     {user.accountType ? "Personal Trainer" : "User"}
                                 </p>
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">Gender</p>
+                                <p className="text-sm text-gray-600">Gender</p>
                                 <p className="text-lg font-semibold">{user.gender || "Not set"}</p>
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">Age</p>
+                                <p className="text-sm text-gray-600">Age</p>
                                 <p className="text-lg font-semibold">{user.age || "Not set"}</p>
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">Height (cm)</p>
+                                <p className="text-sm text-gray-600">Height (cm)</p>
                                 <p className="text-lg font-semibold">{user.height || "Not set"}</p>
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">Weight (kg)</p>
+                                <p className="text-sm text-gray-600">Weight (kg)</p>
                                 <p className="text-lg font-semibold">{user.weight || "Not set"}</p>
                             </div>
                         </div>
@@ -172,8 +172,9 @@ function ProfilePage() {
                                 <h2 className="text-xl font-semibold mb-4">Edit Profile</h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                     <div>
-                                        <label className="block text-sm text-gray-500 mb-1">Gender</label>
+                                        <label htmlFor="profile-gender" className="block text-sm text-gray-700 mb-1">Gender</label>
                                         <select
+                                            id="profile-gender"
                                             value={gender}
                                             onChange={(e) => setGender(e.target.value)}
                                             className="border rounded p-2 w-full"
@@ -185,8 +186,9 @@ function ProfilePage() {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-sm text-gray-500 mb-1">Age</label>
+                                        <label htmlFor="profile-age" className="block text-sm text-gray-700 mb-1">Age</label>
                                         <input
+                                            id="profile-age"
                                             type="number"
                                             value={age}
                                             onChange={(e) => setAge(e.target.value)}
@@ -194,8 +196,9 @@ function ProfilePage() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm text-gray-500 mb-1">Height (cm)</label>
+                                        <label htmlFor="profile-height" className="block text-sm text-gray-700 mb-1">Height (cm)</label>
                                         <input
+                                            id="profile-height"
                                             type="number"
                                             value={height}
                                             onChange={(e) => setHeight(e.target.value)}
@@ -203,8 +206,9 @@ function ProfilePage() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm text-gray-500 mb-1">Weight (kg)</label>
+                                        <label htmlFor="profile-weight" className="block text-sm text-gray-700 mb-1">Weight (kg)</label>
                                         <input
+                                            id="profile-weight"
                                             type="number"
                                             value={weight}
                                             onChange={(e) => setWeight(e.target.value)}
@@ -240,27 +244,39 @@ function ProfilePage() {
                             <div className="border-t pt-6 mt-6">
                                 <h2 className="text-xl font-semibold mb-4">Change Password</h2>
                                 <div className="flex flex-col gap-4 max-w-sm mb-4">
-                                    <input
-                                        type="password"
-                                        placeholder="Current password"
-                                        value={oldPassword}
-                                        onChange={(e) => setOldPassword(e.target.value)}
-                                        className="border rounded p-2"
-                                    />
-                                    <input
-                                        type="password"
-                                        placeholder="New password"
-                                        value={newPassword}
-                                        onChange={(e) => setNewPassword(e.target.value)}
-                                        className="border rounded p-2"
-                                    />
-                                    <input
-                                        type="password"
-                                        placeholder="Confirm new password"
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        className="border rounded p-2"
-                                    />
+                                    <div>
+                                        <label htmlFor="old-password" className="block text-sm text-gray-700 mb-1">Current Password</label>
+                                        <input
+                                            id="old-password"
+                                            type="password"
+                                            placeholder="Current password"
+                                            value={oldPassword}
+                                            onChange={(e) => setOldPassword(e.target.value)}
+                                            className="border rounded p-2 w-full"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="new-password" className="block text-sm text-gray-700 mb-1">New Password</label>
+                                        <input
+                                            id="new-password"
+                                            type="password"
+                                            placeholder="New password"
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                            className="border rounded p-2 w-full"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="confirm-password" className="block text-sm text-gray-700 mb-1">Confirm New Password</label>
+                                        <input
+                                            id="confirm-password"
+                                            type="password"
+                                            placeholder="Confirm new password"
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                            className="border rounded p-2 w-full"
+                                        />
+                                    </div>
                                 </div>
                                 <div className="flex gap-4">
                                     <button
