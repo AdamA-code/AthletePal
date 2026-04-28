@@ -1,88 +1,83 @@
-import { Link } from "react-router-dom"
 import { useNavigate } from "react-router-dom"
 import { useEffect, useState } from "react"
 import Sidebar from "../components/Sidebar"
 
 function WorkoutLogPage() {
     const navigate = useNavigate()
-    
     const [routines, setRoutines] = useState([])
+    const [error, setError] = useState("")
 
     useEffect(() => {
+        const userID = localStorage.getItem("userID")
+        if (!userID) {
+            setError("Not logged in. Please log in again.")
+            return
+        }
+
         const fetchRoutines = async () => {
             try {
-                const res = await fetch("/api/routines")
+                const res = await fetch(`http://localhost:3000/api/workouts/${userID}`)
                 const data = await res.json()
-                setRoutines()
+                setRoutines(Array.isArray(data.Workouts) ? data.Workouts : [])
             } catch (err) {
                 console.error("Error fetching routines:", err)
+                setError("Could not load your routines.")
             }
         }
+
         fetchRoutines()
-    })
+    }, [])
 
     return (
         <div className="min-h-screen bg-gray-100 flex">
-
-            <Sidebar/>
-
+            <Sidebar />
             <main className="flex-1 p-8">
-
                 <h2 className="text-3xl font-bold mb-6">Workouts</h2>
 
-                <button 
-                onClick={() => navigate("/start-workout")} 
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 mb-8"
+                {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
+
+                <button
+                    onClick={() => navigate("/start-workout")}
+                    className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 mb-8"
                 >
                     + Start Empty Workout
                 </button>
 
                 <div className="mb-8">
-
-                    <h3 className="text-xl font-semibold mb-3">
-                        Routines
-                    </h3>
-
-                    <button 
+                    <h3 className="text-xl font-semibold mb-3">Routines</h3>
+                    <button
                         onClick={() => navigate("/new-routine")}
                         className="border border-blue-600 text-blue-600 px-5 py-2 rounded-lg hover:bg-blue-50"
                     >
                         New Routine
                     </button>
-
                 </div>
 
                 <div>
+                    <h3 className="text-xl font-semibold mb-4">My Routines</h3>
 
-                    <h3 className="text-xl font-semibold mb-4">
-                        My Routines
-                    </h3>
-
-                    {routines.length === 0 && (
-                        <p className="text-gray-500">
-                            No routines created yet.
-                        </p>
+                    {routines.length === 0 ? (
+                        <p className="text-gray-500">No routines created yet.</p>
+                    ) : (
+                        routines.map((routine) => (
+                            <div key={routine.workoutID} className="bg-white p-4 rounded shadow mb-4 flex justify-between items-center">
+                                <div>
+                                    <p className="font-semibold text-gray-800">
+                                        {routine.notes || "Untitled Routine"}
+                                    </p>
+                                    <p className="text-sm text-gray-500">{routine.date}</p>
+                                </div>
+                                <button
+                                    onClick={() => navigate("/start-workout", { state: { workoutID: routine.workoutID } })}
+                                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                                >
+                                    Start
+                                </button>
+                            </div>
+                        ))
                     )}
-
-                    {routines.map(routine => (
-                        <div key={routine.id} className="bg-white p-4 rounded shadow mb-4">
-                            <h4 className="font-semibold">
-                                {routine.name}
-                            </h4>
-
-                            <button
-                            onClick={() => navigate("/start-workout", {state: routine})}
-                            className="mt-2 bg-blue-500 text-white px-3 py-1 rounded"
-                            >
-                                Start Routine
-                            </button>
-                        </div>
-                    ))}
-
                 </div>
-
             </main>
-
         </div>
     )
 }

@@ -1,164 +1,263 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import Sidebar from "../components/Sidebar"
 
 function StartWorkoutPage() {
-
+    const navigate = useNavigate()
     const location = useLocation()
-    const routine = location.state 
 
-    const [exercises, setExercises] = useState(
-        routine ? routine.exercises : []
+    // If coming from a routine, this will have the workoutID
+    const routineWorkoutID = location.state?.workoutID || null
+
+    const [availableExercises, setAvailableExercises] = useState([])
+    const [selectedExercises, setSelectedExercises] = useState([])
+    const [notes, setNotes] = useState("")
+    const [duration, setDuration] = useState("")
+    const [searchTerm, setSearchTerm] = useState("")
+    const [showDropdown, setShowDropdown] = useState(false)
+    const [error, setError] = useState("")
+    const [success, setSuccess] = useState("")
+
+    useEffect(() => {
+        // Always fetch the full exercise list
+        const fetchExercises = async () => {
+            try {
+                const res = await fetch("http://localhost:3000/api/exercises")
+                const data = await res.json()
+                const exercises = Array.isArray(data.Exercises) ? data.Exercises : []
+                setAvailableExercises(exercises)
+
+                // If coming from a routine, preload its exercises
+                if (routineWorkoutID) {
+                    const routineRes = await fetch(`http://localhost:3000/api/workout/exercises/${routineWorkoutID}`)
+                    const routineData = await routineRes.json()
+
+                    if (Array.isArray(routineData)) {
+                        // Match exerciseIDs from routine to names from exercise list
+                        const preloaded = routineData.map(re => {
+                            const match = exercises.find(e => e.exerciseID === re.exerciseID)
+                            return {
+                                exerciseID: re.exerciseID,
+                                name: match ? match.name : `Exercise ${re.exerciseID}`,
+                                sets: re.sets || 3,
+                                reps: "",
+                                weight: ""
+                            }
+                        })
+                        setSelectedExercises(preloaded)
+                    }
+                }
+            } catch (err) {
+                console.error("Error loading exercises:", err)
+                setError("Could not load exercises. Is the server running?")
+            }
+        }
+
+        fetchExercises()
+    }, [])
+
+    const filteredExercises = availableExercises.filter(ex =>
+        ex.name.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
-    const [name, setName] = useState(routine ? routine.name : "")
-    const [notes, setNotes] = useState("")
-
-    const addExercise = () => {
-        setExercises([...exercises, {id: Date.now(), name: "", sets: []}])
+    const addExercise = (exercise) => {
+        if (selectedExercises.find(ex => ex.exerciseID === exercise.exerciseID)) return
+        setSelectedExercises([...selectedExercises, {
+            exerciseID: exercise.exerciseID,
+            name: exercise.name,
+            sets: 3,
+            reps: "",
+            weight: ""
+        }])
+        setSearchTerm("")
+        setShowDropdown(false)
     }
 
-    const deleteExercise = (id) => {
-        setExercises(exercises.filter(ex => ex.id !== id))
+    const removeExercise = (exerciseID) => {
+        setSelectedExercises(selectedExercises.filter(ex => ex.exerciseID !== exerciseID))
     }
 
-    const updateExerciseName = (id, value) => {
-        setExercises(exercises.map(ex =>
-            ex.id === id ? {...ex, name:value} : ex
+    const updateExercise = (exerciseID, field, value) => {
+        setSelectedExercises(selectedExercises.map(ex =>
+            ex.exerciseID === exerciseID ? { ...ex, [field]: value } : ex
         ))
     }
 
-    const addSet = (exerciseId) => {
-        setExercises(exercises.map(ex => {
-            if (ex.id === exerciseId) {
-                return {
-                    ...ex, sets: [...ex.sets, {reps: "", weight: ""}]
-                }
-            }
-            return ex
-        }))
-    }
-
-    const deleteSet = (exerciseId, index) => {
-        setExercises(exercises.map(ex => {
-            if (ex.id === exerciseId) {
-                const updated = ex.sets.filter((_, i) => i !== index)
-                return {...ex, sets:updated}
-            }
-            return ex
-        }))
-    }
-
-    const updateSet = (exerciseId, index, field, value) => {
-        setExercises(exercises.map(ex => {
-            if (ex.id === exerciseId) {
-                const updated = [...ex.sets]
-                updated[index][field] = value
-                return {...ex, sets: updated}
-            }
-            return ex
-        }))
-    }
-
     const saveWorkout = async () => {
-        const workout = {name, notes, exercises}
+        const userID = parseInt(localStorage.getItem("userID"))
+        if (!userID) {
+            setError("Not logged in. Please log in again.")
+            return
+        }
+        if (selectedExercises.length === 0) {
+            setError("Please add at least one exercise.")
+            return
+        }
+
+        const today = new Date().toISOString().split("T")[0]
+
+        const body = {
+            workout: {
+                workoutID: 0,
+                createdBy: userID,
+                assignedTo: userID,
+                date: today,
+                duration: duration ? parseInt(duration) : null,
+                workoutType: "weights",
+                notes: notes || null,
+                routeID: null
+            },
+            exercises: selectedExercises.map(ex => ({
+                workoutExercisesID: 0,
+                workoutID: 0,
+                exerciseID: ex.exerciseID,
+                sets: parseInt(ex.sets) || 1,
+                reps: ex.reps ? parseInt(ex.reps) : null,
+                weight: ex.weight ? parseFloat(ex.weight) : null
+            }))
+        }
 
         try {
-            await fetch("/api/workouts", {
+            const res = await fetch("http://localhost:3000/api/log/workout", {
                 method: "POST",
-                headers: {"Content-Type":"application/json"},
-                body: JSON.stringify(workout)
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body)
             })
-            alert("Workout Saved!")
+            const data = await res.json()
+
+            if (res.ok) {
+                setSuccess("Workout saved!")
+                setError("")
+                setTimeout(() => navigate("/workout-log"), 1500)
+            } else {
+                setError(data.message || "Failed to save workout.")
+            }
         } catch (err) {
             console.error(err)
+            setError("Could not connect to server.")
         }
     }
 
     return (
         <div className="min-h-screen bg-gray-100 flex">
             <Sidebar />
-
             <main className="flex-1 p-8 max-w-3xl">
+                <h2 className="text-3xl font-bold mb-6">
+                    {routineWorkoutID ? "Start Workout" : "Empty Workout"}
+                </h2>
 
-                <h2 className="text-3xl font-bold mb-6">Workout</h2>
+                {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
+                {success && <p className="text-green-600 text-sm mb-4">{success}</p>}
 
-                <input
-                placeholder="Workout Name"
-                value = {name}
-                onChange={(e) => setName(e.target.value)}
-                className="border p-2 rounded w-full mb-3"
-                />
+                <div className="flex gap-4 mb-6">
+                    <input
+                        type="number"
+                        placeholder="Duration (mins)"
+                        value={duration}
+                        onChange={(e) => setDuration(e.target.value)}
+                        className="border p-2 rounded w-40"
+                    />
+                    <input
+                        placeholder="Notes (optional)"
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        className="border p-2 rounded flex-1"
+                    />
+                </div>
 
-                <textarea
-                placeholder="Notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="border p-2 rounded w-full mb-6"
-                />
-
-                {exercises.map(ex => (
-                    <div key={ex.id} className="bg-white p-4 rounded shadow mb-4">
-                        <div className="flex justify-between mb-2">
-                            <input
-                            placeholder="Exercise Name"
-                            value = {ex.name}
-                            onChange={(e) =>
-                                updateExerciseName(ex.id, e.target.value)
-                            }
-                            className="border p-2 rounded w-full mr-2"
-                            />
-
-                            <button onClick={() => deleteExercise(ex.id)} className="text-red-500">
-                                X
-                            </button>
+                {/* Exercise search */}
+                <div className="relative mb-6">
+                    <input
+                        placeholder="Search and add an exercise..."
+                        value={searchTerm}
+                        onChange={(e) => { setSearchTerm(e.target.value); setShowDropdown(true) }}
+                        onFocus={() => setShowDropdown(true)}
+                        className="border p-2 rounded w-full"
+                    />
+                    {showDropdown && searchTerm && (
+                        <div className="absolute z-10 bg-white border rounded shadow w-full max-h-48 overflow-y-auto">
+                            {filteredExercises.length === 0 ? (
+                                <p className="p-2 text-gray-500 text-sm">No exercises found</p>
+                            ) : (
+                                filteredExercises.map(ex => (
+                                    <button
+                                        key={ex.exerciseID}
+                                        onClick={() => addExercise(ex)}
+                                        className="w-full text-left px-3 py-2 hover:bg-blue-50 text-sm"
+                                    >
+                                        <span className="font-medium">{ex.name}</span>
+                                        <span className="text-gray-400 ml-2 text-xs">{ex.category}</span>
+                                    </button>
+                                ))
+                            )}
                         </div>
+                    )}
+                </div>
 
-                        {ex.sets.map((set, i) => (
-                            <div key={i} className="flex gap-2 mb-2">
-
-                                <input
-                                placeholder="Reps"
-                                value={set.reps}
-                                onChange={(e) => updateSet(ex.id, i, "reps", e.target.value)}
-                                className="border p-2 rounded w-1/3"
-                                />
-
-                                <input
-                                placeholder="Weight"
-                                value={set.weight}
-                                onChange={(e) => updateSet(ex.id, i, "weight", e.target.value)}
-                                className="border p-2 rounded w-1/3"
-                                />
-
-                                <button
-                                onClick={() => deleteSet(ex.id, i)}
-                                className="text-red-500"
-                                >
-                                    X
+                {/* Exercises — sets, reps and weight */}
+                {selectedExercises.length === 0 ? (
+                    <p className="text-gray-500 mb-6">No exercises added yet.</p>
+                ) : (
+                    selectedExercises.map(ex => (
+                        <div key={ex.exerciseID} className="bg-white p-4 rounded shadow mb-4">
+                            <div className="flex justify-between items-center mb-3">
+                                <p className="font-semibold">{ex.name}</p>
+                                <button onClick={() => removeExercise(ex.exerciseID)} className="text-red-500 text-sm">
+                                    Remove
                                 </button>
                             </div>
-                        ))}
+                            <div className="flex gap-3">
+                                <div className="flex flex-col">
+                                    <label className="text-xs text-gray-500 mb-1">Sets</label>
+                                    <input
+                                        type="number"
+                                        value={ex.sets}
+                                        onChange={(e) => updateExercise(ex.exerciseID, "sets", e.target.value)}
+                                        className="border p-2 rounded w-20"
+                                    />
+                                </div>
+                                <div className="flex flex-col">
+                                    <label className="text-xs text-gray-500 mb-1">Reps</label>
+                                    <input
+                                        type="number"
+                                        value={ex.reps}
+                                        placeholder="optional"
+                                        onChange={(e) => updateExercise(ex.exerciseID, "reps", e.target.value)}
+                                        className="border p-2 rounded w-24"
+                                    />
+                                </div>
+                                <div className="flex flex-col">
+                                    <label className="text-xs text-gray-500 mb-1">Weight (kg)</label>
+                                    <input
+                                        type="number"
+                                        value={ex.weight}
+                                        placeholder="optional"
+                                        onChange={(e) => updateExercise(ex.exerciseID, "weight", e.target.value)}
+                                        className="border p-2 rounded w-28"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                )}
 
-                        <button onClick={() => addSet(ex.id)} className="text-blue-600">
-                            + Add Set
-                        </button>
-
-                    </div>
-                ))}
-
-                <button onClick={addExercise} className="bg-blue-500 text-white px-4 py-2 rounded mr-3">
-                    + Add Exercise
-                </button>
-
-                <button onClick={saveWorkout} className="bg-gree-500 text-white px-4 py-2 rounded">
-                    Save Workout
-                </button>
-
+                <div className="flex gap-4 mt-4">
+                    <button
+                        onClick={saveWorkout}
+                        className="bg-green-600 text-white px-6 py-2 rounded font-semibold hover:bg-green-700"
+                    >
+                        Save Workout
+                    </button>
+                    <button
+                        onClick={() => navigate("/workout-log")}
+                        className="border border-gray-400 text-gray-600 px-6 py-2 rounded hover:bg-gray-100"
+                    >
+                        Cancel
+                    </button>
+                </div>
             </main>
         </div>
     )
-
 }
 
 export default StartWorkoutPage

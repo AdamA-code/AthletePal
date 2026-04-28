@@ -3,11 +3,23 @@ import { EditControl } from "react-leaflet-draw"
 import "leaflet/dist/leaflet.css"
 import "leaflet-draw/dist/leaflet.draw.css"
 
-function RouteMap() {
+// onRouteDrawn is a callback so CardioPage can receive the drawn route data
+function RouteMap({ onRouteDrawn }) {
 
     const onCreated = (e) => {
         const layer = e.layer
-        console.log("Route drawn:", layer)
+        const geoJSON = layer.toGeoJSON()
+        // Pass the route data up to CardioPage as a JSON string
+        if (onRouteDrawn) {
+            onRouteDrawn(JSON.stringify(geoJSON))
+        }
+    }
+
+    const onDeleted = () => {
+        // If user deletes the drawn route, clear it
+        if (onRouteDrawn) {
+            onRouteDrawn(null)
+        }
     }
 
     return (
@@ -20,11 +32,11 @@ function RouteMap() {
                 attribution="&copy; OpenStreetMap contributors"
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-
             <FeatureGroup>
                 <EditControl
                     position="topright"
                     onCreated={onCreated}
+                    onDeleted={onDeleted}
                     draw={{
                         rectangle: false,
                         circle: false,
@@ -34,7 +46,6 @@ function RouteMap() {
                     }}
                 />
             </FeatureGroup>
-
         </MapContainer>
     )
 }
