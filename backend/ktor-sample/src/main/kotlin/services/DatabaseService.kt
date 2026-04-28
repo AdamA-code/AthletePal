@@ -17,9 +17,34 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 
-// data classes to finitely store inputs (and potentially outputs) to database
-
+/**
+ * Provides all database operations for the application.
+ *
+ * This class acts as the main service layer between the backend logic
+ * and the SQL database, handling CRUD operations, authentication,
+ * and relational queries.
+ * 
+ * It is responsible for maintaining data integrity, managing transactions,
+ * and ensuring consistent communication between the application and database.
+ */
 class DatabaseService {
+
+// Data classes to finitely store inputs (and potentially outputs) to database
+
+    /**
+     * Represents a registered user stored in the database.
+     *
+     * @property userID Unique identifier for the user.
+     * @property name User's display name.
+     * @property email User's login email address.
+     * @property passwordHash Secure SHA-256 hash of the password.
+     * @property passwordKey Random salt used during hashing.
+     * @property gender Optional gender value.
+     * @property age Optional age value.
+     * @property height Optional height in cm.
+     * @property weight Optional weight in kg.
+     * @property accountType True if personal trainer, false if standard user.
+     */
     @Serializable
     data class User(
         val userID: Int,
@@ -34,14 +59,34 @@ class DatabaseService {
         val accountType: Boolean,
     )
 
+    /**
+     * Represents an exercise stored in the database.
+     *
+     * @property exerciseID Unique identifier for the exercise.
+     * @property name Exercise's display name.
+     * @property category The category of exercise (e.g. weights, running, etc).
+     * @property description A description of the exercise.
+     */
     @Serializable
     data class Exercise(
-        val exerciseID: Int? = 0,
+        val exerciseID: Int = 0,
         val name: String,
         val category: String,
         val description: String?,
     )
 
+    /**
+     * Represents a workout stored in the database.
+     *
+     * @property workoutID Unique identifier for the workout.
+     * @property createdBy The userID of the user who created the workout.
+     * @property assignedTo The userID of the user who will be attempting the workout.
+     * @property date The date the workout is scheduled for.
+     * @property duration Optional duration of the workout.
+     * @property workoutType Optional type of the workout such as weights or swimming.
+     * @property notes Optional notes added to the workout.
+     * @property routeID Optional routeID to link cardio workouts to a route on a map.
+     */
     @Serializable
     data class Workout(
         val workoutID: Int = 0,
@@ -54,6 +99,16 @@ class DatabaseService {
         val routeID: Int? = null,
     )
 
+    /**
+     * Represents a many-to-many relationship between workouts and exercises.
+     *
+     * @property workoutExercisesID Unique identifier for the exercise in the workout.
+     * @property workoutID The workoutID of the workout the exercise belongs to.
+     * @property exerciseID The exerciseID of the exercise in the workout.
+     * @property sets Optional number of sets for the exercise.
+     * @property reps Optional number of reps for the exercise.
+     * @property weight Optional weight of the exercise.
+     */
     @Serializable
     data class WorkoutExercise(
         val workoutExercisesID: Int = 0,
@@ -101,17 +156,6 @@ class DatabaseService {
         val date: String,
         val isPublic: Boolean,
         val routeData: String,
-    )
-
-    @Serializable
-    data class CalendarEvent(
-        val calendarID: Int? = 0,
-        val userID: Int,
-        val eventType: String,
-        val eventID: Int,
-        val status: String,
-        val scheduledDate: String,
-        val name: String,
     )
 
     @Serializable
