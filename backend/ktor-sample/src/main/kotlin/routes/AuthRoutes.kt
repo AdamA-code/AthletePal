@@ -67,6 +67,20 @@ fun Route.authRoutes() {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
         }
+
+        get("/user/{email}") {
+            try {
+                val email = call.parameters["email"]!!
+                val user = db.findUser(email)
+                if (user != null) {
+                    call.respond(HttpStatusCode.OK, user)
+                } else {
+                    call.respond(HttpStatusCode.NotFound, mapOf("message" to "User not found"))
+                }
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid request"))
+            }
+        }
     }
 
     route("/update") {
