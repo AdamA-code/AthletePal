@@ -7,11 +7,19 @@ function CompetitionPage() {
     const [name, setName] = useState("")
     const [date, setDate] = useState("")
     const [rank, setRank] = useState("")
-    const [result, setResult] = useState("")
+    const [resultMins, setResultMins] = useState("")
+    const [resultSecs, setResultSecs] = useState("")
     const [error, setError] = useState("")
     const [success, setSuccess] = useState("")
 
     const today = new Date().toISOString().split("T")[0]
+
+    const formatResult = (seconds) => {
+        if (!seconds) return null
+        const mins = Math.floor(seconds / 60)
+        const secs = seconds % 60
+        return `${mins}:${secs.toString().padStart(2, "0")}`
+    }
 
     // Split competitions into upcoming and completed based on date
     const upcoming = competitions.filter(c => c.date >= today)
@@ -61,7 +69,7 @@ function CompetitionPage() {
                     name: name,
                     date: date,
                     rank: rank ? parseInt(rank) : null,
-                    result: result ? parseInt(result) : null
+                    result: (resultMins || resultSecs) ? (parseInt(resultMins || 0) * 60) + parseInt(resultSecs || 0) : null
                 })
             })
             const data = await res.json()
@@ -71,7 +79,8 @@ function CompetitionPage() {
                 setName("")
                 setDate("")
                 setRank("")
-                setResult("")
+                setResultMins("")
+                setResultSecs("")
                 // Refresh the list
                 fetchCompetitions(userID)
             } else {
@@ -147,15 +156,24 @@ function CompetitionPage() {
                         </div>
                         <div>
                             <label className="block text-sm text-gray-500 mb-1">
-                                Result in seconds (optional)
+                                Result (optional)
                             </label>
-                            <input
-                                type="number"
-                                value={result}
-                                onChange={(e) => setResult(e.target.value)}
-                                placeholder="e.g. 2901"
-                                className="border rounded p-2 w-full"
-                            />
+                            <div className="flex gap-2">
+                                <input
+                                    type="number"
+                                    value={resultMins}
+                                    onChange={(e) => setResultMins(e.target.value)}
+                                    placeholder="mins"
+                                    className="border rounded p-2 w-full"
+                                />
+                                <input
+                                    type="number"
+                                    value={resultSecs}
+                                    onChange={(e) => setResultSecs(e.target.value)}
+                                    placeholder="secs"
+                                    className="border rounded p-2 w-full"
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -208,7 +226,7 @@ function CompetitionPage() {
                                     )}
                                     {comp.result && (
                                         <p className="text-sm text-gray-600">
-                                            Result: {comp.result}s
+                                            Result: {formatResult(comp.result)}
                                         </p>
                                     )}
                                 </div>
