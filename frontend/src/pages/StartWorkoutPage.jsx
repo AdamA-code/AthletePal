@@ -1,5 +1,5 @@
 // page structure and layout generated with chatgpt chat.openai.com
-// frontend-backend connection logic done with claude sonnet AI
+// frontend-backend connection logic and accessibility improvements done with Claude Sonnet (claude.ai)
 import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import Sidebar from "../components/Sidebar"
@@ -8,7 +8,6 @@ function StartWorkoutPage() {
     const navigate = useNavigate()
     const location = useLocation()
 
-    // If coming from a routine, this will have the workoutID
     const routineWorkoutID = location.state?.workoutID || null
 
     const [availableExercises, setAvailableExercises] = useState([])
@@ -21,7 +20,6 @@ function StartWorkoutPage() {
     const [success, setSuccess] = useState("")
 
     useEffect(() => {
-        // Always fetch the full exercise list
         const fetchExercises = async () => {
             try {
                 const res = await fetch("http://localhost:3000/api/exercises")
@@ -29,13 +27,11 @@ function StartWorkoutPage() {
                 const exercises = Array.isArray(data.Exercises) ? data.Exercises : []
                 setAvailableExercises(exercises)
 
-                // If coming from a routine, preload its exercises
                 if (routineWorkoutID) {
                     const routineRes = await fetch(`http://localhost:3000/api/workout/exercises/${routineWorkoutID}`)
                     const routineData = await routineRes.json()
 
                     if (Array.isArray(routineData)) {
-                        // Match exerciseIDs from routine to names from exercise list
                         const preloaded = routineData.map(re => {
                             const match = exercises.find(e => e.exerciseID === re.exerciseID)
                             return {
@@ -148,28 +144,38 @@ function StartWorkoutPage() {
                     {routineWorkoutID ? "Start Workout" : "Empty Workout"}
                 </h2>
 
-                {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
-                {success && <p className="text-green-600 text-sm mb-4">{success}</p>}
+                {error && <p className="text-red-700 text-sm mb-4" role="alert">{error}</p>}
+                {success && <p className="text-green-700 text-sm mb-4" role="status">{success}</p>}
 
                 <div className="flex gap-4 mb-6">
-                    <input
-                        type="number"
-                        placeholder="Duration (mins)"
-                        value={duration}
-                        onChange={(e) => setDuration(e.target.value)}
-                        className="border p-2 rounded w-40"
-                    />
-                    <input
-                        placeholder="Notes (optional)"
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        className="border p-2 rounded flex-1"
-                    />
+                    <div className="flex flex-col">
+                        <label htmlFor="workout-duration" className="sr-only">Duration in minutes</label>
+                        <input
+                            id="workout-duration"
+                            type="number"
+                            placeholder="Duration (mins)"
+                            value={duration}
+                            onChange={(e) => setDuration(e.target.value)}
+                            className="border p-2 rounded w-40"
+                        />
+                    </div>
+                    <div className="flex-1">
+                        <label htmlFor="workout-notes" className="sr-only">Notes</label>
+                        <input
+                            id="workout-notes"
+                            placeholder="Notes (optional)"
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            className="border p-2 rounded w-full"
+                        />
+                    </div>
                 </div>
 
                 {/* Exercise search */}
                 <div className="relative mb-6">
+                    <label htmlFor="exercise-search" className="sr-only">Search and add an exercise</label>
                     <input
+                        id="exercise-search"
                         placeholder="Search and add an exercise..."
                         value={searchTerm}
                         onChange={(e) => { setSearchTerm(e.target.value); setShowDropdown(true) }}
@@ -179,7 +185,7 @@ function StartWorkoutPage() {
                     {showDropdown && searchTerm && (
                         <div className="absolute z-10 bg-white border rounded shadow w-full max-h-48 overflow-y-auto">
                             {filteredExercises.length === 0 ? (
-                                <p className="p-2 text-gray-500 text-sm">No exercises found</p>
+                                <p className="p-2 text-gray-600 text-sm">No exercises found</p>
                             ) : (
                                 filteredExercises.map(ex => (
                                     <button
@@ -188,7 +194,7 @@ function StartWorkoutPage() {
                                         className="w-full text-left px-3 py-2 hover:bg-blue-50 text-sm"
                                     >
                                         <span className="font-medium">{ex.name}</span>
-                                        <span className="text-gray-400 ml-2 text-xs">{ex.category}</span>
+                                        <span className="text-gray-600 ml-2 text-xs">{ex.category}</span>
                                     </button>
                                 ))
                             )}
@@ -198,20 +204,25 @@ function StartWorkoutPage() {
 
                 {/* Exercises — sets, reps and weight */}
                 {selectedExercises.length === 0 ? (
-                    <p className="text-gray-500 mb-6">No exercises added yet.</p>
+                    <p className="text-gray-600 mb-6">No exercises added yet.</p>
                 ) : (
                     selectedExercises.map(ex => (
                         <div key={ex.exerciseID} className="bg-white p-4 rounded shadow mb-4">
                             <div className="flex justify-between items-center mb-3">
                                 <p className="font-semibold">{ex.name}</p>
-                                <button onClick={() => removeExercise(ex.exerciseID)} className="text-red-500 text-sm">
+                                <button
+                                    onClick={() => removeExercise(ex.exerciseID)}
+                                    className="text-red-700 text-sm"
+                                    aria-label={`Remove ${ex.name}`}
+                                >
                                     Remove
                                 </button>
                             </div>
                             <div className="flex gap-3">
                                 <div className="flex flex-col">
-                                    <label className="text-xs text-gray-500 mb-1">Sets</label>
+                                    <label htmlFor={`sets-${ex.exerciseID}`} className="text-xs text-gray-700 mb-1">Sets</label>
                                     <input
+                                        id={`sets-${ex.exerciseID}`}
                                         type="number"
                                         value={ex.sets}
                                         onChange={(e) => updateExercise(ex.exerciseID, "sets", e.target.value)}
@@ -219,8 +230,9 @@ function StartWorkoutPage() {
                                     />
                                 </div>
                                 <div className="flex flex-col">
-                                    <label className="text-xs text-gray-500 mb-1">Reps</label>
+                                    <label htmlFor={`reps-${ex.exerciseID}`} className="text-xs text-gray-700 mb-1">Reps</label>
                                     <input
+                                        id={`reps-${ex.exerciseID}`}
                                         type="number"
                                         value={ex.reps}
                                         placeholder="optional"
@@ -229,8 +241,9 @@ function StartWorkoutPage() {
                                     />
                                 </div>
                                 <div className="flex flex-col">
-                                    <label className="text-xs text-gray-500 mb-1">Weight (kg)</label>
+                                    <label htmlFor={`weight-${ex.exerciseID}`} className="text-xs text-gray-700 mb-1">Weight (kg)</label>
                                     <input
+                                        id={`weight-${ex.exerciseID}`}
                                         type="number"
                                         value={ex.weight}
                                         placeholder="optional"
@@ -246,7 +259,7 @@ function StartWorkoutPage() {
                 <div className="flex gap-4 mt-4">
                     <button
                         onClick={saveWorkout}
-                        className="bg-green-600 text-white px-6 py-2 rounded font-semibold hover:bg-green-700"
+                        className="bg-green-700 text-white px-6 py-2 rounded font-semibold hover:bg-green-800"
                     >
                         Save Workout
                     </button>
