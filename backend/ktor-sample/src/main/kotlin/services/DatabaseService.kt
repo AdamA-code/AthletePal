@@ -868,7 +868,7 @@ class DatabaseService {
     }
 
     // Statistics DB
-    fun addStatistic(stat: Statistic): Int {
+    fun createStatistic(stat: Statistic): Int {
         // Validation Checks
         if (stat.userID <= 0 || stat.exerciseID <= 0) return -1
         if (stat.scoreValue <= 0.0) return -1
@@ -1016,7 +1016,7 @@ class DatabaseService {
     }
 
     // Competitions DB
-    fun addComp(comp: Competition): Int {
+    fun createCompetition(comp: Competition): Int {
         // Validation Checks
         if (comp.name.isBlank()) return -1
         if (comp.date.isBlank() || !comp.date.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) return -1
@@ -1131,7 +1131,7 @@ class DatabaseService {
     }
 
     // CompetitionsAndExercise DB
-    fun addCompExercise(compEx: CompetitionExercise): Int {
+    fun addExercisetoCompetition(compEx: CompetitionExercise): Int {
         val stmt =
             db.connection.prepareStatement(
                 """
@@ -1225,7 +1225,7 @@ class DatabaseService {
 
     // Routes DB
 
-    fun addRoute(route: Route): Int {
+    fun createRoute(route: Route): Int {
         // Validation Checks
         if (route.name.isBlank()) return -1
         if (route.distance <= 0.0) return -1
@@ -1341,114 +1341,6 @@ class DatabaseService {
             )
 
         stmt.setInt(1, routeID)
-
-        val rowsDeleted = stmt.executeUpdate()
-        stmt.close()
-
-        return rowsDeleted > 0
-    }
-
-    // Calendar DB
-
-    fun addCalendarEvent(event: CalendarEvent): Int {
-        val stmt =
-            db.connection.prepareStatement(
-                """
-                INSERT INTO calendar_events(userID,eventType,eventID,status,scheduledDate,name)
-                VALUES (?, ?, ?, ?, ?, ?)
-                """.trimIndent(),
-                Statement.RETURN_GENERATED_KEYS,
-            )
-
-        stmt.setInt(1, event.userID)
-        stmt.setString(2, event.eventType)
-        stmt.setInt(3, event.eventID)
-        stmt.setString(4, event.status)
-        stmt.setString(5, event.scheduledDate)
-        stmt.setString(6, event.name)
-
-        val rowsInserted = stmt.executeUpdate()
-
-        if (rowsInserted == 0) {
-            stmt.close()
-            return -1
-        }
-
-        val rs = stmt.generatedKeys
-        val id = if (rs.next()) rs.getInt(1) else -1
-
-        rs.close()
-        stmt.close()
-
-        return id
-    }
-
-    fun findAllCalendarEvents(
-        userID: Int,
-        scheduledDate: String,
-    ): List<CalendarEvent> {
-        val stmt: PreparedStatement =
-            db.connection.prepareStatement(
-                "SELECT * FROM calendar_events WHERE userID = ? AND scheduledDate = ?",
-            )
-
-        stmt.setInt(1, userID)
-        stmt.setString(2, scheduledDate)
-
-        val rs: ResultSet = stmt.executeQuery()
-        val events = mutableListOf<CalendarEvent>()
-        while (rs.next()) {
-            val event =
-                CalendarEvent(
-                    calendarID = rs.getInt("calendarID"),
-                    userID = rs.getInt("userID"),
-                    eventType = rs.getString("eventType"),
-                    eventID = rs.getInt("eventID"),
-                    status = rs.getString("status"),
-                    scheduledDate = rs.getString("scheduledDate"),
-                    name = rs.getString("name"),
-                )
-            events.add(event)
-        }
-
-        rs.close()
-        stmt.close()
-        return events
-    }
-
-    fun updateCalendarEvent(
-        calendarID: Int,
-        status: String,
-        scheduledDate: String,
-        name: String,
-    ): Boolean {
-        val stmt: PreparedStatement =
-            db.connection.prepareStatement(
-                """
-                UPDATE calendar_events
-                SET status = ?, scheduledDate = ?, name = ?
-                WHERE calendarID = ?
-                """.trimIndent(),
-            )
-
-        stmt.setString(1, status)
-        stmt.setString(2, scheduledDate)
-        stmt.setString(3, name)
-        stmt.setInt(4, calendarID)
-
-        val rowsUpdated = stmt.executeUpdate()
-        stmt.close()
-
-        return rowsUpdated > 0
-    }
-
-    fun deleteCalendarEvent(calendarID: Int): Boolean {
-        val stmt: PreparedStatement =
-            db.connection.prepareStatement(
-                "DELETE FROM calendar_events WHERE calendarID = ?",
-            )
-
-        stmt.setInt(1, calendarID)
 
         val rowsDeleted = stmt.executeUpdate()
         stmt.close()
@@ -1838,7 +1730,7 @@ class DatabaseService {
     ): Boolean {
         // Validation Checks
         if (groupID <= 0 || userID <= 0) return false
-        val members = getGroupMembers(groupID)
+        val members = findGroupMembers(groupID)
         if (members.any { it.userID == userID }) return false
 
         val stmt =
@@ -1872,7 +1764,7 @@ class DatabaseService {
         return rows > 0
     }
 
-    fun getGroupMembers(groupID: Int): List<User> {
+    fun findGroupMembers(groupID: Int): List<User> {
         val stmt =
             db.connection.prepareStatement(
                 """

@@ -160,7 +160,7 @@ fun Route.socialRoutes() {
         get("/group/members/{groupID}") {
             try {
                 val groupID: Int = call.parameters["groupID"]!!.toInt()
-                val groupMembers: List<User> = db.getGroupMembers(groupID)
+                val groupMembers: List<User> = db.findGroupMembers(groupID)
 
                 if (!groupMembers.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.OK, mapOf("Group Members" to groupMembers))

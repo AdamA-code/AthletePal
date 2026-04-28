@@ -179,7 +179,7 @@ class DatabaseServiceTest {
         // 5. STATISTICS
         // =========================
         val statId =
-            ds.addStatistic(
+            ds.createStatistic(
                 Statistic(
                     statisticID = 0,
                     userID = userId,
@@ -210,7 +210,7 @@ class DatabaseServiceTest {
         // 6. COMPETITION
         // =========================
         val compId =
-            ds.addComp(
+            ds.createCompetition(
                 Competition(
                     competitionID = 0,
                     userID = userId,
@@ -244,7 +244,7 @@ class DatabaseServiceTest {
         // 7. ROUTE
         // =========================
         val routeId =
-            ds.addRoute(
+            ds.createRoute(
                 Route(
                     routeID = 0,
                     userID = userId,
@@ -322,21 +322,21 @@ class DatabaseServiceTest {
         )
 
         // Future
-        ds.addComp(
+        ds.createCompetition(
             Competition(0, userId, "Future Comp", future, null, null),
         )
 
         // Competition (past)
-        ds.addComp(
+        ds.createCompetition(
             Competition(0, userId, "Past Comp", past, 1, 500),
         )
 
         // Routes
-        ds.addRoute(
+        ds.createRoute(
             Route(0, userId, "Route 1", 5.0, 30.0, today, false, "Big loop somewhere on map"),
         )
 
-        ds.addRoute(
+        ds.createRoute(
             Route(0, userId, "Route 2", 6.0, 35.0, past, true, "Big square somewhere on map"),
         )
 
@@ -623,9 +623,9 @@ class DatabaseServiceTest {
         val benchPressID = ds.createExercise(Exercise(0, "Bench Press", "weights", null))
 
         // Add a statistic for bench press
-        ds.addStatistic(Statistic(0, userId, benchPressID, 100.0, today))
-        ds.addStatistic(Statistic(0, userId, benchPressID, 110.0, today)) // Highscore
-        ds.addStatistic(Statistic(0, userId, squatID, 80.0, today))
+        ds.createStatistic(Statistic(0, userId, benchPressID, 100.0, today))
+        ds.createStatistic(Statistic(0, userId, benchPressID, 110.0, today)) // Highscore
+        ds.createStatistic(Statistic(0, userId, squatID, 80.0, today))
 
         val pbs = ds.getPersonalBests(userId)
         assertTrue(pbs.isNotEmpty())
@@ -673,7 +673,7 @@ class DatabaseServiceTest {
         assertTrue(groupID > 0)
 
         // Creator should be automatically added
-        val members = ds.getGroupMembers(groupID)
+        val members = ds.findGroupMembers(groupID)
         assertEquals(1, members.size)
         assertTrue(members.any { it.userID == creatorID })
 
@@ -696,7 +696,7 @@ class DatabaseServiceTest {
         // Join group
 
         assertTrue(ds.joinGroup(groupID, memberID))
-        val newMembers = ds.getGroupMembers(groupID)
+        val newMembers = ds.findGroupMembers(groupID)
         assertEquals(2, newMembers.size)
         assertTrue(newMembers.any { it.userID == memberID })
 
@@ -752,7 +752,7 @@ class DatabaseServiceTest {
 
         // Leave group
         assertTrue(ds.leaveGroup(groupID, memberID))
-        val afterLeave = ds.getGroupMembers(groupID)
+        val afterLeave = ds.findGroupMembers(groupID)
         assertEquals(1, afterLeave.size)
         assertTrue(afterLeave.none { it.userID == memberID })
 

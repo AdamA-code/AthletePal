@@ -451,7 +451,7 @@ fun Route.activityRoutes(){
         post("/competition"){
             try {
                 val comp = call.receive<Competition>()
-                val id = db.addComp(comp)
+                val id = db.createCompetition(comp)
 
                 if (id > 0) {
                     call.respond(HttpStatusCode.OK, mapOf("ID" to id))
@@ -567,7 +567,7 @@ fun Route.activityRoutes(){
         post("/route"){
             try {
                 val route = call.receive<RunningRoute>()
-                val id = db.addRoute(route)
+                val id = db.createRoute(route)
 
                 if (id > 0) {
                     call.respond(HttpStatusCode.OK, mapOf("ID" to id))
