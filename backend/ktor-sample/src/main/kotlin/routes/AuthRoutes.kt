@@ -29,7 +29,11 @@ fun Route.authRoutes() {
                     ) // If authService deems the password acceptable
 
                 if (isValid) {
-                    call.respond(HttpStatusCode.OK, mapOf("message" to "Login Successful")) // Response for valid login
+                    call.respond(HttpStatusCode.OK, mapOf(
+                        "message" to "Login Successful",
+                        "userID" to (user?.userID ?: 0),
+                        "name" to (user?.name ?: "")
+                        )) // Response for valid login
                 } else {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "Invalid Credentials")) // Response for invalid login
                 }

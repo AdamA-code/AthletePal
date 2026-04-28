@@ -627,5 +627,15 @@ fun Route.activityRoutes(){
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid request"))
             }
         }
+
+        get("/exercises") {
+            try {
+                val exercises = db.findAllExercises()
+                call.respond(HttpStatusCode.OK, mapOf("Exercises" to allExercises))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Could not fetch exercises"))
+            }
+        }
+
     }
 }
