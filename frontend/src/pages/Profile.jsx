@@ -30,7 +30,7 @@ function ProfilePage() {
                 const res = await fetch(`http://localhost:3000/auth/user/${email}`)
                 const data = await res.json()
                 if (res.ok) {
-                    setUser(data)
+                    setUser(data.User)
                     setGender(data.gender || "")
                     setAge(data.age || "")
                     setHeight(data.height || "")
