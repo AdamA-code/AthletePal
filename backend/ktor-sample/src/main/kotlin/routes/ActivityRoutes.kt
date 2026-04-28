@@ -402,7 +402,7 @@ fun Route.activityRoutes(){
                 }
 
             } catch (e: Exception) {
-                call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Could not fetch exercises"))
+                call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
         }
 
