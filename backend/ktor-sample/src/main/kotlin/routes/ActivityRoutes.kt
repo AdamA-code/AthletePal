@@ -20,6 +20,7 @@ import services.DatabaseService.Competition as Competition
 import services.DatabaseService.Workout as Workout
 import services.DatabaseService.Route as RunningRoute
 import services.DatabaseService.WorkoutExercise as WorkoutExercise
+import services.DatabaseService.Exercise as Exercise
 
 import services.DatabaseService
 
@@ -385,6 +386,22 @@ fun Route.activityRoutes(){
             }
             catch (e: Exception) {
                 e.printStackTrace()
+                call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
+            }
+        }
+
+        // Get all exercises
+        get("/exercises") {
+            try {
+                val exercises: List<Exercise> = db.findAllExercises()
+                
+                if (!exercises.isNullOrEmpty()) {
+                    call.respond(HttpStatusCode.OK, mapOf("Exercises" to exercises))
+                } else if (exercises.isNullOrEmpty()) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("message" to "Could not find exercises"))
+                }
+
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
         }
