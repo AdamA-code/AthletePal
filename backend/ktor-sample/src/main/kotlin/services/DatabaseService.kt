@@ -29,7 +29,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
  */
 class DatabaseService {
 
-// Data classes to finitely store inputs (and potentially outputs) to database
+    // Data classes used to store inputs and outputs for database operations
 
     /**
      * Represents a registered user stored in the database.
@@ -62,7 +62,7 @@ class DatabaseService {
     /**
      * Represents an exercise stored in the database.
      *
-     * @property exerciseID Unique identifier for the exercise.
+     * @property exerciseID Unique identifier for the exercise, defaulting to 0.
      * @property name Exercise's display name.
      * @property category The category of exercise (e.g. weights, running, etc).
      * @property description A description of the exercise.
@@ -78,7 +78,7 @@ class DatabaseService {
     /**
      * Represents a workout stored in the database.
      *
-     * @property workoutID Unique identifier for the workout.
+     * @property workoutID Unique identifier for the workout, defaulting to 0.
      * @property createdBy The userID of the user who created the workout.
      * @property assignedTo The userID of the user who will be attempting the workout.
      * @property date The date the workout is scheduled for.
@@ -86,7 +86,7 @@ class DatabaseService {
      * @property workoutType Optional type of the workout such as weights or swimming.
      * @property notes Optional notes added to the workout.
      * @property routeID Optional routeID to link cardio workouts to a route on a map.
-     * @property isRoutine True if the workout is aa regular routine, false if not.
+     * @property isRoutine True if the workout is a regular routine, false if not.
      */
     @Serializable
     data class Workout(
@@ -104,7 +104,7 @@ class DatabaseService {
     /**
      * Represents a many-to-many relationship between workouts and exercises.
      *
-     * @property workoutExercisesID Unique identifier for the exercise in the workout.
+     * @property workoutExercisesID Unique identifier for the exercise in the workout, defaulting to 0.
      * @property workoutID The workoutID of the workout the exercise belongs to.
      * @property exerciseID The exerciseID of the exercise in the workout.
      * @property sets Optional number of sets for the exercise.
@@ -121,18 +121,37 @@ class DatabaseService {
         val weight: Double? = 1.0
     )
 
+    /**
+     * Represents a user statistic stored in the database.
+     *
+     * @property statisticID Unique identifier for the statistic, defaulting to 0.
+     * @property userID The userID of the user the statistic belongs to.
+     * @property exerciseID The exerciseID of the exercise the statistic is based off.
+     * @property scoreValue The score the user achieved (e.g. 70kg for bench press, 240 minutes for a marathon).
+     * @property date The date the user achieved this statistic.
+     */
     @Serializable
     data class Statistic(
-        val statisticID: Int? = 0,
+        val statisticID: Int = 0,
         val userID: Int,
         val exerciseID: Int,
         val scoreValue: Double,
         val date: String,
     )
 
+    /**
+     * Represents competition stored in a the database.
+     *
+     * @property competitionID Unique identifier for the competition in the database, defaulting to 0.
+     * @property userID The userID of the user the competition belongs to.
+     * @property name The name of the competition.
+     * @property date The date the competition is scheduled for.
+     * @property rank Optional placement of the user in the competition (e.g. first, third, etc).
+     * @property result Optional score the user achieved in the competition.
+     */
     @Serializable
     data class Competition(
-        val competitionID: Int? = 0,
+        val competitionID: Int = 0,
         val userID: Int,
         val name: String,
         val date: String,
@@ -140,17 +159,37 @@ class DatabaseService {
         val result: Int? = null,
     )
 
+    /**
+     * Represents a many-to-many relationship between competitions and exercises.
+     *
+     * @property competitionExerciseID Unique identifier for the exercise in the competition, defaulting to 0.
+     * @property competitionID Unique identifier for the competition in the database.
+     * @property exerciseID The exerciseID of the exercise in the competition.
+     * @property performance Optional score of the user exercise (e.g. 70kg or 40 minutes).
+     */
     @Serializable
     data class CompetitionExercise(
-        val competitionExerciseID: Int? = 0,
+        val competitionExerciseID: Int = 0,
         val competitionID: Int,
         val exerciseID: Int,
         val performance: Double?,
     )
 
+    /**
+     * Represents a route associated with a cardio workout in the database.
+     *
+     * @property routeID Unique identifier for the route in the workout, defaulting to 0.
+     * @property userID The userID of the user who owns the route.
+     * @property name The name of the route.
+     * @property distance The distance of the route.
+     * @property estimatedTime Optional estimated time the route to be completed.
+     * @property date The date the route is scheduled for.
+     * @property isPublic True if the route is available to the public, false if not.
+     * @property routeData The data that represents where the route is on the map.
+     */
     @Serializable
     data class Route(
-        val routeID: Int? = 0,
+        val routeID: Int = 0,
         val userID: Int,
         val name: String,
         val distance: Double,
@@ -160,25 +199,49 @@ class DatabaseService {
         val routeData: String,
     )
 
+    /**
+     * Represents a training group users can join.
+     *
+     * @property groupID Unique identifier for the training group users can join, defaulting to 0.
+     * @property createdBy The userID of the user who created the workout.
+     * @property name The name of the training group.
+     * @property description Optional description describing the training group.
+     * @property goal Optional overall goal users in the group are working towards.
+     */
     @Serializable
     data class TrainingGroup(
-        val groupID: Int? = 0,
+        val groupID: Int = 0,
         val createdBy: Int,
         val name: String,
         val description: String? = null,
         val goal: String? = null
     )
 
+    /**
+     * Represents a many-to-many relationship between training groups and users.
+     *
+     * @property memberID Unique identifier for the users in a training group, defaulting to 0.
+     * @property groupID Unique identifier for the group the user is in.
+     * @property userID Unique identifier for user
+     */
     @Serializable
     data class GroupMember(
-        val memberID: Int? = 0,
+        val memberID: Int = 0,
         val groupID: Int,
         val userID: Int,
     )
 
+    /**
+     * Represents a many-to-many relationship between training groups and workouts.
+     *
+     * @property sessionID Unique identifier for the workout session the group will be completing together, defaulting to 0.
+     * @property groupID Unique identifier for the group the user is in.
+     * @property workoutID Unique identifier for the workout.
+     * @property scheduledDate The date the group session is scheduled to be held on.
+     */
     @Serializable
     data class GroupSession(
-        val sessionID: Int? = 0,
+        val sessionID: Int = 0,
         val groupID: Int,
         val workoutID: Int,
         val scheduledDate: String,
@@ -2177,7 +2240,32 @@ class DatabaseService {
         return streak
     }
 
-    // Weekly training history
+    /**
+     * Retrieves a weekly summary of the user's completed training history.
+     * 
+     * The function first retrieves all workouts assigned to the supplied userID.
+     * It then filters out any workouts not yet completed, or workouts where no duration
+     * has been recorded.
+     * 
+     * The remaining workouts are grouped by calendar week, starting from monday
+     * and ending at sunday.
+     * 
+     * For each week, the function calculates:
+     *  - the number of completed workouts
+     *  - the total training duration in hours
+     * 
+     * The duration is calculated by summing the duration stored in minutes and converting
+     * the result into hours.
+     * 
+     * The returned map is sorted by week start date in ascending order.
+     * 
+     * This is used to display statistics such as weekly consistency and total training time
+     * for each week.
+     * @param userID The unique identifier for the user.
+     * @return A map where the key is the week's starting date, and the value is another map containing:
+     *  - "sessions": the number of workouts completed that week
+     *  - "totalDuration": the total hours trained during that week
+     */
     fun getWeeklyTrainingHistory(userID: Int): Map<String, Map<String, Any>> {
         val today = LocalDate.now()
         return findAllWorkouts(userID).filter { LocalDate.parse(it.date).isBefore(today) && it.duration != null }
@@ -2195,7 +2283,31 @@ class DatabaseService {
             .toSortedMap()
     }
 
-    // Exercise by category
+    /**
+     * Retrieves a breakdown of exercise categories completed by a user.
+     * 
+     * The function first retrieves all workouts assigned to the supplied userID
+     * and filters out any workouts with future dates so only completed workouts
+     * are included.
+     * 
+     * For each workout, the workout_exercises and exercises tables are joined
+     * to identify the category of each exercise. The number of occurrences of each
+     * category is then counted.
+     * 
+     * After all categories have been counted, the function returns both the number
+     * of completed sessions for each category, and the percentage share of the total
+     * completed sessions each category has.
+     * 
+     * This is used to display statistics such as how much of a user's training consists of weights,
+     * running, swimming, and other categories.
+     * 
+     * If the user has no completed workouts, an empty map is returned.
+     * 
+     * @param userID The unique identifier of the user.
+     * @return A map where the key is the exercise category and the value is another map containing:
+     *   - "sessions": the number of times that category appears
+     *   - "percentage": the percentage share of total exercises completed
+     */
     fun getExerciseBreakdown(userID: Int): Map<String, Map<String, Any>> {
         val workouts = findAllWorkouts(userID).filter { it.date < LocalDate.now().toString() }
         val workoutIDs: List<Int> = workouts.mapNotNull { it.workoutID }
@@ -2238,12 +2350,51 @@ class DatabaseService {
         }
     }
 
-    // For personal bests
+    /**
+     * Retrieves the highest score for each exercise completed by a user.
+     * 
+     * The function first retrieves all exercises stored in the database.
+     * It then checks each exercise individually by calling getBestStat()
+     * and returns the highest recorded statistic for the supplied user
+     * where one exists.
+     * 
+     * This is used to display personal bests such as the heaviest weight
+     * lifted, fastest time achieved, or highest score recorded, depending
+     * on the exercise.
+     * 
+     * Exercises with no recorded statistics for the user are excluded using
+     * mapNotNull().
+     * 
+     * @param userID The unique identifier of the user.
+     * @return A list of Statistic objects containing the user's best
+     * recorded result for each exercise.
+     */
     fun getPersonalBests(userID: Int): List<Statistic> {
         return findAllExercises().mapNotNull { exercise -> getBestStat(userID, exercise.exerciseID) }
     }
 
-    // Log workout for workout logs page
+    /**
+     * Adds a workout and its related exercises to the database.
+     *
+     * The autoCommit is set to false so all operations can be committed or rolled back as a single transaction.
+     * 
+     * Calls createWorkout() store the given workout
+     * in the database, then iterates through every exercise in the given list of
+     * exercises and links them to the created workout by adding them to the join table in
+     * the database.
+     * 
+     * If there is any error or failure during the function, the previous actions are undone
+     * using rollback() so there is no partial data stored and -1 is returned.
+     * 
+     * If all operations succeed, commit() is called and the new workoutID
+     * is returned.
+     * 
+     * Regardless of success or failure, autoCommit is set back to true so later database operations remain unaffected.
+     *
+     * @param workout An instance of the workout data class.
+     * @param exercises A list of the WorkoutExercise objects.
+     * @return The created workoutID if successful, -1 if the transaction fails.
+     */
     fun logWorkout(
         workout: Workout,
         exercises: List<WorkoutExercise>,
@@ -2297,7 +2448,31 @@ class DatabaseService {
         return rowsDeleted > 0
     }
 
-    // Update a logged workout (in case of a changed exercise or another detail)
+    /**
+     * Updates an existing workout and replaces its linked exercises.
+     *
+     * The autoCommit is set to false so all operations can be committed or rolled
+     *  back as a single transaction.
+     *
+     * The function first updates the workout record in the workouts table.
+     * It then removes any existing exercise links for that workout from the
+     * workout_exercises join table before inserting the new list of exercises.
+     *
+     * Replacing all linked exercises ensures outdated exercise records are
+     * removed and the workout accurately reflects the user's latest changes.
+     *
+     * If any part of the update fails, rollback() is called so no partial
+     * changes are saved, and false is returned.
+     *
+     * If all operations succeed, commit() is called and true is returned.
+     *
+     * Regardless of success or failure, autoCommit is set back to true so
+     * later database operations remain unaffected.
+     *
+     * @param workout The updated workout data to store.
+     * @param exercises The revised list of WorkoutExercise objects to link to the workout.
+     * @return True if the workout was updated successfully, false otherwise.
+     */
     fun updateLoggedWorkout(
         workout: Workout,
         exercises: List<WorkoutExercise>,
