@@ -1,3 +1,5 @@
+// page structure and layout generated with chatgpt chat.openai.com
+// frontend-backend connection logic and accessibility improvements done with Claude Sonnet (claude.ai)
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import Sidebar from "../components/Sidebar"
@@ -12,7 +14,6 @@ function NewRoutinePage() {
     const [showDropdown, setShowDropdown] = useState(false)
     const [error, setError] = useState("")
 
-    // Fetch the preset exercise list when page loads
     useEffect(() => {
         const fetchExercises = async () => {
             try {
@@ -77,7 +78,7 @@ function NewRoutinePage() {
                 date: today,
                 duration: null,
                 workoutType: "weights",
-                notes: routineName,   // routine name stored here
+                notes: routineName,
                 routeID: null
             },
             exercises: selectedExercises.map(ex => ({
@@ -85,8 +86,8 @@ function NewRoutinePage() {
                 workoutID: 0,
                 exerciseID: ex.exerciseID,
                 sets: parseInt(ex.sets),
-                reps: null,     // not set at routine creation stage
-                weight: null    // not set at routine creation stage
+                reps: null,
+                weight: null
             }))
         }
 
@@ -115,18 +116,24 @@ function NewRoutinePage() {
             <main className="flex-1 p-8 max-w-3xl">
                 <h2 className="text-3xl font-bold mb-6">New Routine</h2>
 
-                {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
+                {error && <p className="text-red-700 text-sm mb-4" role="alert">{error}</p>}
 
-                <input
-                    placeholder="Routine Name (e.g. Upper Day)"
-                    value={routineName}
-                    onChange={(e) => setRoutineName(e.target.value)}
-                    className="border p-2 rounded w-full mb-6"
-                />
+                <div className="mb-6">
+                    <label htmlFor="routine-name" className="sr-only">Routine Name</label>
+                    <input
+                        id="routine-name"
+                        placeholder="Routine Name (e.g. Upper Day)"
+                        value={routineName}
+                        onChange={(e) => setRoutineName(e.target.value)}
+                        className="border p-2 rounded w-full"
+                    />
+                </div>
 
                 {/* Exercise search */}
                 <div className="relative mb-6">
+                    <label htmlFor="exercise-search" className="sr-only">Search exercises</label>
                     <input
+                        id="exercise-search"
                         placeholder="Search and add an exercise..."
                         value={searchTerm}
                         onChange={(e) => { setSearchTerm(e.target.value); setShowDropdown(true) }}
@@ -136,7 +143,7 @@ function NewRoutinePage() {
                     {showDropdown && searchTerm && (
                         <div className="absolute z-10 bg-white border rounded shadow w-full max-h-48 overflow-y-auto">
                             {filteredExercises.length === 0 ? (
-                                <p className="p-2 text-gray-500 text-sm">No exercises found</p>
+                                <p className="p-2 text-gray-600 text-sm">No exercises found</p>
                             ) : (
                                 filteredExercises.map(ex => (
                                     <button
@@ -145,7 +152,7 @@ function NewRoutinePage() {
                                         className="w-full text-left px-3 py-2 hover:bg-blue-50 text-sm"
                                     >
                                         <span className="font-medium">{ex.name}</span>
-                                        <span className="text-gray-400 ml-2 text-xs">{ex.category}</span>
+                                        <span className="text-gray-600 ml-2 text-xs">{ex.category}</span>
                                     </button>
                                 ))
                             )}
@@ -155,15 +162,16 @@ function NewRoutinePage() {
 
                 {/* Selected exercises — sets only */}
                 {selectedExercises.length === 0 ? (
-                    <p className="text-gray-500 mb-6">No exercises added yet.</p>
+                    <p className="text-gray-600 mb-6">No exercises added yet.</p>
                 ) : (
                     selectedExercises.map(ex => (
                         <div key={ex.exerciseID} className="bg-white p-4 rounded shadow mb-4 flex justify-between items-center">
                             <p className="font-semibold">{ex.name}</p>
                             <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-2">
-                                    <label className="text-sm text-gray-500">Sets</label>
+                                    <label htmlFor={`sets-${ex.exerciseID}`} className="text-sm text-gray-700">Sets</label>
                                     <input
+                                        id={`sets-${ex.exerciseID}`}
                                         type="number"
                                         value={ex.sets}
                                         onChange={(e) => updateSets(ex.exerciseID, e.target.value)}
@@ -172,7 +180,8 @@ function NewRoutinePage() {
                                 </div>
                                 <button
                                     onClick={() => removeExercise(ex.exerciseID)}
-                                    className="text-red-500 text-sm"
+                                    className="text-red-700 text-sm"
+                                    aria-label={`Remove ${ex.name}`}
                                 >
                                     Remove
                                 </button>

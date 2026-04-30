@@ -17,9 +17,34 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 
-// data classes to finitely store inputs (and potentially outputs) to database
-
+/**
+ * Provides all database operations for the application.
+ *
+ * This class acts as the main service layer between the backend logic
+ * and the SQL database, handling CRUD operations, authentication,
+ * and relational queries.
+ * 
+ * It is responsible for maintaining data integrity, managing transactions,
+ * and ensuring consistent communication between the application and database.
+ */
 class DatabaseService {
+
+// Data classes to finitely store inputs (and potentially outputs) to database
+
+    /**
+     * Represents a registered user stored in the database.
+     *
+     * @property userID Unique identifier for the user.
+     * @property name User's display name.
+     * @property email User's login email address.
+     * @property passwordHash Secure SHA-256 hash of the password.
+     * @property passwordKey Random salt used during hashing.
+     * @property gender Optional gender value.
+     * @property age Optional age value.
+     * @property height Optional height in cm.
+     * @property weight Optional weight in kg.
+     * @property accountType True if personal trainer, false if standard user.
+     */
     @Serializable
     data class User(
         val userID: Int,
@@ -34,14 +59,35 @@ class DatabaseService {
         val accountType: Boolean,
     )
 
+    /**
+     * Represents an exercise stored in the database.
+     *
+     * @property exerciseID Unique identifier for the exercise.
+     * @property name Exercise's display name.
+     * @property category The category of exercise (e.g. weights, running, etc).
+     * @property description A description of the exercise.
+     */
     @Serializable
     data class Exercise(
-        val exerciseID: Int? = 0,
+        val exerciseID: Int = 0,
         val name: String,
         val category: String,
         val description: String?,
     )
 
+    /**
+     * Represents a workout stored in the database.
+     *
+     * @property workoutID Unique identifier for the workout.
+     * @property createdBy The userID of the user who created the workout.
+     * @property assignedTo The userID of the user who will be attempting the workout.
+     * @property date The date the workout is scheduled for.
+     * @property duration Optional duration of the workout.
+     * @property workoutType Optional type of the workout such as weights or swimming.
+     * @property notes Optional notes added to the workout.
+     * @property routeID Optional routeID to link cardio workouts to a route on a map.
+     * @property isRoutine True if the workout is aa regular routine, false if not.
+     */
     @Serializable
     data class Workout(
         val workoutID: Int = 0,
@@ -52,8 +98,19 @@ class DatabaseService {
         val workoutType: String? = null,
         val notes: String? = null,
         val routeID: Int? = null,
+        val isRoutine: Boolean = false,
     )
 
+    /**
+     * Represents a many-to-many relationship between workouts and exercises.
+     *
+     * @property workoutExercisesID Unique identifier for the exercise in the workout.
+     * @property workoutID The workoutID of the workout the exercise belongs to.
+     * @property exerciseID The exerciseID of the exercise in the workout.
+     * @property sets Optional number of sets for the exercise.
+     * @property reps Optional number of reps for the exercise.
+     * @property weight Optional weight of the exercise.
+     */
     @Serializable
     data class WorkoutExercise(
         val workoutExercisesID: Int = 0,
@@ -101,17 +158,6 @@ class DatabaseService {
         val date: String,
         val isPublic: Boolean,
         val routeData: String,
-    )
-
-    @Serializable
-    data class CalendarEvent(
-        val calendarID: Int? = 0,
-        val userID: Int,
-        val eventType: String,
-        val eventID: Int,
-        val status: String,
-        val scheduledDate: String,
-        val name: String,
     )
 
     @Serializable
@@ -643,8 +689,8 @@ class DatabaseService {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
                 """
-                INSERT INTO workouts(createdBy, assignedTo, date, duration, workoutType, notes, routeID)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO workouts(createdBy, assignedTo, date, duration, workoutType, notes, routeID, isRoutine)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """.trimIndent(),
                 Statement.RETURN_GENERATED_KEYS,
             )
@@ -656,6 +702,7 @@ class DatabaseService {
         stmt.setObject(5, workout.workoutType)
         stmt.setObject(6, workout.notes)
         stmt.setObject(7, workout.routeID)
+        stmt.setBoolean(8, workout.isRoutine)
 
         val rowsInserted = stmt.executeUpdate()
 
@@ -695,6 +742,7 @@ class DatabaseService {
                     workoutType = rs.getObject("workoutType") as String?,
                     notes = rs.getObject("notes") as String?,
                     routeID = rs.getObject("routeID") as Int?,
+                    isRoutine = rs.getBoolean("isRoutine"),
                 )
             workouts.add(workout)
         }
@@ -711,6 +759,7 @@ class DatabaseService {
         workoutType: String?,
         notes: String?,
         routeID: Int?,
+        isRoutine: Boolean,
     ): Boolean {
         // Validation Checks
         if (workoutID <= 0) return false
@@ -721,7 +770,7 @@ class DatabaseService {
             db.connection.prepareStatement(
                 """
                 UPDATE workouts
-                SET date = ?, duration = ?, workoutType = ?, notes = ?, routeID = ?
+                SET date = ?, duration = ?, workoutType = ?, notes = ?, routeID = ?, isRoutine = ?
                 WHERE workoutID = ?
                 """.trimIndent(),
             )
@@ -731,7 +780,8 @@ class DatabaseService {
         stmt.setObject(3, workoutType)
         stmt.setObject(4, notes)
         stmt.setObject(5, routeID)
-        stmt.setInt(6, workoutID)
+        stmt.setBoolean(6, isRoutine)
+        stmt.setInt(7, workoutID)
 
         val rowsUpdated = stmt.executeUpdate()
         stmt.close()
@@ -868,7 +918,7 @@ class DatabaseService {
     }
 
     // Statistics DB
-    fun addStatistic(stat: Statistic): Int {
+    fun createStatistic(stat: Statistic): Int {
         // Validation Checks
         if (stat.userID <= 0 || stat.exerciseID <= 0) return -1
         if (stat.scoreValue <= 0.0) return -1
@@ -1016,7 +1066,7 @@ class DatabaseService {
     }
 
     // Competitions DB
-    fun addComp(comp: Competition): Int {
+    fun createCompetition(comp: Competition): Int {
         // Validation Checks
         if (comp.name.isBlank()) return -1
         if (comp.date.isBlank() || !comp.date.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) return -1
@@ -1131,7 +1181,7 @@ class DatabaseService {
     }
 
     // CompetitionsAndExercise DB
-    fun addCompExercise(compEx: CompetitionExercise): Int {
+    fun addExercisetoCompetition(compEx: CompetitionExercise): Int {
         val stmt =
             db.connection.prepareStatement(
                 """
@@ -1225,7 +1275,7 @@ class DatabaseService {
 
     // Routes DB
 
-    fun addRoute(route: Route): Int {
+    fun createRoute(route: Route): Int {
         // Validation Checks
         if (route.name.isBlank()) return -1
         if (route.distance <= 0.0) return -1
@@ -1348,114 +1398,6 @@ class DatabaseService {
         return rowsDeleted > 0
     }
 
-    // Calendar DB
-
-    fun addCalendarEvent(event: CalendarEvent): Int {
-        val stmt =
-            db.connection.prepareStatement(
-                """
-                INSERT INTO calendar_events(userID,eventType,eventID,status,scheduledDate,name)
-                VALUES (?, ?, ?, ?, ?, ?)
-                """.trimIndent(),
-                Statement.RETURN_GENERATED_KEYS,
-            )
-
-        stmt.setInt(1, event.userID)
-        stmt.setString(2, event.eventType)
-        stmt.setInt(3, event.eventID)
-        stmt.setString(4, event.status)
-        stmt.setString(5, event.scheduledDate)
-        stmt.setString(6, event.name)
-
-        val rowsInserted = stmt.executeUpdate()
-
-        if (rowsInserted == 0) {
-            stmt.close()
-            return -1
-        }
-
-        val rs = stmt.generatedKeys
-        val id = if (rs.next()) rs.getInt(1) else -1
-
-        rs.close()
-        stmt.close()
-
-        return id
-    }
-
-    fun findAllCalendarEvents(
-        userID: Int,
-        scheduledDate: String,
-    ): List<CalendarEvent> {
-        val stmt: PreparedStatement =
-            db.connection.prepareStatement(
-                "SELECT * FROM calendar_events WHERE userID = ? AND scheduledDate = ?",
-            )
-
-        stmt.setInt(1, userID)
-        stmt.setString(2, scheduledDate)
-
-        val rs: ResultSet = stmt.executeQuery()
-        val events = mutableListOf<CalendarEvent>()
-        while (rs.next()) {
-            val event =
-                CalendarEvent(
-                    calendarID = rs.getInt("calendarID"),
-                    userID = rs.getInt("userID"),
-                    eventType = rs.getString("eventType"),
-                    eventID = rs.getInt("eventID"),
-                    status = rs.getString("status"),
-                    scheduledDate = rs.getString("scheduledDate"),
-                    name = rs.getString("name"),
-                )
-            events.add(event)
-        }
-
-        rs.close()
-        stmt.close()
-        return events
-    }
-
-    fun updateCalendarEvent(
-        calendarID: Int,
-        status: String,
-        scheduledDate: String,
-        name: String,
-    ): Boolean {
-        val stmt: PreparedStatement =
-            db.connection.prepareStatement(
-                """
-                UPDATE calendar_events
-                SET status = ?, scheduledDate = ?, name = ?
-                WHERE calendarID = ?
-                """.trimIndent(),
-            )
-
-        stmt.setString(1, status)
-        stmt.setString(2, scheduledDate)
-        stmt.setString(3, name)
-        stmt.setInt(4, calendarID)
-
-        val rowsUpdated = stmt.executeUpdate()
-        stmt.close()
-
-        return rowsUpdated > 0
-    }
-
-    fun deleteCalendarEvent(calendarID: Int): Boolean {
-        val stmt: PreparedStatement =
-            db.connection.prepareStatement(
-                "DELETE FROM calendar_events WHERE calendarID = ?",
-            )
-
-        stmt.setInt(1, calendarID)
-
-        val rowsDeleted = stmt.executeUpdate()
-        stmt.close()
-
-        return rowsDeleted > 0
-    }
-
     // Individual find functions
 
     fun findRoute(routeID: Int): Route? {
@@ -1490,36 +1432,6 @@ class DatabaseService {
         return route
     }
 
-    fun findCalendarEvent(calendarID: Int): CalendarEvent? {
-        val stmt: PreparedStatement =
-            db.connection.prepareStatement(
-                "SELECT * FROM calendar_events WHERE calendarID = ?",
-            )
-
-        stmt.setInt(1, calendarID)
-
-        val rs: ResultSet = stmt.executeQuery()
-        if (rs.next()) {
-            val event =
-                CalendarEvent(
-                    calendarID = rs.getInt("calendarID"),
-                    userID = rs.getInt("userID"),
-                    eventType = rs.getString("eventType"),
-                    eventID = rs.getInt("eventID"),
-                    status = rs.getString("status"),
-                    scheduledDate = rs.getString("scheduledDate"),
-                    name = rs.getString("name"),
-                )
-            rs.close()
-            stmt.close()
-            return event
-        }
-
-        rs.close()
-        stmt.close()
-        return null
-    }
-
     fun findWorkout(workoutID: Int): Workout? {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -1541,6 +1453,7 @@ class DatabaseService {
                     workoutType = rs.getObject("workoutType") as String?,
                     notes = rs.getObject("notes") as String?,
                     routeID = rs.getObject("routeID") as Int?,
+                    isRoutine = rs.getBoolean("isRoutine"),
                 )
             rs.close()
             stmt.close()
@@ -1838,7 +1751,7 @@ class DatabaseService {
     ): Boolean {
         // Validation Checks
         if (groupID <= 0 || userID <= 0) return false
-        val members = getGroupMembers(groupID)
+        val members = findGroupMembers(groupID)
         if (members.any { it.userID == userID }) return false
 
         val stmt =
@@ -1872,7 +1785,7 @@ class DatabaseService {
         return rows > 0
     }
 
-    fun getGroupMembers(groupID: Int): List<User> {
+    fun findGroupMembers(groupID: Int): List<User> {
         val stmt =
             db.connection.prepareStatement(
                 """
@@ -2056,6 +1969,7 @@ class DatabaseService {
                     workoutType = rs.getObject("workoutType") as String?,
                     notes = rs.getObject("notes") as String?,
                     routeID = rs.getObject("routeID") as Int?,
+                    isRoutine = rs.getBoolean("isRoutine"),
                 ),
             )
         }
@@ -2104,6 +2018,7 @@ class DatabaseService {
                     workoutType = rs.getObject("workoutType") as String?,
                     notes = rs.getObject("notes") as String?,
                     routeID = rs.getObject("routeID") as Int?,
+                    isRoutine = rs.getBoolean("isRoutine")
                 ),
             )
         }
@@ -2325,7 +2240,7 @@ class DatabaseService {
 
     // For personal bests
     fun getPersonalBests(userID: Int): List<Statistic> {
-        return findAllExercises().mapNotNull { exercise -> getBestStat(userID, exercise.exerciseID!!) }
+        return findAllExercises().mapNotNull { exercise -> getBestStat(userID, exercise.exerciseID) }
     }
 
     // Log workout for workout logs page
@@ -2391,7 +2306,7 @@ class DatabaseService {
         db.connection.autoCommit = false
         try {
             val updated =
-                updateWorkout(workout.workoutID, workout.date, workout.duration, workout.workoutType, workout.notes, workout.routeID)
+                updateWorkout(workout.workoutID, workout.date, workout.duration, workout.workoutType, workout.notes, workout.routeID, workout.isRoutine)
             // Update workout failed so undo everything
             if (!updated) {
                 db.connection.rollback()

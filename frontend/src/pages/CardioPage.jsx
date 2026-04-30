@@ -1,3 +1,5 @@
+// page structure and layout generated with chatgpt chat.openai.com
+// frontend-backend connection logic and accessibility improvements done with Claude Sonnet (claude.ai)
 import { useState, useEffect } from "react"
 import RouteMap from "../components/RouteMap"
 import Sidebar from "../components/Sidebar"
@@ -13,13 +15,12 @@ function CardioPage() {
     const [distance, setDistance] = useState("")
     const [drawnRouteData, setDrawnRouteData] = useState(null)
     const [publicRoutes, setPublicRoutes] = useState([])
+    const [selectedRoute, setSelectedRoute] = useState(null)
     const [error, setError] = useState("")
     const [success, setSuccess] = useState("")
 
-    // Map exercise type to valid backend workoutType
     const getWorkoutType = (type) => {
         const map = {
-            "Walking": "cardio",
             "Running": "running",
             "Swimming": "swimming",
             "Cycling": "cycling"
@@ -27,7 +28,6 @@ function CardioPage() {
         return map[type] || "cardio"
     }
 
-    // Fetch public and own routes when page loads
     useEffect(() => {
         const userID = localStorage.getItem("userID")
         if (!userID) return
@@ -63,7 +63,6 @@ function CardioPage() {
         setError("")
         let savedRouteID = null
 
-        // Step 1 — if a route was drawn AND has a name and distance, save it first
         if (drawnRouteData && routeName && distance) {
             try {
                 const routeBody = {
@@ -98,7 +97,6 @@ function CardioPage() {
             }
         }
 
-        // Step 2 — save the cardio workout
         try {
             const workoutBody = {
                 workout: {
@@ -109,9 +107,9 @@ function CardioPage() {
                     duration: parseInt(duration),
                     workoutType: getWorkoutType(exerciseType),
                     notes: notes || null,
-                    routeID: savedRouteID  // links to the route if one was saved
+                    routeID: savedRouteID
                 },
-                exercises: []  // no exercises for cardio
+                exercises: []
             }
 
             const workoutRes = await fetch("http://localhost:3000/api/log/workout", {
@@ -125,7 +123,6 @@ function CardioPage() {
             if (workoutRes.ok) {
                 setSuccess("Session saved!")
                 setError("")
-                // Reset form
                 setDate("")
                 setDuration("")
                 setNotes("")
@@ -149,18 +146,20 @@ function CardioPage() {
 
                 <h2 className="text-3xl font-bold mb-8">Cardio</h2>
 
-                {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
-                {success && <p className="text-green-600 text-sm mb-4">{success}</p>}
+                {error && <p className="text-red-700 text-sm mb-4" role="alert">{error}</p>}
+                {success && <p className="text-green-700 text-sm mb-4" role="status">{success}</p>}
 
                 {/* Exercise Type */}
                 <div className="mb-6">
-                    <label className="block font-semibold mb-2">Exercise Type</label>
+                    <label htmlFor="exercise-type" className="block font-semibold mb-2">
+                        Exercise Type
+                    </label>
                     <select
+                        id="exercise-type"
                         value={exerciseType}
                         onChange={(e) => setExerciseType(e.target.value)}
                         className="border rounded p-2 w-full"
                     >
-                        <option>Walking</option>
                         <option>Running</option>
                         <option>Swimming</option>
                         <option>Cycling</option>
@@ -169,8 +168,9 @@ function CardioPage() {
 
                 {/* Date */}
                 <div className="mb-6">
-                    <label className="block font-semibold mb-2">Date</label>
+                    <label htmlFor="cardio-date" className="block font-semibold mb-2">Date</label>
                     <input
+                        id="cardio-date"
                         type="date"
                         value={date}
                         onChange={(e) => setDate(e.target.value)}
@@ -180,8 +180,11 @@ function CardioPage() {
 
                 {/* Duration */}
                 <div className="mb-6">
-                    <label className="block font-semibold mb-2">Duration (minutes)</label>
+                    <label htmlFor="cardio-duration" className="block font-semibold mb-2">
+                        Duration (minutes)
+                    </label>
                     <input
+                        id="cardio-duration"
                         type="number"
                         value={duration}
                         onChange={(e) => setDuration(e.target.value)}
@@ -191,8 +194,9 @@ function CardioPage() {
 
                 {/* Notes */}
                 <div className="mb-6">
-                    <label className="block font-semibold mb-2">Notes</label>
+                    <label htmlFor="cardio-notes" className="block font-semibold mb-2">Notes</label>
                     <textarea
+                        id="cardio-notes"
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                         className="border rounded p-2 w-full h-24"
@@ -204,8 +208,11 @@ function CardioPage() {
                     <h3 className="font-semibold text-lg mb-4">Route (optional)</h3>
 
                     <div className="mb-4">
-                        <label className="block font-semibold mb-2">Route Name</label>
+                        <label htmlFor="route-name" className="block font-semibold mb-2">
+                            Route Name
+                        </label>
                         <input
+                            id="route-name"
                             placeholder="e.g. Morning run around the park"
                             value={routeName}
                             onChange={(e) => setRouteName(e.target.value)}
@@ -214,8 +221,11 @@ function CardioPage() {
                     </div>
 
                     <div className="mb-4">
-                        <label className="block font-semibold mb-2">Distance (km)</label>
+                        <label htmlFor="route-distance" className="block font-semibold mb-2">
+                            Distance (km)
+                        </label>
                         <input
+                            id="route-distance"
                             type="number"
                             placeholder="e.g. 5.2"
                             value={distance}
@@ -230,17 +240,18 @@ function CardioPage() {
                         </label>
                         <RouteMap onRouteDrawn={setDrawnRouteData} />
                         {drawnRouteData && (
-                            <p className="text-green-600 text-sm mt-2">Route drawn ✓</p>
+                            <p className="text-green-700 text-sm mt-2">Route drawn ✓</p>
                         )}
                     </div>
 
                     {/* Make public */}
-                    <div>
-                        <label className="block font-semibold mb-2">Make Route Public</label>
+                    <fieldset>
+                        <legend className="block font-semibold mb-2">Make Route Public</legend>
                         <div className="flex gap-6">
                             <label className="flex items-center gap-2">
                                 <input
                                     type="radio"
+                                    name="isPublic"
                                     checked={isPublic === true}
                                     onChange={() => setIsPublic(true)}
                                 />
@@ -249,13 +260,14 @@ function CardioPage() {
                             <label className="flex items-center gap-2">
                                 <input
                                     type="radio"
+                                    name="isPublic"
                                     checked={isPublic === false}
                                     onChange={() => setIsPublic(false)}
                                 />
                                 No
                             </label>
                         </div>
-                    </div>
+                    </fieldset>
                 </div>
 
                 {/* Save button */}
@@ -266,29 +278,45 @@ function CardioPage() {
                     Save Session
                 </button>
 
-                {/* Public and own routes */}
+                {/* Available routes */}
                 <div>
                     <h3 className="text-xl font-semibold mb-4">Available Routes</h3>
-                    <p className="text-sm text-gray-500 mb-4">
+                    <p className="text-sm text-gray-600 mb-4">
                         Your routes and public routes from other users
                     </p>
 
                     {publicRoutes.length === 0 ? (
-                        <p className="text-gray-500">No routes available yet.</p>
+                        <p className="text-gray-600">No routes available yet.</p>
                     ) : (
                         publicRoutes.map((route) => (
                             <div key={route.routeID} className="bg-white p-4 rounded shadow mb-4">
                                 <div className="flex justify-between items-center">
                                     <div>
                                         <p className="font-semibold">{route.name}</p>
-                                        <p className="text-sm text-gray-500">
+                                        <p className="text-sm text-gray-600">
                                             {route.distance} km · {route.date}
                                         </p>
                                         {route.isPublic && (
-                                            <span className="text-xs text-blue-500">Public</span>
+                                            <span className="text-xs text-blue-600">Public</span>
                                         )}
                                     </div>
+                                    {route.routeData && (
+                                        <button
+                                            onClick={() => setSelectedRoute(
+                                                selectedRoute?.routeID === route.routeID ? null : route
+                                            )}
+                                            className="text-blue-600 text-sm border border-blue-600 px-3 py-1 rounded hover:bg-blue-50"
+                                            aria-label={`${selectedRoute?.routeID === route.routeID ? "Hide" : "View"} route for ${route.name}`}
+                                        >
+                                            {selectedRoute?.routeID === route.routeID ? "Hide Route" : "View Route"}
+                                        </button>
+                                    )}
                                 </div>
+                                {selectedRoute?.routeID === route.routeID && (
+                                    <div className="mt-4">
+                                        <RouteMap viewRouteData={route.routeData} />
+                                    </div>
+                                )}
                             </div>
                         ))
                     )}

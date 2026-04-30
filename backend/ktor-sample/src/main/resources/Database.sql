@@ -83,6 +83,7 @@ CREATE TABLE IF NOT EXISTS workouts (
     workoutType TEXT,
     notes TEXT,
     routeID INTEGER,
+    isRoutine BOOLEAN NOT NULL DEFAULT 0,
     FOREIGN KEY (routeID) REFERENCES routes(routeID) ON DELETE CASCADE,
     FOREIGN KEY (createdBy) REFERENCES users(userID) ON DELETE CASCADE,
     FOREIGN KEY (assignedTo) REFERENCES users(userID) ON DELETE CASCADE
@@ -109,7 +110,7 @@ CREATE TABLE IF NOT EXISTS users (
     age INTEGER,
     height REAL,
     weight REAL,
-    accountType BOOLEAN
+    accountType BOOLEAN NOT NULL DEFAULT 0
     );
 
 CREATE TABLE IF NOT EXISTS exercises (

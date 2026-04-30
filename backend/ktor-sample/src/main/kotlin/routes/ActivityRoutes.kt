@@ -20,6 +20,7 @@ import services.DatabaseService.Competition as Competition
 import services.DatabaseService.Workout as Workout
 import services.DatabaseService.Route as RunningRoute
 import services.DatabaseService.WorkoutExercise as WorkoutExercise
+import services.DatabaseService.Exercise as Exercise
 
 import services.DatabaseService
 
@@ -389,6 +390,22 @@ fun Route.activityRoutes(){
             }
         }
 
+        // Get all exercises
+        get("/exercises") {
+            try {
+                val exercises: List<Exercise> = db.findAllExercises()
+                
+                if (!exercises.isNullOrEmpty()) {
+                    call.respond(HttpStatusCode.OK, mapOf("Exercises" to exercises))
+                } else if (exercises.isNullOrEmpty()) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("message" to "Could not find exercises"))
+                }
+
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
+            }
+        }
+
         // =====================
         // COMPETITIONS
         // =====================
@@ -451,7 +468,7 @@ fun Route.activityRoutes(){
         post("/competition"){
             try {
                 val comp = call.receive<Competition>()
-                val id = db.addComp(comp)
+                val id = db.createCompetition(comp)
 
                 if (id > 0) {
                     call.respond(HttpStatusCode.OK, mapOf("ID" to id))
@@ -567,7 +584,7 @@ fun Route.activityRoutes(){
         post("/route"){
             try {
                 val route = call.receive<RunningRoute>()
-                val id = db.addRoute(route)
+                val id = db.createRoute(route)
 
                 if (id > 0) {
                     call.respond(HttpStatusCode.OK, mapOf("ID" to id))
