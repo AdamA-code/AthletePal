@@ -21,7 +21,7 @@ fun Route.statisticsRoutes() {
         post("/statistics") {
             try {
                 val stat = call.receive<Statistic>()
-                val id = db.addStatistic(stat)
+                val id = db.createStatistic(stat)
 
                 if (id != -1) {
                     call.respond(HttpStatusCode.OK, mapOf("ID" to id))
