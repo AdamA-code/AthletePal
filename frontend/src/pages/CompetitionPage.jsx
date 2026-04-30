@@ -2,6 +2,7 @@
 // frontend-backend connection logic and accessibility improvements done with Claude Sonnet (claude.ai)
 import { useEffect, useState } from "react"
 import Sidebar from "../components/Sidebar"
+import API_BASE_URL from "../config"
 
 function CompetitionPage() {
     const [competitions, setCompetitions] = useState([])
@@ -60,7 +61,7 @@ function CompetitionPage() {
         setSuccess("")
 
         try {
-            const res = await fetch("http://localhost:3000/api/competition", {
+            const res = await fetch(`http://localhost:3000/api/competition`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

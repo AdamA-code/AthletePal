@@ -1,31 +1,38 @@
 // page structure and layout generated with chatgpt chat.openai.com
-// Used Claude to help implement feature and pass route data
-import { MapContainer, TileLayer, FeatureGroup } from "react-leaflet"
+// Used Claude to help implement feature, pass route data and display saved routes
+import { MapContainer, TileLayer, FeatureGroup, GeoJSON } from "react-leaflet"
 import { EditControl } from "react-leaflet-draw"
 import "leaflet/dist/leaflet.css"
 import "leaflet-draw/dist/leaflet.draw.css"
 
-// onRouteDrawn is a callback so CardioPage can receive the drawn route data
-function RouteMap({ onRouteDrawn }) {
+function RouteMap({ onRouteDrawn, viewRouteData }) {
 
     const onCreated = (e) => {
         const layer = e.layer
         const geoJSON = layer.toGeoJSON()
-        // Pass the route data up to CardioPage as a JSON string
         if (onRouteDrawn) {
             onRouteDrawn(JSON.stringify(geoJSON))
         }
     }
 
     const onDeleted = () => {
-        // If user deletes the drawn route, clear it
         if (onRouteDrawn) {
             onRouteDrawn(null)
         }
     }
 
+    let parsedRoute = null
+    if (viewRouteData) {
+        try {
+            parsedRoute = JSON.parse(viewRouteData)
+        } catch (e) {
+            console.error("Could not parse route data:", e)
+        }
+    }
+
     return (
         <MapContainer
+            key={viewRouteData || "default"}
             center={[53.8008, -1.5491]}
             zoom={13}
             style={{ height: "300px", width: "100%" }}
@@ -34,20 +41,30 @@ function RouteMap({ onRouteDrawn }) {
                 attribution="&copy; OpenStreetMap contributors"
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            <FeatureGroup>
-                <EditControl
-                    position="topright"
-                    onCreated={onCreated}
-                    onDeleted={onDeleted}
-                    draw={{
-                        rectangle: false,
-                        circle: false,
-                        marker: false,
-                        circlemarker: false,
-                        polygon: false
-                    }}
+
+            {parsedRoute && (
+                <GeoJSON
+                    data={parsedRoute}
+                    style={{ color: "#3B82F6", weight: 4, opacity: 0.8 }}
                 />
-            </FeatureGroup>
+            )}
+
+            {onRouteDrawn && (
+                <FeatureGroup>
+                    <EditControl
+                        position="topright"
+                        onCreated={onCreated}
+                        onDeleted={onDeleted}
+                        draw={{
+                            rectangle: false,
+                            circle: false,
+                            marker: false,
+                            circlemarker: false,
+                            polygon: false
+                        }}
+                    />
+                </FeatureGroup>
+            )}
         </MapContainer>
     )
 }

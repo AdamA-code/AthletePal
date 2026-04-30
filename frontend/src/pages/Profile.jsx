@@ -2,6 +2,7 @@
 // frontend-backend connection logic and accessibility improvements done with Claude Sonnet (claude.ai)
 import { useState, useEffect } from "react"
 import Sidebar from "../components/Sidebar"
+import API_BASE_URL from "../config"
 
 function ProfilePage() {
     const [user, setUser] = useState(null)
@@ -54,7 +55,7 @@ function ProfilePage() {
         setSuccess("")
 
         try {
-            const res = await fetch("http://localhost:3000/update/account", {
+            const res = await fetch(`http://localhost:3000/update/account`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
