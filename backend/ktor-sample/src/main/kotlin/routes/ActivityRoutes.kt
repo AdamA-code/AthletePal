@@ -226,7 +226,7 @@ fun Route.activityRoutes(){
                 val id = call.parameters["workoutID"]!!.toInt()
                 val body = call.receive<UpdateWorkoutRequest>()
 
-                val updated = db.updateWorkout(id, body.date ?: "", body.duration, body.workoutType, body.notes, body.routeID)
+                val updated = db.updateWorkout(id, body.date ?: "", body.duration, body.workoutType, body.notes, body.routeID, body.isRoutine)
 
                 if (updated) {
                     call.respond(HttpStatusCode.OK, mapOf("message" to "Workout updated"))
