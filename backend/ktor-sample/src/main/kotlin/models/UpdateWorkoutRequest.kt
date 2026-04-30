@@ -9,4 +9,5 @@ data class UpdateWorkoutRequest(
     val workoutType: String,
     val notes: String?,
     val routeID: Int?,
+    val isRoutine: Boolean = false,
 )

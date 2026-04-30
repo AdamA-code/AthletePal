@@ -9,4 +9,5 @@ data class Workout(
     val assignedTo: Int,
     val date: String,
     val duration: Int?,
+    val isRoutine: Boolean? = false,
 )
