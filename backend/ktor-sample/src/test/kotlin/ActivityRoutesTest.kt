@@ -696,6 +696,15 @@ class ActivityRoutesTest {
         assertEquals(HttpStatusCode.BadRequest, response.status)
     }
 
+    @Test
+    fun getAllExercises_valid() = testApplication {
+        application { module() }
+
+        val response = client.get("/api/exercises")
+
+        assertEquals(HttpStatusCode.OK, response.status)
+    }
+
     // ===========================
     // COMPETITION ROUTES TESTING
     // ===========================

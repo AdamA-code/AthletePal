@@ -12,6 +12,8 @@ import services.DatabaseService // Import service for storing to database
 import models.CreateAccountRequest as CreateAccountRequest
 import models.PasswordUpdateRequest as PasswordUpdateRequest
 import models.ForgotPasswordRequest as ForgotPasswordRequest
+import models.LoginResponse as LoginResponse
+import services.DatabaseService.User as User
 
 fun Route.authRoutes() {
     val authService = AuthService() // Initialise AuthService in routes
@@ -29,11 +31,20 @@ fun Route.authRoutes() {
                     ) // If authService deems the password acceptable
 
                 if (isValid) {
-                    call.respond(HttpStatusCode.OK, mapOf("message" to "Login Successful")) // Response for valid login
+                    // Get user which has been successfully logged into
+                    val userDetails: User? = db.findUser(loginRequest.email)
+
+                    call.respond(HttpStatusCode.OK, LoginResponse(
+                        message = "Login Successful",
+                        userID = userDetails!!.userID!!,
+                        name = userDetails!!.name!!,
+                    )) // Response for valid login
+                    
                 } else {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "Invalid Credentials")) // Response for invalid login
                 }
             } catch (e: Exception) {
+                e.printStackTrace()
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
         }
@@ -61,6 +72,21 @@ fun Route.authRoutes() {
                 }
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
+            }
+        }
+
+        get("/user/{email}") {
+            try {
+                val email = call.parameters["email"]!!
+                val user: User? = db.findUser(email)
+
+                if (user != null) {
+                    call.respond(HttpStatusCode.OK, mapOf("User" to user))
+                } else if (user == null) {
+                    call.respond(HttpStatusCode.NotFound, mapOf("message" to "User not found"))
+                }
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid request"))
             }
         }
     }
