@@ -86,6 +86,7 @@ class DatabaseService {
      * @property workoutType Optional type of the workout such as weights or swimming.
      * @property notes Optional notes added to the workout.
      * @property routeID Optional routeID to link cardio workouts to a route on a map.
+     * @property isRoutine True if the workout is aa regular routine, false if not.
      */
     @Serializable
     data class Workout(
@@ -97,6 +98,7 @@ class DatabaseService {
         val workoutType: String? = null,
         val notes: String? = null,
         val routeID: Int? = null,
+        val isRoutine: Boolean = false,
     )
 
     /**
@@ -687,8 +689,8 @@ class DatabaseService {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
                 """
-                INSERT INTO workouts(createdBy, assignedTo, date, duration, workoutType, notes, routeID)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO workouts(createdBy, assignedTo, date, duration, workoutType, notes, routeID, isRoutine)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """.trimIndent(),
                 Statement.RETURN_GENERATED_KEYS,
             )
@@ -700,6 +702,7 @@ class DatabaseService {
         stmt.setObject(5, workout.workoutType)
         stmt.setObject(6, workout.notes)
         stmt.setObject(7, workout.routeID)
+        stmt.setBoolean(8, workout.isRoutine)
 
         val rowsInserted = stmt.executeUpdate()
 
@@ -739,6 +742,7 @@ class DatabaseService {
                     workoutType = rs.getObject("workoutType") as String?,
                     notes = rs.getObject("notes") as String?,
                     routeID = rs.getObject("routeID") as Int?,
+                    isRoutine = rs.getBoolean("isRoutine"),
                 )
             workouts.add(workout)
         }
@@ -755,6 +759,7 @@ class DatabaseService {
         workoutType: String?,
         notes: String?,
         routeID: Int?,
+        isRoutine: Boolean,
     ): Boolean {
         // Validation Checks
         if (workoutID <= 0) return false
@@ -765,7 +770,7 @@ class DatabaseService {
             db.connection.prepareStatement(
                 """
                 UPDATE workouts
-                SET date = ?, duration = ?, workoutType = ?, notes = ?, routeID = ?
+                SET date = ?, duration = ?, workoutType = ?, notes = ?, routeID = ?, isRoutine = ?
                 WHERE workoutID = ?
                 """.trimIndent(),
             )
@@ -775,7 +780,8 @@ class DatabaseService {
         stmt.setObject(3, workoutType)
         stmt.setObject(4, notes)
         stmt.setObject(5, routeID)
-        stmt.setInt(6, workoutID)
+        stmt.setBoolean(6, isRoutine)
+        stmt.setInt(7, workoutID)
 
         val rowsUpdated = stmt.executeUpdate()
         stmt.close()
@@ -1426,36 +1432,6 @@ class DatabaseService {
         return route
     }
 
-    fun findCalendarEvent(calendarID: Int): CalendarEvent? {
-        val stmt: PreparedStatement =
-            db.connection.prepareStatement(
-                "SELECT * FROM calendar_events WHERE calendarID = ?",
-            )
-
-        stmt.setInt(1, calendarID)
-
-        val rs: ResultSet = stmt.executeQuery()
-        if (rs.next()) {
-            val event =
-                CalendarEvent(
-                    calendarID = rs.getInt("calendarID"),
-                    userID = rs.getInt("userID"),
-                    eventType = rs.getString("eventType"),
-                    eventID = rs.getInt("eventID"),
-                    status = rs.getString("status"),
-                    scheduledDate = rs.getString("scheduledDate"),
-                    name = rs.getString("name"),
-                )
-            rs.close()
-            stmt.close()
-            return event
-        }
-
-        rs.close()
-        stmt.close()
-        return null
-    }
-
     fun findWorkout(workoutID: Int): Workout? {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -1477,6 +1453,7 @@ class DatabaseService {
                     workoutType = rs.getObject("workoutType") as String?,
                     notes = rs.getObject("notes") as String?,
                     routeID = rs.getObject("routeID") as Int?,
+                    isRoutine = rs.getBoolean("isRoutine"),
                 )
             rs.close()
             stmt.close()
@@ -1992,6 +1969,7 @@ class DatabaseService {
                     workoutType = rs.getObject("workoutType") as String?,
                     notes = rs.getObject("notes") as String?,
                     routeID = rs.getObject("routeID") as Int?,
+                    isRoutine = rs.getBoolean("isRoutine"),
                 ),
             )
         }
@@ -2040,6 +2018,7 @@ class DatabaseService {
                     workoutType = rs.getObject("workoutType") as String?,
                     notes = rs.getObject("notes") as String?,
                     routeID = rs.getObject("routeID") as Int?,
+                    isRoutine = rs.getBoolean("isRoutine")
                 ),
             )
         }
@@ -2261,7 +2240,7 @@ class DatabaseService {
 
     // For personal bests
     fun getPersonalBests(userID: Int): List<Statistic> {
-        return findAllExercises().mapNotNull { exercise -> getBestStat(userID, exercise.exerciseID!!) }
+        return findAllExercises().mapNotNull { exercise -> getBestStat(userID, exercise.exerciseID) }
     }
 
     // Log workout for workout logs page
@@ -2327,7 +2306,7 @@ class DatabaseService {
         db.connection.autoCommit = false
         try {
             val updated =
-                updateWorkout(workout.workoutID, workout.date, workout.duration, workout.workoutType, workout.notes, workout.routeID)
+                updateWorkout(workout.workoutID, workout.date, workout.duration, workout.workoutType, workout.notes, workout.routeID, workout.isRoutine)
             // Update workout failed so undo everything
             if (!updated) {
                 db.connection.rollback()
