@@ -17,6 +17,7 @@ import models.UpdateWorkoutRequest // Import data class for a request to update 
 import models.WorkoutExerciseResponse // Import data class for a HTTP response for a workout exercise operation
 import services.DatabaseService // Import DatabaseService and all functions relatiing to CRUD operations with the database
 import services.DatabaseService.Competition as Competition // Import model for a competition
+import services.DatabaseService.Exercise as Exercise // Import model for an exercise
 import services.DatabaseService.Route as RunningRoute // Import model for a route (named RunningRoute to avoid variable name clashess)
 import services.DatabaseService.Workout as Workout // Import model for a workout
 import services.DatabaseService.WorkoutExercise as WorkoutExercise // Import model for a exercise assoicated with a workout

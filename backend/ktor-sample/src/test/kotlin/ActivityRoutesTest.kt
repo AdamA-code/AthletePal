@@ -69,7 +69,7 @@ class ActivityRoutesTest {
                     rank = 2,
                     result = 1,
                 )
-            competitionID = DatabaseService().addComp(competition)
+            competitionID = DatabaseService().createCompetition(competition)
 
             // Create Test ROUTE
             val runningRoute =
@@ -81,7 +81,7 @@ class ActivityRoutesTest {
                     isPublic = false,
                     routeData = "Test Route Data",
                 )
-            routeID = DatabaseService().addRoute(runningRoute)
+            routeID = DatabaseService().createRoute(runningRoute)
 
             // Create Test WORKOUT EXERCISE
             val workoutExercise =
@@ -826,8 +826,6 @@ class ActivityRoutesTest {
 
         assertEquals(HttpStatusCode.OK, response.status)
     }
-            assertEquals(HttpStatusCode.BadRequest, response.status)
-        }
 
     // ===========================
     // COMPETITION ROUTES TESTING

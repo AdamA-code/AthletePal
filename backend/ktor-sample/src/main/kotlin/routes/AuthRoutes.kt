@@ -12,10 +12,12 @@ import io.ktor.server.routing.route
 import models.CreateAccountRequest // Import model for request to create an account
 import models.ForgotPasswordRequest // Import model for forgotten password requests
 import models.LoginRequest // Import the model for a login request (i.e. formatting of HTTP request)
+import models.LoginResponse // Import the model for a HTTP response to login attempt
 import models.PasswordUpdateRequest // Import model for request to update password
 import models.UpdateAccountRequest // Import the model for a request to update account info
 import services.AuthService // Import service (logic) for validating a login
 import services.DatabaseService // Import service for storing to database
+import services.DatabaseService.User as User // Import model for a user
 
 /*
 Defines endpoints for authentication and account-related HTTP routes for the webapp.
