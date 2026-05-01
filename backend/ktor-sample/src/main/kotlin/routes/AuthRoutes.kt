@@ -112,14 +112,6 @@ fun Route.authRoutes() {
                         HttpStatusCode.NotAcceptable,
                         mapOf("message" to "User already exists!"),
                     ) // Fail message if account not created (as user already exists)
-                    call.respond(
-                        HttpStatusCode.NotAcceptable,
-                        mapOf("message" to "User already exists!"),
-                    ) // Fail message if account not created (as user already exists)
-                    call.respond(
-                        HttpStatusCode.NotAcceptable,
-                        mapOf("message" to "User already exists!"),
-                    ) // Fail message if account not created (as user already exists)
                 }
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request")) // Response if a bad HTTP request is made
