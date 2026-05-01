@@ -1,10 +1,10 @@
 package models
 
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.Serializable // Import kotlinx serialisation
 
-@Serializable
+@Serializable // Declare model to be serialisable
 data class UpdateGroupRequest(
     val name: String,
-    val description: String? = null,
-    val goal: String? = null,
+    val description: String? = null, // Optional Field: Defaults to null
+    val goal: String? = null, // Optional Field: Defaults to null
 )

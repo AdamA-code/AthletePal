@@ -1,7 +1,8 @@
 package models
-import kotlinx.serialization.Serializable
 
-@Serializable
+import kotlinx.serialization.Serializable // Import kotlinx serialisation
+
+@Serializable // Declare model to be serialisable
 data class WorkoutExerciseResponse(
     val exerciseID: Int,
     val sets: Int?,

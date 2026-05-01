@@ -1,8 +1,8 @@
 package models
 
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.Serializable // Import kotlinx serialisation
 
-@Serializable
+@Serializable // Declare model to be serialisable
 data class UpdateWorkoutRequest(
     val date: String,
     val duration: Int,
