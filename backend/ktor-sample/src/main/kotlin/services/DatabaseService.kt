@@ -2198,7 +2198,22 @@ class DatabaseService {
         return results
     }
 
-    // Functions for the stats page
+    /**
+     * Retrieves a user's completed workouts grouped by workout type.
+     *
+     * The function first retrieves all workouts assigned to the supplied userID.
+     * It then excludes workouts with null workoutType and filters out any workouts with a date
+     * scheduled for today or in the future, so only completed typed workouts are included.
+     *
+     * The remaining workouts are sorted in ascending date order and grouped by workout type, such as weights,
+     *  running, swimming, or cycling.
+     *
+     * This is used to display progression statistics over time for different categories of training.
+     *
+     * @param userID The unique identifier of the user.
+     * @return A map where the key is the workout type and the value is a list of completed workouts of that type,
+     * ordered by date from oldest to newest.
+     */
     fun getWorkoutProgression(userID: Int): Map<String, List<Workout>> {
         val today = LocalDate.now().toString()
         return findAllWorkouts(
@@ -2206,19 +2221,69 @@ class DatabaseService {
         ).filter { it.workoutType != null && it.date < today }.sortedBy { it.date }.groupBy { it.workoutType!! }
     }
 
+    /**
+     * Retrieves the total number of workouts completed by the user.
+     *
+     * The function first retrieves all workouts assigned to the supplied userID.
+     * It then counts workouts the number of workouts completed by filtering out any workouts
+     * with a date set today or after.
+     *
+     * This is used to display summary statistics such as the total number of training sessions completed.
+     *
+     * @param userID The unique identifier of the user.
+     * @return The number of completed workouts.
+     */
     fun getTotalWorkoutsCompleted(userID: Int): Int {
         val today = LocalDate.now().toString()
         return findAllWorkouts(userID).count { it.date < today }
     }
 
-    // Hours trained
+    /**
+     * Retrieves the total number of hours the user has trained.
+     *
+     * The function first retrieves all workouts assigned to the supplied userID.
+     * It then filters out any workouts with future dates so only completed training sessions are included.
+     * It also filters out any workouts where no duration has been recorded as these workouts
+     * cannot affect the total hours trained.
+     *
+     * The duration values are summed in minutes and converted into hours.
+     *
+     * This is used to display cumulative training volume statistics such as
+     * total hours exercised over time.
+     *
+     * @param userID The unique identifier of the user.
+     * @return The total completed training time in hours.
+     */
     fun getHoursTrained(userID: Int): Double {
         return findAllWorkouts(
             userID,
         ).filter { it.date < LocalDate.now().toString() && it.duration != null }.sumOf { it.duration ?: 0 }.div(60.0)
     }
 
-    // Workout Streak
+    /**
+     * Retrieves the user's current training streak in days.
+     *
+     * The function first retrieves all workouts assigned to the supplied userID
+     * and filters out any workouts with future dates so only completed workouts
+     * are included.
+     *
+     * The completed workout dates are converted into LocalDate values and sorted with
+     * duplicate values being removed. The list is then ordered from most revent the oldest.
+     *
+     * A streak begins from yesterday, as today's workout may not yet be fully
+     * completed. The function then checks whether the user completed a workout on each
+     * consecutive previous day.
+     *
+     * The streak increases by one for each uninterrupted day with at least one
+     * completed workout. If a day is missed, the streak is set back to 0.
+     *
+     * Multiple workouts completed on the same day only count as one streak day.
+     *
+     * This is used to display consistency statistics and motivate regular training.
+     *
+     * @param userID The unique identifier of the user.
+     * @return The number of consecutive days the user has completed workouts.
+     */
     fun getCurrentStreak(userID: Int): Int {
         val today = LocalDate.now()
         val completed =
