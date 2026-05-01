@@ -46,4 +46,3 @@ fun Application.module() { // Function for config. of Ktor app.
         socialRoutes() // Add socialRoutes to Ktor routing table
     }
 }
-
