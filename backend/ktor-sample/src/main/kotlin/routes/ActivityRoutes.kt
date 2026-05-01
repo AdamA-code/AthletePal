@@ -189,9 +189,18 @@ fun Route.activityRoutes() {
         // WORKOUTS
         // =====================
 
-        // Get recent workouts for a given user
         /*
-        The GET '/workouts/recent/{email}' endpoint is responsible for
+        The GET '/workouts/recent/{email}' endpoint is responsible for handling HTTP requests for 
+        getting recent workouts for a specific user. It is also responsible for calling the backend
+        service(s)' functions to complete said request.
+
+        The endpoint expects the target user's email (email) to be passed as a parameter at the end
+        of the endpoint's route as a string serialisable value (i.e. consists of alphanumeric characters)
+
+        The endpoint returns:
+            - OK (200) and recent workouts found for the target user, if there were recent workout(s) found in the db for the user
+            - NotFound (404) and a relevant message, if the target user could not be found OR no recent workouts could be found for the user
+            - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
         */
         get("/workouts/recent/{email}") {
             try {
@@ -209,9 +218,19 @@ fun Route.activityRoutes() {
             }
         }
 
-        // Get workouts for today, for a user
         /*
-        The GET '/workouts/today/{email}' endpoint is responsible for
+        The GET '/workouts/today/{email}' endpoint is responsible for handling HTTP requests made to
+        retrieve workouts for a specific user, planned for today, It is also responsible for calling
+        the relevent backend service(s)' functions and/or methods to fulfil said request.
+
+        The endpoint requires the target user's email (email) to be given at the end of the endpoint's
+        route, the email should be given as a string serialisable input (i.e. consists of alphanumeric
+        characters).
+
+        The endpoint returns:
+            - OK (200) and todays workout, if there was a workout found for today, for the target user, in the db
+            - NotFound (404) and a relevant message, if there was no workout found for today for the user OR the user wasn't found
+            - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
         */
         get("/workouts/today/{email}") {
             try {
@@ -228,9 +247,18 @@ fun Route.activityRoutes() {
             }
         }
 
-        // Get all workouts for a given user
         /*
-        The GET '/workouts/{userID}' endpoint is responsible for
+        The GET '/workouts/{userID}' endpoint is responsible for handling HTTP requests made to get all workouts
+        for a specific user. It is also responsible for calling the backend service functions and/or methods to
+        fulfil the request.
+        
+        The endpoint expects the target user's ID (userID) to be provided as a parameter at the end of the
+        endpoint's route. The value passed must be serialisable into an integer.
+
+        The endpoint returns:
+            - OK (200) and a list of all workouts for the target user, if the user was found with registered workouts in the db
+            - NotFound (404) and a relevant message, if either the user wasn't found OR had no registered workouts to them
+            - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
         */
         get("/workouts/{userID}") {
             try {
@@ -249,7 +277,18 @@ fun Route.activityRoutes() {
 
         // Get a single workout
         /*
-        The GET '/workout/{workoutID}' endpoint is responsible for
+        The GET '/workout/{workoutID}' endpoint is responsible for handling HTTP requests to retrieve a
+        single, specific workout from the database and calling the backend service's function(s) to 
+        fulfil said request.
+
+        The endpoint expects to be provided the workoutID corresponding to the target workout, passed as
+        a parameter at the end of the endpoint's route. The value passed must be serialisable into an
+        integer.
+
+        The endpoint returns:
+            - OK (200) and the target workouts information, if there was a workout found with the provided workoutID
+            - NotFound (404) and a relevant message, if no workout corresponding with the provided workoutID was found
+            - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
         */
         get("/workout/{workoutID}") {
             try {
@@ -266,9 +305,21 @@ fun Route.activityRoutes() {
             }
         }
 
-        // Add new workout to user account
         /*
-        The POST '/workout' endpoint is responsible for
+        The POST '/workout' endpoint is responsible for adding an entirely new workout to a user's account.
+        The workout does not include any associated exercises by default, and have to be explicity added with
+        other endpoints, referencing the target workout's workoutID.
+
+        The endpoint expects values for the 'Workout' object to be passed, required fields for workout creation
+        are createdBy (Int), assignedTo (Int) and date (Str). There are also optional fields duration (Int), workoutType (Str),
+        notes (Str), routeID (Int) allowing for more descript workouts to be added to the user account if desired by the client.
+        These values are passed in the HTTP request body, and should all be serialisable into their respecive data 
+        types, as outlined in the Workout model.
+
+        The endpoint returns:
+            - OK (200) and the new workout's workoutID, if the workout was successfully created to the user's account with attached fields
+            - InternalServerError (500) and a relevant message, if the workout could not be created due to a non-descript services error
+            - BadRequest (400) and a relevant message, if the endpoint is provided with a malformed HTTP request
         */
         post("/workout") {
             try {
@@ -278,7 +329,7 @@ fun Route.activityRoutes() {
                 if (id > 0) {
                     call.respond(HttpStatusCode.OK, mapOf("ID" to id))
                 } else {
-                    call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Failed to create workout"))
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("message" to "Failed to create workout"))
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -286,9 +337,18 @@ fun Route.activityRoutes() {
             }
         }
 
-        // Update specific workout on user account
         /*
-        The PUT '/workout/{workoutID}' endpoint is responsible for
+        The PUT '/workout/{workoutID}' endpoint is responsible for updating a specific, existing workout on a users
+        account. The workout is updated with all required fields, and does not create a new workout instance.
+
+        The endpoint expects the target workoutID to be given as a integer serialisable parameter at the end of the
+        endpoint's route (workoutID). The endpoint also expects the request body to contain date (as a required field)
+        as well as duration, workoutType, notes, and routeID (all as optional fields).
+
+        The endpoint returns:
+            - OK (200) and a relevant change confirmation message, if the target workout was found and updated
+            - NotFound (404) and a relevant message, if the target workout couldn't be found and hence couldn't be updated
+            - BadRequest (400) and a relevant message, if the endpoint is provided with a malformed HTTP request
         */
         put("/workout/{workoutID}") {
             try {
@@ -309,7 +369,18 @@ fun Route.activityRoutes() {
 
         // Delete a specific workout from user account
         /*
-        The DELETE '/workout/{workoutID}' endpoint is responsible for
+        The DELETE '/workout/{workoutID}' endpoint is responsible for handling HTTP requests for requesting
+        deletion of specific workouts from a user's account. It is also responsible for calling relevant
+        backend services' functions in order to fulfil this request.
+
+        The endpoint expects the target workout's ID (workoutID) to be provided at the end of the endpoint's
+        route, as a integer serialisable value (i.e. only numeric characters, with no .). This value should
+        be associated with an existing workout, desired for deletion.
+
+        The endpoint returns:
+            - OK (200) and a relevant confirmation message, if the workout could be found in the db and hence deleted
+            - NotFound (404) and a relevant message, if the workoutID doesn't correspond with an existing workout and cannot be deleted
+            - BadRequest (400) and a relevant message, if the endpoint is provided with a malformed HTTP request
         */
         delete("/workout/{workoutID}") {
             try {
@@ -332,7 +403,19 @@ fun Route.activityRoutes() {
         // =====================
 
         /*
-        The POST '/workout/exercises/add-exercise' endpoint is responsible for
+        The POST '/workout/exercises/add-exercise' endpoint is responsible for handling HTTP requests to create new
+        exercises associated to a specific, existing workout on a user's account. It is also responsible for calling
+        the backend service's functions in order to fulfil this request, passing it the values provided in the request
+        for creation.
+
+        The endpoint expects required values workoutID (Int) and exerciseID (Int), however also allows for optional
+        fields sets (Int), reps (Int) and weight (Double) for more descript workout exercises to be created. The values
+        passed in the request body must be serialisable into their respective data types.
+
+        The endpoint returns:
+            - OK (200) and the ID of the new workout exercise, if the workout exercise was successfully created in the database
+            - NotFound (404) and a relevant message, if the specified workout could not be found (preventing workout exercise creation)
+            - BadRequest (400) and a relevant message, if the endpoint is provided with a malformed HTTP request
         */
         post("/workout/exercises/add-exercise") {
             try {
@@ -350,9 +433,18 @@ fun Route.activityRoutes() {
             }
         }
 
-        // Find all exercises belonging to a given workout
         /*
-        The GET '/workout/exercises/{workoutID}' endpoint is responsible for
+        The GET '/workout/exercises/{workoutID}' endpoint is responsible for handling HTTP requests to retrieve
+        all of the workout exercises associated with a specific workout. It is also then responsible for calling
+        the required backend service's functions in order to fulfil this request.
+
+        The endpoint expects the target workout's ID to be passed as a parameter at the end of the endpoint's route.
+        The value passed for workoutID here must be serialisable into an integer (i.e. consist only of numeric characters).
+
+        The endpoint returns:
+            - OK (200) and a list of all associated workout exercises, if the workout was found and contained > 0 exercises
+            - NotFound (404) and a relevant message, if the specified workout wasn't found OR contained no exercises
+            - BadRequest (400) and a relevant message, if the endpoint is provided with a malformed HTTP request
         */
         get("/workout/exercises/{workoutID}") {
             try {
@@ -380,9 +472,18 @@ fun Route.activityRoutes() {
             }
         }
 
-        // Get specific exercise in a workout
         /*
-        The GET '/workout/exercise/{exerciseWorkoutID}' endpoint is responsible for
+        The GET '/workout/exercise/{exerciseWorkoutID}' endpoint is responsible for handling HTTP requests to 
+        retrieve a specific workout exercise and its details from the database. It is also then responsible
+        for calling the backend service's functions in order to fulfil this request.
+
+        The endpoint expects the target workout exercise's ID (exerciseWorkoutID) to be passed as a parameter
+        at the end of the endpoint's route, as a integer serialisable value (i.e. contains only numeric characters).
+
+        The endpoint returns:
+            - OK (200) and the workout exercise found (and its info), if the workout exercise could be found in the database
+            - NotFound (404) and a relevant message, if the specified workout exercise couldn't be found in the database
+            - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
         */
         get("/workout/exercise/{exerciseWorkoutID}") {
             try {
@@ -401,9 +502,20 @@ fun Route.activityRoutes() {
             }
         }
 
-        // Update an exercise in a given workout
         /*
-        The PUT '/workout/exercise/{exerciseWorkoutID}' endpoint is responsible for
+        The PUT '/workout/exercise/{exerciseWorkoutID}' endpoint is responsible for handling HTTP requests
+        to update a specific, existing workout exercise in the database with the provided details. It is
+        then also responsible for calling the backend service's functions in order to fulfil this request.
+
+        The endpoint expects the target workout exercise's ID (exerciseWorkoutID) to be passed as a
+        parameter at the end of the endpoint's route, as a integer serialisable value. It also expects
+        a HTTP request body optionally containing the sets (Int), reps (Int), and weight (Double) fields
+        where values passed (default to null) will be used for exercise updating.
+
+        The endpoint returns:
+            - OK (200) and a relevant confirmation message, if the specified workout was found and updated in the db
+            - NotFound (404) and a relevant message, if the specified workout exercise couldn't be found and hence can't be updated
+            - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request 
         */
         put("/workout/exercise/{exerciseWorkoutID}") {
             try {
@@ -423,9 +535,20 @@ fun Route.activityRoutes() {
             }
         }
 
-        // Delete ALL exercises from a workout (i.e. reset workout)
         /*
-        The DELETE '/workout/exercises/{workoutID}' endpoint is responsible for
+        The DELETE '/workout/exercises/{workoutID}' endpoint is responsible for handling HTTP requests to delete
+        all workout exercises associated with a specific workout (essentially 'resetting' a workout). It is then
+        also responsible for calling the backend service's functions in order to fulfil this request in the db
+        for the requesting client.
+
+        The endpoint expects the target workout's ID (workoutID) to be passed as a parameter at the end of the
+        endpoint's route. The value passed should be serialisable into an integer (i.e. contains only numeric
+        characters).
+
+        The endpoint returns:
+            - OK (200) and a relevant confirmation message, if the target workout was found in the db and was then deleted
+            - NotFound (404) and a relevant message, if the target workout could not be found in the db and hence wasn't deleted
+            - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
         */
         delete("/workout/exercises/{workoutID}") {
             try {
@@ -444,9 +567,20 @@ fun Route.activityRoutes() {
             }
         }
 
-        // Delete an exercise from a workout
         /*
-        The DELETE '/workout/exercise/{exerciseWorkoutID}' endpoint is responsible for
+        The DELETE '/workout/exercise/{exerciseWorkoutID}' endpoint is responsible for handling HTTP requests
+        to delete a singular, specific workout exercise from a workout. It is then also responsible for
+        calling the backend service's functions in order to fulfil this request in the db for the requesting
+        client.
+
+        The endpoint expects the target workout exercise's ID (exerciseWorkoutID) to be provided as a parameter
+        at the end of the endpoint's route. The value passed here should be serialisable into an integer (i.e.
+        contains only numeric characters).
+
+        The endpoint returns:
+            - OK (200) and a relevant confirmation message, if the workout exercise was found and hence deleted from the db
+            - NotFound (404) and a relevant message, if the specified workout exercise wasn't found in the db and hance not deleted
+            - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
         */
         delete("/workout/exercise/{exerciseWorkoutID}") {
             try {
@@ -469,9 +603,18 @@ fun Route.activityRoutes() {
         // COMPETITIONS
         // =====================
 
-        // Get any and all upcoming competitions
         /*
-        The GET '/competitions/upcoming/{email}' endpoint is responsible for
+        The GET '/competitions/upcoming/{email}' endpoint is responsible for handling HTTP requests to get
+        all upcoming competitions registered to a specific user. It is then also responsible for calling the
+        backend service's function(s) in order to fulfil this request from the db, for the requesting client.
+
+        The endpoint expects the target user's email (email) to be passed as a parameter at the end of the
+        endpoint's route. The value passed should be serialisable into a string data type.
+
+        The endpoint returns:
+            - OK (200) and a list of any and all upcoming competitions, if the user was found and had competitions upcoming
+            - NotFound (404) and a relevant message, if the specified user wasn't found OR had not upcoming competitions
+            - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
         */
         get("/competitions/upcoming/{email}") {
             try {
@@ -488,9 +631,18 @@ fun Route.activityRoutes() {
             }
         }
 
-        // Get all competitions for a given user
         /*
-        The GET '/competitions/{userID}' endpoint is responsible for
+        The GET '/competitions/{userID}' endpoint is responsible for handling HTTP requests to get all competitions
+        (both past and upcoming) on a user's account. It is then also responsible for calling the backend service's 
+        function(s) to fulfil this request from the db, for the requesting client.
+
+        The endpoint expects the target user's ID (userID) to be passed as a parameter at the end of the endpoint's
+        route. The value passed here must also be serialisable into an integer (i.e. contain only numeric characters).
+
+        The endpoint returns:
+            - OK (200) and a list of all competitions for the user, if the user was found and had competitions registered
+            - NotFound (404) and a relevant message, if the user wasn't found OR had no competitions registered to their account
+            - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
         */
         get("/competitions/{userID}") {
             try {
@@ -509,7 +661,18 @@ fun Route.activityRoutes() {
 
         // Get a single competition
         /*
-        The GET '/competition/{competitionID}' endpoint is responsible for
+        The GET '/competition/{competitionID}' endpoint is responsible for handling HTTP requests made to get a
+        single, specific competition from the database. It is then also responsible for calling the backend
+        service's function(s) required to fulfil this request from the db, for the requesting client.
+
+        The endpoint expects the target competition's ID (competitionID) to be passed as a parameter at the end
+        of the endpoint's route. The value passed here should also be serialisable into an integer (i.e. contains
+        only numeric characters).
+
+        The endpoint returns:
+            - OK (200) and the competition found for ID, if the competition correlated to a single competition in the database
+            - NotFound (404) and a relevant message, if there could be no competition found in the databse for the provided ID
+            - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
         */
         get("/competition/{competitionID}") {
             try {
@@ -526,9 +689,18 @@ fun Route.activityRoutes() {
             }
         }
 
-        // Add new competition to user account
         /*
-        The POST '/competition' endpoint is responsible for
+        The POST '/competition' endpoint is responsible for handling HTTP requests to add a new competition to
+        a given user's account. It is then also responsible for calling the backend service's functions to
+        fulfil this request in the database for the requesting client.
+
+        The endpoint expects a syntactically valid HTTP request, with a body containing userID (Int), name (Str),
+        and date (Str) as well as optionally the rank (Int) and result (Int) of the competition.
+
+        The endpoint returns:
+            - OK (200) and the ID of the new competition, if the competition was successfully created with the given values in the db
+            - InternalServerError (500) and a relevant message, if a logical error in the backend services prevented competiton creation
+            - BadRequest (400) and a relevant message, if the endpoint is provided with a malformed HTTP request
         */
         post("/competition") {
             try {
@@ -538,7 +710,7 @@ fun Route.activityRoutes() {
                 if (id > 0) {
                     call.respond(HttpStatusCode.OK, mapOf("ID" to id))
                 } else {
-                    call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Failed to create competition"))
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("message" to "Failed to create competition"))
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -546,9 +718,20 @@ fun Route.activityRoutes() {
             }
         }
 
-        // Update a given competition on the users account
         /*
-        The PUT '/competition/{competitionID}' endpoint is responsible for
+        The PUT '/competition/{competitionID}' endpoint is responsible for handling HTTP requests
+        made to update a specific, existing competition on a user's account. It is also responsible
+        for calling the required backend service's function(s) to fulfil this request in the db
+        for the requesting client.
+
+        The endpoint expects the target competition's ID (competitionID) to be passed as an integer
+        serialisable parameter at the end of the endpoint's route. It also expects the HTTP request
+        body to contain the updated values for name and date, as well as optionally rank and result.
+
+        The endpoint returns:
+            - OK (200) and a relevant message, if the specified competition was successfully updated with the new info in the db
+            - NotFound (404) and a relevant message, if the target competition wasn't found in the db and hence wasn't updated
+            - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
         */
         put("/competition/{competitionID}") {
             try {
@@ -567,9 +750,19 @@ fun Route.activityRoutes() {
             }
         }
 
-        // Delete a given competition from the users account
         /*
-        The DELETE '/competition/{competitionID}' endpoint is responsible for
+        The DELETE '/competition/{competitionID}' endpoint is responsible for handling HTTP requests
+        made to delete a specific competition from a user's acocunt in the database. It is also then
+        responsible for calling the required backend service's function(s) required to fulfil this
+        request in the database for the requesting client.
+
+        The endpoint expects the target competition's ID (competitionID) to be passed as a integer
+        serialisable parameter at the end of the endpoint's route.
+
+        The endpoint returns:
+            - OK (200) and a relevant confirmation message, if the competition was found and thus deleted from the db
+            - NotFound (404) and a relevant message, if the specified competition wasn't found in the db and hence not deleted
+            - BadRequest (400) and a relevant message, if the endpoint is provided with a malformed HTTP request
         */
         delete("/competition/{competitionID}") {
             try {
@@ -591,9 +784,19 @@ fun Route.activityRoutes() {
         // ROUTES
         // =====================
 
-        // Get any recent routes for a user
         /*
-        The GET '/routes/recent/{email}' endpoint is responsible for
+        The GET '/routes/recent/{email}' endpoint is responsible for handling HTTP requests made to
+        retrieve any and all recent routes from the database for a given user. It is then also
+        responsible for calling the required backend service's function(s) to fulfil this request
+        from the db for the requesting client.
+
+        The endpoint expects the target user's email (email) to be provided as a string serialisable
+        parameter at the end of the endpoint's route.
+
+        The endpoint returns:
+            - OK (200) and a list of all recent routes found, if the user was identified and had > 0 recent routes recorded
+            - NotFound (404) and a relevant message, if the user couldn't be found in the db OR had no recent routes recorded
+            - BadRequest (400) and a relevant message, if the endpoint is provided with a malformed HTTP request
         */
         get("/routes/recent/{email}") {
             try {
@@ -610,9 +813,19 @@ fun Route.activityRoutes() {
             }
         }
 
-        // Get all routes for a given user
         /*
-        The GET '/routes/{userID}' endpoint is responsible for
+        The GET '/routes/{userID}' endpoint is responsible for handling HTTP requests made to
+        retrieve all routes recorded to a given user's acocunt, irrespective of when they were
+        recorded. It is then also responsible for calling the required backend service's function(s)
+        required to fulfil this request from the databse, for the requesting client.
+
+        The endpoint expects the target user's ID (userID) to be provided as an integer serialisable
+        parameter at the end of the endpoint's route.
+
+        The endpoint returns:
+            - OK (200) and a list of all routes registered to the user, if the user could be found and had > 0 routes recorded
+            - NotFound (404) and a relevant message, if the user could not be found OR had no recorded routes on the account
+            - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
         */
         get("/routes/{userID}") {
             try {
@@ -629,9 +842,18 @@ fun Route.activityRoutes() {
             }
         }
 
-        // Get a single route
         /*
-        The GET '/route/{routeID}' endpoint is responsible for
+        The GET '/route/{routeID}' endpoint is responsible for handling HTTP requests to retrieve
+        a single, specific route from the database. The endpoint is then also responsible for
+        calling the required backend service's function(s) needed to fulfil this request.
+
+        The endpoint expects the target route's ID (routeID) to be provided as a integer serialisable
+        parameter at the end of the endpoint's route.
+
+        The endpoint returns:
+            - OK (200) and the route found under the given ID, if a route could be found in the database for the specified ID
+            - NotFound (404) and a relevant message, if no route could be found in the database under the given routeID
+            - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
         */
         get("/route/{routeID}") {
             try {
@@ -648,9 +870,20 @@ fun Route.activityRoutes() {
             }
         }
 
-        // Add a route to the user account
         /*
-        The POST '/route' endpoint is responsible for
+        The POST '/route' endpoint is responsible for handling HTTP requests made to add a new
+        route to a user's account. It is then also responsible for calling the required backend
+        service's function(s) needed to fulfil this request in the database for the requesting
+        client.
+
+        The endpoint expects a syntactically valid HTTP request, with a body containing userID (Int),
+        name (Str), distance (Double), date (String), isPublic (Boolean) and routeData (String) as
+        required fields, as well as optionally estimatedTime (Double).
+
+        The endpoint returns:
+            - OK (200) and the ID of the new route, if the route was successfully created in the db with the given data
+            - InternalServerError (500) and a relevant message, if some logic error in the backend service prevented route creation
+            - BadRequest (400) and a relevant message, if the endpoint is provided with a malformed HTTP request
         */
         post("/route") {
             try {
@@ -660,7 +893,7 @@ fun Route.activityRoutes() {
                 if (id > 0) {
                     call.respond(HttpStatusCode.OK, mapOf("ID" to id))
                 } else {
-                    call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Failed to create route"))
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("message" to "Failed to create route"))
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -668,9 +901,21 @@ fun Route.activityRoutes() {
             }
         }
 
-        // Update a given route on the users account
         /*
-        The PUT '/route/{routeID}' endpoint is responsible for
+        The PUT '/route/{routeID}' endpoint is responsible for handling HTTP requests made to update
+        a single, specific route on a users account in the database. The endpoint is then responsible
+        for calling the required backend service's function(s) required in order to update the route
+        in the database, for the requesting client.
+
+        The endpoint expects the target route's ID (routeID) to be passed as an integer serialisable
+        parameter at the end of the endpoint's route. It also expects the required fields: name (Str),
+        distance (Double), date (Str), isPublic (Boolean), routeData (Str), as well as optional field:
+        estimatedTime (Double), to be passed in the body of the HTTP request.
+
+        The endpoint returns:
+            - OK (200) and a relevant confirmation message, if the route was identified and updated in the database with the given data
+            - NotFound (404) and a relevant message, if the route could not be found in the databse so wasn't updated
+            - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
         */
         put("/route/{routeID}") {
             try {
@@ -698,9 +943,19 @@ fun Route.activityRoutes() {
             }
         }
 
-        // Delete a specific route from the users account
         /*
-        The DELETE '/route/{routeID}' endpoint is responsible for
+        The DELETE '/route/{routeID}' endpoint is responsible for handling HTTP requests made to delete
+        a specific, single route from a user's account in the database. The endpoint is then also
+        responsible for calling the backend service's function(s) required in order to fulfil the request
+        in the database, for the requesting client.
+
+        The endpoint expects the target route's ID (routeID) to be provided as an integer serialisable
+        parameter at the end of the endpoint's route.
+
+        The endpoint returns:
+            - OK (200) and a relevant confirmation message, if the route could be found in the database and was then deleted successfully
+            - NotFound (404) and a relevant message, if the route could not be found in the database anda hence wasn't deleted
+            - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
         */
         delete("/route/{routeID}") {
             try {

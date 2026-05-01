@@ -30,8 +30,8 @@ fun Application.module() { // Function for config. of Ktor app.
     }
 
     routing {
-        get("/") {
-            call.respond("")
+        get("/") { // When blank request made to no endpoint
+            call.respond("") // Respond with nothing
         }
         get("/health") { // When GET HTTP request made for server health...
             call.respond(mapOf("Status" to "Running")) // Respond with affirmative good health response
