@@ -247,30 +247,53 @@ class DatabaseService {
         val scheduledDate: String,
     )
 
-    // Connect to DB
+    /**
+     * Manages the application's connection to the SQLite database.
+     *
+     * This class creates a JDBC connection to the users.db database file located in the project's resources directory.
+     *
+     * When an instance is created, foreign key constraints are enabled using PRAGMA foreign_keys = ON 
+     * so relational integrity rules such as cascading deletes are enabled.
+     *
+     * The connection can be reused by database service functions until close() is called.
+     */
     class DatabaseConnection {
-        // open connection to database
+        // File path used to connect to the database
         val connectionLocation = "jdbc:sqlite:${System.getProperty("user.dir")}/src/main/resources/users.db"
+
+        // Open connection used to communicate with database
         val connection: Connection = DriverManager.getConnection(connectionLocation)
 
-        // Runs automatically on creation
+        // Runs automatically on creation - enables foreign key contstraint enforcement
         init {
             connection.createStatement().execute("PRAGMA foreign_keys = ON") // Enable deletion cascading
         }
 
+        // Closes the database connectiion if its currently open
         fun close() {
             if (!connection.isClosed) connection.close()
         }
     }
 
+    // Shared connection used by all service functions
     val db = DatabaseConnection()
-    // User db
 
+    /**
+     * Stores a new user in the database.
+     *
+     * The function first checks whether the given email address is already associated with an existing account.
+     * If the email is unique, the user record is inserted into the users table.
+     *
+     * If successful, the generated userID is returned. If the email already exists or the insert fails,
+     * -1 is returned.
+     *
+     * Prepared statements are used to safely insert values.
+     *
+     * @param user The user data to store.
+     * @return The created userID if successful, -1 if not.
+     */
     fun createUser(user: User): Int {
         if (findUser(user.email) == null) {
-            // Connect to db, pepare query struct, use object that allows updating
-            // and prevent SQL injection, store to set values and exec
-            // SQL INSERT statement with "?"" as a placeholder
             val stmt: PreparedStatement =
                 db.connection.prepareStatement(
                     """
@@ -278,10 +301,9 @@ class DatabaseService {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """
                         .trimIndent(),
-                    Statement.RETURN_GENERATED_KEYS,
-                ) // Needed to return created ID
+                    Statement.RETURN_GENERATED_KEYS, // Needed to return created ID
+                )
 
-            // Set placeholder values based on given data
             stmt.setString(1, user.name)
             stmt.setString(2, user.email)
             stmt.setString(3, user.passwordHash)
@@ -310,15 +332,19 @@ class DatabaseService {
         return -1
     }
 
+    /**
+     * Retrieves a user from the database using their email address.
+     *
+     * @param email The email address of the user to find.
+     * @return The matching User object if found, null if no user exists.
+     */
     fun findUser(email: String): User? {
-        // Connect to db, pepare query struct, use object that allows updating
-        // and prevent SQL injection, store to set values and exec
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
                 "SELECT * FROM users WHERE email = ?",
             )
 
-        stmt.setString(1, email) // Put email value in placeholder (?)
+        stmt.setString(1, email)
 
         val rs: ResultSet = stmt.executeQuery()
 
@@ -344,6 +370,25 @@ class DatabaseService {
         return null
     }
 
+    /**
+     * Updates optional profile details for a user account.
+     *
+     * The function validates the provided email, ensuring it's in a valid format before attempting the update.
+     * Age is also validated to ensure it falls in a realistic range.
+     *
+     * The update modifies only non-authentication profile fields such as gender, age, height, and weight.
+     * The user is identified using their email address.
+     *
+     * If the update is successful, the database is modified and the function returns true. If no matching user
+     * is found or validation fails, false is returned.
+     *
+     * @param email The email address of the user to update.
+     * @param gender Optional gender value.
+     * @param age Optional age value.
+     * @param height Optional height in cm.
+     * @param weight Optional weight in kg.
+     * @return True if the update was successful, false if not.
+     */
     fun updateAccount(
         email: String,
         gender: String?,
@@ -351,8 +396,6 @@ class DatabaseService {
         height: Double?,
         weight: Double?,
     ): Boolean {
-        // Connect to db, pepare query struct, use object that allows updating
-        // and prevent SQL injection, store to set values and exec
 
         //  Validation checks
         if (email.isBlank() || !email.contains("@") || !email.contains(".")) return false
@@ -367,20 +410,36 @@ class DatabaseService {
                 """.trimIndent(),
             )
 
-        // Set placeholder values based on given data
         stmt.setString(1, gender)
         stmt.setObject(2, age)
         stmt.setObject(3, height)
         stmt.setObject(4, weight)
         stmt.setString(5, email)
 
-        val rowsUpdated = stmt.executeUpdate() // smt.executeUpdate returns 0 if nothing updated and 1 if updated
+        val rowsUpdated = stmt.executeUpdate()
         stmt.close()
 
-        return rowsUpdated > 0 // Returns True is rowsUpdated == 1
+        return rowsUpdated > 0
     }
 
-    // Voluntary change, not forgot password
+    /**
+     * Updates a user's password after verifying their current password.
+     *
+     * At first, the function validates that both passwords meet minimum security requirements and
+     * ensures the user exists in the database.
+     *
+     * It then verifies the given old password against the stored hash using the user's stored salt.
+     * If authentication succeeds, a new salt and hash are generated for the new password.
+     *
+     * The password hash and salt are then updated in the database.
+     *
+     * This function is used for voluntary password changes, not password recovery.
+     *
+     * @param email The email address of the user.
+     * @param oldPassword The user's current password.
+     * @param newPassword The new password to be set.
+     * @return True if the password was successfully updated, false if not.
+     */
     fun updatePassword(
         email: String,
         oldPassword: String,
@@ -392,7 +451,7 @@ class DatabaseService {
 
         val authService = AuthService()
 
-        // Verify old password is correct via reverse of func
+        // Verify old password is correct via reverse
         if (!authService.verifyPassword(oldPassword, user.passwordKey, user.passwordHash)) {
             return false
         }
@@ -419,7 +478,18 @@ class DatabaseService {
         return rowsUpdated > 0
     }
 
-    // Forgot password (email token)
+    /**
+     * Generates a password reset token for a user account.
+     *
+     * The function validates the email and ensures the user exists in the database.
+     * If valid, a unique token is generated and stored in the password_reset_tokens table. 
+     * An expiry time is set to 1 hour from creation to add security.
+     *
+     * The token is returned so it can be sent to the user's email for password recovery.
+     *
+     * @param email The email address of the account requesting a password reset.
+     * @return The generated reset token if successful, or null if validation fails or the user doesn't exit.
+     */
     fun generatePasswordResetToken(email: String): String? {
         // Validation checks
         if (!email.contains("@") || !email.contains(".")) return null
@@ -454,6 +524,21 @@ class DatabaseService {
         }
     }
 
+    /**
+     * Resets a user's password using a valid password reset token.
+     *
+     * The function checks the token has not passed expiry or has already been used. If it has,
+     * the function returns false. If valid, the user's password is updated using a newly generated salt
+     * and hash based off the given input.
+     * 
+     *
+     * The reset is performed inside a transaction using a try-catch block to ensure atomicity.
+     * Both the password update and token invalidation must succeed or all changes are undone using rollback().
+     *
+     * @param token The password reset token provided to the user.
+     * @param newPassword The new password.
+     * @return True if the password was successfully reset, false if not.
+     */
     fun resetPasswordWithToken(
         token: String,
         newPassword: String,
@@ -545,7 +630,7 @@ class DatabaseService {
             db.connection.commit()
             return true
             // Find any unexpected errors and rollback if so, set connection back to autocommit either way
-        } catch (erro: Exception) {
+        } catch (error: Exception) {
             db.connection.rollback()
             return false
         } finally {
@@ -591,6 +676,15 @@ class DatabaseService {
         }
     }
 
+    /**
+     * Deletes a user account from the database using their email address.
+     * 
+     * The function executes a DELETE operation on the users table if a user is found linking
+     * to the given email address and true is returned. Otherwise, false is returned.
+     * 
+     * @param email The email address of the user to delete.
+     * @return True if the user was deleted, false if not.
+     */
     fun deleteUser(email: String): Boolean {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -608,8 +702,17 @@ class DatabaseService {
         return rowsDeleted > 0
     }
 
-    // Exercise db
-
+    /**
+     * Creates a new exercise and stores it in the database.
+     * 
+     * The function checks the exercise name isn't blank and ensures the category is one of the
+     * predefined types: ("weights", "running", "cycling", "swimming", "walking").
+     * 
+     * If validation is passed, the exercise is inserted into the database and the exerciseID is returned.
+     * 
+     * @param exercise The exercise object containing name, category, and description.
+     * @return The generated exerciseID if successful, -1  if not.
+     */
     fun createExercise(exercise: Exercise): Int {
         
         // Validation Checks
@@ -646,6 +749,15 @@ class DatabaseService {
         return id
     }
 
+    /**
+     * Retrieves an exercise from the database using its unique ID.
+     * 
+     * If an exercise with the given ID exists, it is returned in an Exercise object.
+     * If no matching record is found, null is returned instead.
+     * 
+     * @param exerciseID The unique identifier of the exercise.
+     * @return The corresponding Exercise object, or null if no record is found.
+     */
     fun findExercise(exerciseID: Int): Exercise? {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -674,6 +786,14 @@ class DatabaseService {
         return exercise
     }
 
+    /**
+     * Retrieves all exercises from the database.
+     * 
+     * Each record in the table is mapped to an Exercise object and returned in a list.
+     * If no matching record is found, an empty list is returned.
+     * 
+     * @return The list of Exercise objects in the database.
+     */
     fun findAllExercises(): List<Exercise> {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -699,6 +819,23 @@ class DatabaseService {
         return exercises
     }
 
+    /**
+     * Updates an exercise in the database.
+     *
+     * The function validates the provided name, ensuring it's not blank before attempting the update.
+     * category is also validated to ensure it falls the list of predefined acceptable values.
+     *
+     * The function only updates the category or optional description, identified by the exercise's name.
+     *
+     * If the update is successful, the database is modified and the function returns true. If no matching exercisse
+     * is found or validation fails, false is returned.
+     * 
+     *
+     * @param name The name of the exercise used to identify the record.
+     * @param category The new category value of the exercise.
+     * @param description Optional updated description of the exercise.
+     * @return True if the update was successful, false if not.
+     */
     fun updateExercise(
         name: String,
         category: String,
@@ -727,6 +864,15 @@ class DatabaseService {
         return rowsUpdated > 0
     }
 
+    /**
+     * Deletes an exercise from the database using the provided exerciseID.
+     * 
+     * The function executes a DELETE operation on the exercises table if an exercise is found linking
+     * to the given exericseID and true is returned. Otherwise, false is returned.
+     * 
+     * @param exerciseID The exerciseID of the row to delete.
+     * @return True if the exercise was deleted, false if not.
+     */
     fun deleteExercise(exerciseID: Int): Boolean {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -741,7 +887,22 @@ class DatabaseService {
         return rowsDeleted > 0
     }
 
-    // Workout to DB
+    /**
+     * Stores a new workout in the database.
+     *
+     * The function first checks whether the given date is not blank and in the correct format.
+     * The function then checks that if the duration is not null then it is longer than 0, and that the given
+     * workoutType of the workout is in the valid types list, if it iss not null.
+     *
+     * The function then inserts the workout into the database.
+     * 
+     * If successful, the generated workoutID is returned. If unsuccessful, -1 is returned.
+     *
+     * Prepared statements are used to safely insert values.
+     *
+     * @param workout The workout data to store.
+     * @return The created workoutID if successful, -1 if not.
+     */
     fun createWorkout(workout: Workout): Int {
         // Validation Checks
         if (workout.date.isBlank() || !workout.date.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) return -1
@@ -783,6 +944,14 @@ class DatabaseService {
         return id
     }
 
+    /**
+     * Retrieves all workouts from the database.
+     * 
+     * Each record in the table is mapped to a Workout object and returned in a list.
+     * If no matching record is found, an empty list is returned.
+     * 
+     * @return The list of Workout objects in the database.
+     */
     fun findAllWorkouts(userID: Int): List<Workout> {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -815,6 +984,29 @@ class DatabaseService {
         return workouts
     }
 
+    /**
+     * Updates a workout in the database.
+     *
+     * The function validates the provided workoutID, ensuring it's not impossible beforing executing the
+     * statement. Date is also validated to ensure it is in the correct YYYY-MM-DD format. Duration is then
+     * validated to check that if a value is given, that it is greater than 0.
+     *
+     * The function only updates the date, duration, workoutType, notes, routeID, and isRoutine associated
+     * with the workout, identified by the workoutID.
+     *
+     * If the update is successful, the database is modified and the function returns true. If no matching workout
+     * is found or validation fails, false is returned.
+     * 
+     *
+     * @param workoutID The unique identifier of the workout to update.
+     * @param date The new date value of the workout.
+     * @param duration Optional updated duration of the workout.
+     * @param workoutType Optional new type descriptor of workout.
+     * @param notes Optional new notes about the workout
+     * @param routeID Optional new routeID linked to the workout.
+     * @param isRoutine New flag that's true if the workout is a regular routine, false if not.
+     * @return True if the update was successful, false if not.
+     */
     fun updateWorkout(
         workoutID: Int,
         date: String,
@@ -852,6 +1044,15 @@ class DatabaseService {
         return rowsUpdated > 0
     }
 
+    /**
+     * Deletes a workout from the database using the provided workoutID.
+     * 
+     * The function executes a DELETE operation on the workouts table if a workout is found linking
+     * to the given workoutID and true is returned. Otherwise, false is returned.
+     * 
+     * @param workoutID The workoutID of the row to delete.
+     * @return True if the workout was deleted, false if not.
+     */
     fun deleteWorkout(workoutID: Int): Boolean {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -866,8 +1067,23 @@ class DatabaseService {
         return rowsDeleted > 0
     }
 
-    // Workout_exercise join table
-
+    
+    /**
+     * Stores a new many-to-many record in the database between workouts and exercises.
+     *
+     * The function first checks that the given exercise and workout IDs are possible
+     * The function then validates that if sets, reps, or weight are not equal to null, then they are
+     * above 0.
+     *
+     * The function then inserts the join record into the database.
+     * 
+     * If successful, the generated workoutExercisesID is returned. If unsuccessful, -1 is returned.
+     *
+     * Prepared statements are used to safely insert values.
+     *
+     * @param workout_exercise The workout_exercise data to store.
+     * @return The created workoutExercisesID if successful, -1 if not.
+     */
     fun addExerciseToWorkout(workout_exercise: WorkoutExercise): Int {
         // Validation Checks
         if (workout_exercise.workoutID <= 0 || workout_exercise.exerciseID <= 0) return -1
@@ -906,6 +1122,14 @@ class DatabaseService {
         return id
     }
 
+    /**
+     * Retrieves all workout and exercises join records from the database.
+     * 
+     * Each record in the table is mapped to a WorkoutExercise object and returned in a list.
+     * If no matching record is found, an empty list is returned.
+     * 
+     * @return The list of WorkoutExercise objects in the database.
+     */
     fun findAllWorkoutExercises(workoutID: Int): List<WorkoutExercise> {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -934,6 +1158,24 @@ class DatabaseService {
         return workoutExs
     }
 
+    /**
+     * Updates a workout and exercise join record in the database.
+     *
+     * The function validates the provided workoutExercisesID, ensuring it's not impossible beforing executing the
+     * statement. Sets, reps, and weight are also validated to ensure that if a value is given, that it is greater than 0.
+     *
+     * The function only updates the stes, reps, and weight associated with the workout, identified by the workoutExercisesID.
+     *
+     * If the update is successful, the database is modified and the function returns true. If no matching workout
+     * is found or validation fails, false is returned.
+     * 
+     *
+     * @param workoutExercisesID The unique identifier of the join record to update.
+     * @param sets Optional sets of an exercise in the workout to update.
+     * @param reps Optional new reps of a set in an exercise in a workout.
+     * @param weight Optional new weight of an exercise in a rep.
+     * @return True if the update was successful, false if not.
+     */
     fun updateWorkoutExercise(
         workoutExercisesID: Int,
         sets: Int?,
@@ -966,6 +1208,15 @@ class DatabaseService {
         return rowsUpdated > 0
     }
 
+    /**
+     * Deletes a workout and exercise join record from the database using the provided workoutExercisesID.
+     * 
+     * The function executes a DELETE operation on the workout_exercises table if a workout_exercise is found linking
+     * to the given workoutExercisesID and true is returned. Otherwise, false is returned.
+     * 
+     * @param workoutID The workoutExercisesID of the row to delete.
+     * @return True if the join record was deleted, false if not.
+     */
     fun deleteWorkoutExercise(workoutExercisesID: Int): Boolean {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
