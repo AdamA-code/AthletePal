@@ -67,12 +67,14 @@ fun Route.authRoutes() {
                     // Get user which has been successfully logged into
                     val userDetails: User? = db.findUser(loginRequest.email)
 
-                    call.respond(HttpStatusCode.OK, LoginResponse(
-                        message = "Login Successful",
-                        userID = userDetails!!.userID!!,
-                        name = userDetails!!.name!!,
-                    )) // Response for valid login
-                    
+                    call.respond(
+                        HttpStatusCode.OK,
+                        LoginResponse(
+                            message = "Login Successful",
+                            userID = userDetails!!.userID!!,
+                            name = userDetails!!.name!!,
+                        ),
+                    ) // Response for valid login
                 } else {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "Invalid Credentials")) // Response for invalid login
                 }

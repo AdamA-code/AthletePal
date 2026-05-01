@@ -353,7 +353,16 @@ fun Route.activityRoutes() {
                 val id = call.parameters["workoutID"]!!.toInt()
                 val body = call.receive<UpdateWorkoutRequest>()
 
-                val updated = db.updateWorkout(id, body.date ?: "", body.duration, body.workoutType, body.notes, body.routeID, body.isRoutine)
+                val updated =
+                    db.updateWorkout(
+                        id,
+                        body.date ?: "",
+                        body.duration,
+                        body.workoutType,
+                        body.notes,
+                        body.routeID,
+                        body.isRoutine,
+                    )
 
                 if (updated) {
                     call.respond(HttpStatusCode.OK, mapOf("message" to "Workout updated"))
@@ -600,13 +609,12 @@ fun Route.activityRoutes() {
         get("/exercises") {
             try {
                 val exercises: List<Exercise> = db.findAllExercises()
-                
+
                 if (!exercises.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.OK, mapOf("Exercises" to exercises))
                 } else if (exercises.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("message" to "Could not find exercises"))
                 }
-
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
