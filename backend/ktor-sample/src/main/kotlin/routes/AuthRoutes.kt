@@ -132,21 +132,6 @@ fun Route.authRoutes() {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid request"))
             }
         }
-
-        get("/user/{email}") {
-            try {
-                val email = call.parameters["email"]!!
-                val user: User? = db.findUser(email)
-
-                if (user != null) {
-                    call.respond(HttpStatusCode.OK, mapOf("User" to user))
-                } else if (user == null) {
-                    call.respond(HttpStatusCode.NotFound, mapOf("message" to "User not found"))
-                }
-            } catch (e: Exception) {
-                call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid request"))
-            }
-        }
     }
 
     /*
