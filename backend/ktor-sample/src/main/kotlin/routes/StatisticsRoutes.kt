@@ -22,7 +22,7 @@ fun Route.statisticsRoutes() {
         - Adding new statistics
         - Getting, updating and deleting existing statistics
         - Getting different statistics through various filters (i.e. best stat, all stats for an exercise, etc)
-    */
+     */
     route("/api") {
         // ========================================
         // STAT WRITE ROUTES (ADD, UPDATE, DELETE)
@@ -40,7 +40,7 @@ fun Route.statisticsRoutes() {
             - OK (200) and the new statistic's ID (statisticID), if the statistic was successfully created
             - InternalServerError (500) and a relevant message, if the statistic couldn't be created (i.e exercise not found, etc)
             - BadRequest (400) and a relevant message, if a malformed HTTP request was provided
-        */
+         */
         post("/statistics") {
             try {
                 val stat = call.receive<Statistic>()
@@ -56,10 +56,9 @@ fun Route.statisticsRoutes() {
             }
         }
 
-
         /*
         The PUT '/statistics/{statisticID}' endpoint is responsible for updating a specific, existing statistic
-        in the database. This is used for changing details associated with a statistic (the stat's scoreValue 
+        in the database. This is used for changing details associated with a statistic (the stat's scoreValue
         and/or date).
 
         The endpoint expects a valid, syntactically correct HTTP request, with the target statistic's ID provided
@@ -70,7 +69,7 @@ fun Route.statisticsRoutes() {
             - OK (200) and a relevant message, if the statistic was successfully updated with the provided information
             - NotFound (404) and a relevant message, if the target statistic for updating could not be found
             - BadRequest (400) and a relevant message, if provided with an invalid, malformed HTTP request
-        */
+         */
         put("/statistics/{statisticID}") {
             try {
                 val id = call.parameters["statisticID"]!!.toInt()
@@ -99,7 +98,7 @@ fun Route.statisticsRoutes() {
             - OK (200) and a relevant message, if the target statistic was successfully found and deleted from the database
             - NotFound (404) and a relevant message, if the target statistic could not be found and hence wasn't deleted
             - BadRequest (400) and a relevant message, if endpoint was given a malformed HTTP request
-        */
+         */
         delete("/statistics/{statisticID}") {
             try {
                 val id = call.parameters["statisticID"]!!.toInt()
@@ -133,7 +132,7 @@ fun Route.statisticsRoutes() {
             - OK (200) and best statistic for the user on specified exercise, if there was any statistic found for the user for the exercise
             - NotFound (404) and a relevant message, if no statistic was found for the user on the specified exercise
             - BadRequest (400) and a relevant message, if a invalid, malformed HTTP request was provided to the endpoint
-        */
+         */
         get("/statistic/exercise/{userID}/{exerciseID}") {
             try {
                 val userID = call.parameters["userID"]!!.toInt()
@@ -160,12 +159,12 @@ fun Route.statisticsRoutes() {
         The endpoint expects only the target statistic's ID (statisticID) passed as a parameter at the
         end of the endpoint's route. The value passed must be serialisable into an integer (i.e. not a
         string, double, etc).
-        
+
         The endpoint returns:
             - OK (200) and the statistic found under statisticID, if the target statistic was successfully found in the database
             - NotFound (404) and a relevent message, if no statistic could be found under the provided statisticID
             - Bad Request (400) and a relevant message, if given a malformed HTTP request (i.e. statisticID parameter of wrong type)
-        */
+         */
         get("/statistic/{statisticID}") {
             try {
                 val statisticID = call.parameters["statisticID"]!!.toInt()
@@ -182,7 +181,6 @@ fun Route.statisticsRoutes() {
             }
         }
 
-        // Get progression for a workout
         /*
         The GET '/statistic/user/workout-progression/{userID}' endpoint is responsible for retrieving the specified user's
         progression on workouts, recorded over time, upon a valid HTTP request being made to the endpoint.
@@ -194,7 +192,7 @@ fun Route.statisticsRoutes() {
             - OK (200) and the user's workout progression, if there was sufficient statistical data in the db to calculate progression
             - NotFound (404) and a relevent message, if not enough statistical data was in the db to calculate the progression
             - BadRequest (400) and a relvant message, if the endpoint was provided with a malformed HTTP request
-        */
+         */
         get("/statistic/user/workout-progression/{userID}") {
             try {
                 val userID = call.parameters["userID"]!!.toInt()
@@ -211,7 +209,6 @@ fun Route.statisticsRoutes() {
             }
         }
 
-        // Get a users total workouts completed
         /*
         The GET '/statistic/user/workouts-completed/{userID}' endpoint is responsible for retrieving the total number of
         recorded workouts which a specific user has completed in the lifetime of their account, and returning it to the
@@ -224,7 +221,7 @@ fun Route.statisticsRoutes() {
             - OK (200) and the number of completed workouts (> 0), if there are completed workouts found in the database
             - NotFound (404) and a relevent message, if there are no completed workouts found in the database
             - BadRequest (400) and a relevant message, if a malformed HTTP request is provided to the endpoint
-        */
+         */
         get("/statistic/user/workouts-completed/{userID}") {
             try {
                 val userID = call.parameters["userID"]!!.toInt()
@@ -241,7 +238,6 @@ fun Route.statisticsRoutes() {
             }
         }
 
-        // Get hours trained by a user
         /*
         The GET '/statistic/user/hours-trained/{userID}' endpoint is responsible for finding the total number
         of hours trained (in workouts logged to the database) over the entire lifetime of the account. It is
@@ -255,7 +251,7 @@ fun Route.statisticsRoutes() {
             - OK (200) and the number of hours trained (>0), if the total recorded number of hours recorded sums to > 0.0
             - NotFound (404) and a relevant message, if the total number of recorded workout hours is equal to 0 (i.e. none found)
             - BadRequest (400) and a relevant message, if the endpoint is provided with a malformed HTTP request
-        */
+         */
         get("/statistic/user/hours-trained/{userID}") {
             try {
                 val userID = call.parameters["userID"]!!.toInt()
@@ -281,7 +277,7 @@ fun Route.statisticsRoutes() {
             - OK (200) and the number of workout streak, if a streak > 0 is found in the database for the user
             - NotFound (404) and a relevant message, if no streak (i.e. streak = 0) is found in the database for the user
             - BadRequest (400) and a relevant message, if endpoint is given a malformed HTTP request (i.e. userID not serialisable)
-        */
+         */
         get("/statistic/user/workout-streak/{userID}") {
             try {
                 val userID = call.parameters["userID"]!!.toInt()
@@ -305,7 +301,7 @@ fun Route.statisticsRoutes() {
             - OK (200) and the user's training history, if there was training history associated with the user in the database
             - NotFound (404) and a relevant message, if no relevent history associated with the user was found in the database
             - BadRequest (400) and a releavant message, if the endpoint was provided with a malformed HTTP request
-        */
+         */
         get("/statistic/user/training-history/{userID}") {
             try {
                 val userID = call.parameters["userID"]!!.toInt()
@@ -326,14 +322,14 @@ fun Route.statisticsRoutes() {
         The GET '/statistics/user/exercise-breakdown/{userID}' is responsible for calling the backend
         to retrieve the targetted user's statistical breakdown for recorded exercises from the database.
 
-        The endpoint expects the target user's ID (userID) to be provided as a parameter at the end of 
+        The endpoint expects the target user's ID (userID) to be provided as a parameter at the end of
         the endpoint's route, as an integer serialisable value (i.e. contains no alphabetical characters).
 
         The endpoint returns:
             - OK (200) and a list of all recorded exercises' statistical breakdown, if there were exercises found in the database
             - NotFound (404) and arelevant message, if there were no associated exercises to the user in the databsae to breakdown
             - BadRequest (400), and a relevant message, if the endpoint was provided with a malformed HTTP request
-        */
+         */
         get("/statistics/user/exercise-breakdown/{userID}") {
             try {
                 val userID = call.parameters["userID"]!!.toInt()
@@ -363,7 +359,7 @@ fun Route.statisticsRoutes() {
             - OK (200) and a list of all exercises and their PBs for the user, if there were exercises for the user in the database
             - NotFound (404) and a relevant message, if there were no recorded exercises for the specified user
             - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
-        */
+         */
         get("/statistics/user/personal-bests/{userID}") {
             try {
                 val userID = call.parameters["userID"]!!.toInt()
@@ -380,7 +376,6 @@ fun Route.statisticsRoutes() {
             }
         }
 
-        // Get all statistics for a user, for an exercise
         /*
         The GET '/statistics/exercise/{userID}/{exerciseID}' endpoint is responsible for calling the
         backend to retrieve all logged statistics for a user on a specified exercise, then returning the
@@ -395,7 +390,7 @@ fun Route.statisticsRoutes() {
             - OK (200) and all statisitcs for the user for the exercise, if there were any statistics matching the parameters found
             - NotFound (404) and a relevant message, if there were no statistics for the user for the exercise found in the db
             - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
-        */
+         */
         get("/statistics/exercise/{userID}/{exerciseID}") {
             try {
                 val userID = call.parameters["userID"]!!.toInt()
@@ -414,4 +409,3 @@ fun Route.statisticsRoutes() {
         }
     }
 }
-

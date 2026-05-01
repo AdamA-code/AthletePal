@@ -11,7 +11,7 @@ import io.ktor.server.routing.put // Import handling of PUT HTTP requests
 import io.ktor.server.routing.route
 import models.Activity // Import data class for an instance of Acitivty
 import models.LogWorkoutRequest // Import data class for a request to log a workout
-import models.UpdateCompetitionRequest // Import data class for a request to update an exisiting competition 
+import models.UpdateCompetitionRequest // Import data class for a request to update an exisiting competition
 import models.UpdateWorkoutExerciseRequest // Import data class for a request to update an exercise associated with a workout
 import models.UpdateWorkoutRequest // Import data class for a request to update an existing workout
 import models.WorkoutExerciseResponse // Import data class for a HTTP response for a workout exercise operation
@@ -33,12 +33,11 @@ This includes:
 fun Route.activityRoutes() {
     val db = DatabaseService() // Import service responsible for following requests
 
-
     /*
     Activity Routes ('/api/...')
-    Serves as a subdivider in order to seperate following activity-oriented endpoints from other endpoints 
+    Serves as a subdivider in order to seperate following activity-oriented endpoints from other endpoints
     (such as social, statistics, authentication, etc) with aim of reducing HTTP requests sent to wrong API address
-    */
+     */
     route("/api") {
         // =====================
         // WORKOUT LOGGING
@@ -59,7 +58,7 @@ fun Route.activityRoutes() {
             - OK (200) and the ID of the new workout, if the workout was successfully logged to the database
             - InternalServerError (500) and a relevant message, if something prevented the workout from being logged to the db
             - BadRequest (400) and a relevant message, if the endpoint is provided a malformed HTTP request
-        */
+         */
         post("/log/workout") {
             try {
                 val body = call.receive<LogWorkoutRequest>()
@@ -84,7 +83,7 @@ fun Route.activityRoutes() {
         to the databse for storage.
 
         The endpoint expects all the same parameters as in logging a new workout in the HTTP request's
-        body, however in addition it requires the workoutID in order to target the specific workout 
+        body, however in addition it requires the workoutID in order to target the specific workout
         for updating. Still, the request should have all fields serialisable to their respective data
         types (as dictated in the LogWorkoutRequest data model).
 
@@ -92,7 +91,7 @@ fun Route.activityRoutes() {
             - OK (200) and a relevant message, if the target workout was identified and updated with the given fields
             - NotFound (404) and a relevant message, if the target workout could not be found (or hence uppdated) in the db
             - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
-        */
+         */
         put("/log/workout") {
             try {
                 val body = call.receive<LogWorkoutRequest>()
@@ -129,7 +128,7 @@ fun Route.activityRoutes() {
             - OK (200) and a list of recent workouts, routes and upcoming competitions, if said data could be found for the user in the db
             - NotFound (404) and a relevant message, if no recent workouts or routes, or upcoming competitions could be found for user in db
             - BadRequest (400) and a relevant message, if the endpoint is provided with a malformed HTTP request
-        */
+         */
         get("/activity/recent/{email}") {
             try {
                 val email = call.parameters["email"]!!
@@ -151,7 +150,6 @@ fun Route.activityRoutes() {
             }
         }
 
-        // Get all activity for a given user
         /*
         The GET '/activity/{userID}' endpoint is responsible for handling HTTP requests made to get any
         and all activity for a given user since the account's creation. It is also responsible for calling
@@ -163,9 +161,9 @@ fun Route.activityRoutes() {
 
         The endpoint returns:
             - OK (200) and a list of all activity for workouts, routes, competitions, if said data could be found for the user in db
-            - NotFound (404) and a relevant message, if no recorded activity could be found for the user in the database 
+            - NotFound (404) and a relevant message, if no recorded activity could be found for the user in the database
             - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
-        */
+         */
         get("/activity/{userID}") {
             try {
                 val userID = call.parameters["userID"]!!.toInt()
@@ -190,7 +188,7 @@ fun Route.activityRoutes() {
         // =====================
 
         /*
-        The GET '/workouts/recent/{email}' endpoint is responsible for handling HTTP requests for 
+        The GET '/workouts/recent/{email}' endpoint is responsible for handling HTTP requests for
         getting recent workouts for a specific user. It is also responsible for calling the backend
         service(s)' functions to complete said request.
 
@@ -201,7 +199,7 @@ fun Route.activityRoutes() {
             - OK (200) and recent workouts found for the target user, if there were recent workout(s) found in the db for the user
             - NotFound (404) and a relevant message, if the target user could not be found OR no recent workouts could be found for the user
             - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
-        */
+         */
         get("/workouts/recent/{email}") {
             try {
                 val email = call.parameters["email"]!!
@@ -231,7 +229,7 @@ fun Route.activityRoutes() {
             - OK (200) and todays workout, if there was a workout found for today, for the target user, in the db
             - NotFound (404) and a relevant message, if there was no workout found for today for the user OR the user wasn't found
             - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
-        */
+         */
         get("/workouts/today/{email}") {
             try {
                 val email = call.parameters["email"]!!
@@ -251,7 +249,7 @@ fun Route.activityRoutes() {
         The GET '/workouts/{userID}' endpoint is responsible for handling HTTP requests made to get all workouts
         for a specific user. It is also responsible for calling the backend service functions and/or methods to
         fulfil the request.
-        
+
         The endpoint expects the target user's ID (userID) to be provided as a parameter at the end of the
         endpoint's route. The value passed must be serialisable into an integer.
 
@@ -259,7 +257,7 @@ fun Route.activityRoutes() {
             - OK (200) and a list of all workouts for the target user, if the user was found with registered workouts in the db
             - NotFound (404) and a relevant message, if either the user wasn't found OR had no registered workouts to them
             - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
-        */
+         */
         get("/workouts/{userID}") {
             try {
                 val userID = call.parameters["userID"]!!.toInt()
@@ -275,10 +273,9 @@ fun Route.activityRoutes() {
             }
         }
 
-        // Get a single workout
         /*
         The GET '/workout/{workoutID}' endpoint is responsible for handling HTTP requests to retrieve a
-        single, specific workout from the database and calling the backend service's function(s) to 
+        single, specific workout from the database and calling the backend service's function(s) to
         fulfil said request.
 
         The endpoint expects to be provided the workoutID corresponding to the target workout, passed as
@@ -289,7 +286,7 @@ fun Route.activityRoutes() {
             - OK (200) and the target workouts information, if there was a workout found with the provided workoutID
             - NotFound (404) and a relevant message, if no workout corresponding with the provided workoutID was found
             - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
-        */
+         */
         get("/workout/{workoutID}") {
             try {
                 val id = call.parameters["workoutID"]!!.toInt()
@@ -313,14 +310,14 @@ fun Route.activityRoutes() {
         The endpoint expects values for the 'Workout' object to be passed, required fields for workout creation
         are createdBy (Int), assignedTo (Int) and date (Str). There are also optional fields duration (Int), workoutType (Str),
         notes (Str), routeID (Int) allowing for more descript workouts to be added to the user account if desired by the client.
-        These values are passed in the HTTP request body, and should all be serialisable into their respecive data 
+        These values are passed in the HTTP request body, and should all be serialisable into their respecive data
         types, as outlined in the Workout model.
 
         The endpoint returns:
             - OK (200) and the new workout's workoutID, if the workout was successfully created to the user's account with attached fields
             - InternalServerError (500) and a relevant message, if the workout could not be created due to a non-descript services error
             - BadRequest (400) and a relevant message, if the endpoint is provided with a malformed HTTP request
-        */
+         */
         post("/workout") {
             try {
                 val workout = call.receive<Workout>()
@@ -349,7 +346,7 @@ fun Route.activityRoutes() {
             - OK (200) and a relevant change confirmation message, if the target workout was found and updated
             - NotFound (404) and a relevant message, if the target workout couldn't be found and hence couldn't be updated
             - BadRequest (400) and a relevant message, if the endpoint is provided with a malformed HTTP request
-        */
+         */
         put("/workout/{workoutID}") {
             try {
                 val id = call.parameters["workoutID"]!!.toInt()
@@ -367,7 +364,6 @@ fun Route.activityRoutes() {
             }
         }
 
-        // Delete a specific workout from user account
         /*
         The DELETE '/workout/{workoutID}' endpoint is responsible for handling HTTP requests for requesting
         deletion of specific workouts from a user's account. It is also responsible for calling relevant
@@ -381,7 +377,7 @@ fun Route.activityRoutes() {
             - OK (200) and a relevant confirmation message, if the workout could be found in the db and hence deleted
             - NotFound (404) and a relevant message, if the workoutID doesn't correspond with an existing workout and cannot be deleted
             - BadRequest (400) and a relevant message, if the endpoint is provided with a malformed HTTP request
-        */
+         */
         delete("/workout/{workoutID}") {
             try {
                 val id = call.parameters["workoutID"]!!.toInt()
@@ -416,7 +412,7 @@ fun Route.activityRoutes() {
             - OK (200) and the ID of the new workout exercise, if the workout exercise was successfully created in the database
             - NotFound (404) and a relevant message, if the specified workout could not be found (preventing workout exercise creation)
             - BadRequest (400) and a relevant message, if the endpoint is provided with a malformed HTTP request
-        */
+         */
         post("/workout/exercises/add-exercise") {
             try {
                 val workoutExercise = call.receive<WorkoutExercise>()
@@ -445,7 +441,7 @@ fun Route.activityRoutes() {
             - OK (200) and a list of all associated workout exercises, if the workout was found and contained > 0 exercises
             - NotFound (404) and a relevant message, if the specified workout wasn't found OR contained no exercises
             - BadRequest (400) and a relevant message, if the endpoint is provided with a malformed HTTP request
-        */
+         */
         get("/workout/exercises/{workoutID}") {
             try {
                 val id = call.parameters["workoutID"]!!.toInt()
@@ -473,7 +469,7 @@ fun Route.activityRoutes() {
         }
 
         /*
-        The GET '/workout/exercise/{exerciseWorkoutID}' endpoint is responsible for handling HTTP requests to 
+        The GET '/workout/exercise/{exerciseWorkoutID}' endpoint is responsible for handling HTTP requests to
         retrieve a specific workout exercise and its details from the database. It is also then responsible
         for calling the backend service's functions in order to fulfil this request.
 
@@ -484,7 +480,7 @@ fun Route.activityRoutes() {
             - OK (200) and the workout exercise found (and its info), if the workout exercise could be found in the database
             - NotFound (404) and a relevant message, if the specified workout exercise couldn't be found in the database
             - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
-        */
+         */
         get("/workout/exercise/{exerciseWorkoutID}") {
             try {
                 val id = call.parameters["exerciseWorkoutID"]!!.toInt()
@@ -515,8 +511,8 @@ fun Route.activityRoutes() {
         The endpoint returns:
             - OK (200) and a relevant confirmation message, if the specified workout was found and updated in the db
             - NotFound (404) and a relevant message, if the specified workout exercise couldn't be found and hence can't be updated
-            - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request 
-        */
+            - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
+         */
         put("/workout/exercise/{exerciseWorkoutID}") {
             try {
                 val id = call.parameters["exerciseWorkoutID"]!!.toInt()
@@ -549,7 +545,7 @@ fun Route.activityRoutes() {
             - OK (200) and a relevant confirmation message, if the target workout was found in the db and was then deleted
             - NotFound (404) and a relevant message, if the target workout could not be found in the db and hence wasn't deleted
             - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
-        */
+         */
         delete("/workout/exercises/{workoutID}") {
             try {
                 val id = call.parameters["workoutID"]!!.toInt()
@@ -581,7 +577,7 @@ fun Route.activityRoutes() {
             - OK (200) and a relevant confirmation message, if the workout exercise was found and hence deleted from the db
             - NotFound (404) and a relevant message, if the specified workout exercise wasn't found in the db and hance not deleted
             - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
-        */
+         */
         delete("/workout/exercise/{exerciseWorkoutID}") {
             try {
                 val id = call.parameters["exerciseWorkoutID"]!!.toInt()
@@ -615,7 +611,7 @@ fun Route.activityRoutes() {
             - OK (200) and a list of any and all upcoming competitions, if the user was found and had competitions upcoming
             - NotFound (404) and a relevant message, if the specified user wasn't found OR had not upcoming competitions
             - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
-        */
+         */
         get("/competitions/upcoming/{email}") {
             try {
                 val email = call.parameters["email"]!!
@@ -633,7 +629,7 @@ fun Route.activityRoutes() {
 
         /*
         The GET '/competitions/{userID}' endpoint is responsible for handling HTTP requests to get all competitions
-        (both past and upcoming) on a user's account. It is then also responsible for calling the backend service's 
+        (both past and upcoming) on a user's account. It is then also responsible for calling the backend service's
         function(s) to fulfil this request from the db, for the requesting client.
 
         The endpoint expects the target user's ID (userID) to be passed as a parameter at the end of the endpoint's
@@ -643,7 +639,7 @@ fun Route.activityRoutes() {
             - OK (200) and a list of all competitions for the user, if the user was found and had competitions registered
             - NotFound (404) and a relevant message, if the user wasn't found OR had no competitions registered to their account
             - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
-        */
+         */
         get("/competitions/{userID}") {
             try {
                 val userID = call.parameters["userID"]!!.toInt()
@@ -659,7 +655,6 @@ fun Route.activityRoutes() {
             }
         }
 
-        // Get a single competition
         /*
         The GET '/competition/{competitionID}' endpoint is responsible for handling HTTP requests made to get a
         single, specific competition from the database. It is then also responsible for calling the backend
@@ -673,7 +668,7 @@ fun Route.activityRoutes() {
             - OK (200) and the competition found for ID, if the competition correlated to a single competition in the database
             - NotFound (404) and a relevant message, if there could be no competition found in the databse for the provided ID
             - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
-        */
+         */
         get("/competition/{competitionID}") {
             try {
                 val id = call.parameters["competitionID"]!!.toInt()
@@ -701,7 +696,7 @@ fun Route.activityRoutes() {
             - OK (200) and the ID of the new competition, if the competition was successfully created with the given values in the db
             - InternalServerError (500) and a relevant message, if a logical error in the backend services prevented competiton creation
             - BadRequest (400) and a relevant message, if the endpoint is provided with a malformed HTTP request
-        */
+         */
         post("/competition") {
             try {
                 val comp = call.receive<Competition>()
@@ -732,7 +727,7 @@ fun Route.activityRoutes() {
             - OK (200) and a relevant message, if the specified competition was successfully updated with the new info in the db
             - NotFound (404) and a relevant message, if the target competition wasn't found in the db and hence wasn't updated
             - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
-        */
+         */
         put("/competition/{competitionID}") {
             try {
                 val id = call.parameters["competitionID"]!!.toIntOrNull() ?: return@put call.respond(HttpStatusCode.BadRequest)
@@ -763,7 +758,7 @@ fun Route.activityRoutes() {
             - OK (200) and a relevant confirmation message, if the competition was found and thus deleted from the db
             - NotFound (404) and a relevant message, if the specified competition wasn't found in the db and hence not deleted
             - BadRequest (400) and a relevant message, if the endpoint is provided with a malformed HTTP request
-        */
+         */
         delete("/competition/{competitionID}") {
             try {
                 val id = call.parameters["competitionID"]!!.toInt()
@@ -797,7 +792,7 @@ fun Route.activityRoutes() {
             - OK (200) and a list of all recent routes found, if the user was identified and had > 0 recent routes recorded
             - NotFound (404) and a relevant message, if the user couldn't be found in the db OR had no recent routes recorded
             - BadRequest (400) and a relevant message, if the endpoint is provided with a malformed HTTP request
-        */
+         */
         get("/routes/recent/{email}") {
             try {
                 val email = call.parameters["email"]!!
@@ -826,7 +821,7 @@ fun Route.activityRoutes() {
             - OK (200) and a list of all routes registered to the user, if the user could be found and had > 0 routes recorded
             - NotFound (404) and a relevant message, if the user could not be found OR had no recorded routes on the account
             - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
-        */
+         */
         get("/routes/{userID}") {
             try {
                 val userID = call.parameters["userID"]!!.toInt()
@@ -854,7 +849,7 @@ fun Route.activityRoutes() {
             - OK (200) and the route found under the given ID, if a route could be found in the database for the specified ID
             - NotFound (404) and a relevant message, if no route could be found in the database under the given routeID
             - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
-        */
+         */
         get("/route/{routeID}") {
             try {
                 val id = call.parameters["routeID"]!!.toInt()
@@ -884,7 +879,7 @@ fun Route.activityRoutes() {
             - OK (200) and the ID of the new route, if the route was successfully created in the db with the given data
             - InternalServerError (500) and a relevant message, if some logic error in the backend service prevented route creation
             - BadRequest (400) and a relevant message, if the endpoint is provided with a malformed HTTP request
-        */
+         */
         post("/route") {
             try {
                 val route = call.receive<RunningRoute>()
@@ -916,7 +911,7 @@ fun Route.activityRoutes() {
             - OK (200) and a relevant confirmation message, if the route was identified and updated in the database with the given data
             - NotFound (404) and a relevant message, if the route could not be found in the databse so wasn't updated
             - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
-        */
+         */
         put("/route/{routeID}") {
             try {
                 val id = call.parameters["routeID"]!!.toInt()
@@ -956,7 +951,7 @@ fun Route.activityRoutes() {
             - OK (200) and a relevant confirmation message, if the route could be found in the database and was then deleted successfully
             - NotFound (404) and a relevant message, if the route could not be found in the database anda hence wasn't deleted
             - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
-        */
+         */
         delete("/route/{routeID}") {
             try {
                 val id = call.parameters["routeID"]!!.toInt()

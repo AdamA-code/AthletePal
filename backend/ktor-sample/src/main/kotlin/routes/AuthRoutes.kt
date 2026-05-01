@@ -9,13 +9,13 @@ import io.ktor.server.routing.get // Import get HTTP requests routes
 import io.ktor.server.routing.post // Import post HTTP requests routes
 import io.ktor.server.routing.put // Import put HTTP requests routes
 import io.ktor.server.routing.route
+import models.CreateAccountRequest // Import model for request to create an account
+import models.ForgotPasswordRequest // Import model for forgotten password requests
 import models.LoginRequest // Import the model for a login request (i.e. formatting of HTTP request)
+import models.PasswordUpdateRequest // Import model for request to update password
 import models.UpdateAccountRequest // Import the model for a request to update account info
 import services.AuthService // Import service (logic) for validating a login
 import services.DatabaseService // Import service for storing to database
-import models.CreateAccountRequest // Import model for request to create an account
-import models.PasswordUpdateRequest // Import model for request to update password
-import models.ForgotPasswordRequest // Import model for forgotten password requests
 
 /*
 Defines endpoints for authentication and account-related HTTP routes for the webapp.
@@ -26,7 +26,7 @@ This includes:
     - Resetting a user's password (when forgotten)
     - Changing a user's password (when known)
     - Deleting a user's account
-    
+
 Said operations are 'grouped' under the larger routes:
     - '/auth' for authentication and account creation operations
     - '/update' for existing account modification
@@ -39,7 +39,7 @@ fun Route.authRoutes() {
     /*
     Authentication Routes ('/auth')
     Handles login and account creation requests
-    */
+     */
     route("/auth") { // If HTTP request in the '/auth' route...
 
         /*
@@ -50,7 +50,7 @@ fun Route.authRoutes() {
             - OK (200) HTTP status code, and relevent message, if credentials are valid
             - NotFound (404) HTTP status code, and relevent message, if credentials are invalid
             - BadRequest (400) HTTP status code, for an invalid HTTP request
-        */
+         */
         post("/login") { // If HTTP request is a POST of '/login'...
             try {
                 val loginRequest = call.receive<LoginRequest>() // Break down the request into usable data, as outlined in LoginRequest
@@ -79,7 +79,7 @@ fun Route.authRoutes() {
             - OK (200) with new user's userID is account creation is successful
             - NotAcceptable (406) and relevent error message if user already exists in db
             - BadRequest (400) and relevent error message if provided a malformed HTTP request
-        */
+         */
         post("/create-account") { // If HTTP request is post of account creation
             try {
                 // Retrieve data from POST, and store in a class 'createAccountRequest'
@@ -114,9 +114,8 @@ fun Route.authRoutes() {
     /*
     Update Account ("/update")
     Contains operations related to the updating of account information
-    */
+     */
     route("/update") {
-        
         /*
         Updates user account infromation (excluding password, which is in a seperate endpoint)
 
@@ -127,7 +126,7 @@ fun Route.authRoutes() {
             - OK (200) and a relevent message, if the account is successfully updated
             - NotFound (404) and a relevent message, if the target account doesn't exist
             - BadRequest (400) and a relevent message, if a malformed HTTP request is received
-        */
+         */
         put("/account") {
             try {
                 val body = call.receive<UpdateAccountRequest>() // Receive data payload, and unpack into body based on model
@@ -165,7 +164,7 @@ fun Route.authRoutes() {
             - OK (200), and a relevant message, if the user's password is successfully updated
             - NotFound (404), and a relevant error message, if the account doesn't exist or the oldPassword is wrong
             - BadRequest (400), and a relevant error message, if provided with a malformed HTTP request
-        */
+         */
         put("/password/{email}") {
             try {
                 val email: String = call.parameters["email"]!!
@@ -175,12 +174,10 @@ fun Route.authRoutes() {
 
                 if (updated) {
                     call.respond(HttpStatusCode.OK, mapOf("message" to "Password successfully updated"))
-                }
-                else if (!updated) {
+                } else if (!updated) {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "Password not valid for user email"))
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
         }
@@ -197,7 +194,7 @@ fun Route.authRoutes() {
             - OK (200) and an informative message, if confirmation from the API is given indicating an email is sent
             - InternalServerError (500) and an infromative message, if the API does not give confirmation the email was sent
             - BadRequest (400) and an informative message, if given a malformed HTTP request which cannot be handled
-        */
+         */
         get("/forgot-password/get-reset-email/{email}") {
             try {
                 val email: String = call.parameters["email"]!!
@@ -206,13 +203,10 @@ fun Route.authRoutes() {
 
                 if (emailSent) {
                     call.respond(HttpStatusCode.OK, mapOf("message" to "Check inbox"))
-                }
-                else if (!emailSent) {
+                } else if (!emailSent) {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("message" to "Request could not be fulfilled"))
                 }
-
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
             }
         }
@@ -228,7 +222,7 @@ fun Route.authRoutes() {
             - OK (200) and a relevent message, if the token is correct and the password is updated
             - InternalServerError (500) and a relevent message, if the token is incorrect or has expired
             - BadRequest (400) and a relevent message, if a malformed HTTP request if provided to the endpoint
-        */
+         */
         put("/forgot-password/enter-token") {
             try {
                 val body = call.receive<ForgotPasswordRequest>()
@@ -237,8 +231,7 @@ fun Route.authRoutes() {
 
                 if (updated) {
                     call.respond(HttpStatusCode.OK, mapOf("message" to "Password updated"))
-                }
-                else if (!updated) {
+                } else if (!updated) {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("message" to "Password couldn't be updated"))
                 }
             } catch (e: Exception) {
@@ -257,7 +250,7 @@ fun Route.authRoutes() {
             - OK (200) and a relevant message, if the account deletion is successful
             - NotFound (404) and a relevent message, if the target user doesn't exist
             - BadRequest (400) and a relevent message, if a malformed HTTP request is given
-        */
+         */
         delete("/account/{email}") {
             try {
                 val email = call.parameters["email"]!! // Extract email parameter from route
@@ -277,4 +270,3 @@ fun Route.authRoutes() {
         }
     }
 }
-

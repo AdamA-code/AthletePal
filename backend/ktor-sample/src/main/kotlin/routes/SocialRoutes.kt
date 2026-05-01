@@ -31,7 +31,7 @@ fun Route.socialRoutes() {
     Social Routes ('/social/...')
     Serves as a subdivider in order to seperate following social-based endpoints
     from other endpoints (such as activity, statistics, authentication, etc)
-    */
+     */
     route("/social") {
         // =====================
         // GROUP CRUD ENDPOINTS
@@ -49,7 +49,7 @@ fun Route.socialRoutes() {
             - OK (200) and the ID of the new group, if the group is successfully created
             - InternalServerError (500) and a relevent message, if the group could not be created
             - BadRequest (400) and a relevent message, if a malformed HTTP request is provided
-        */
+         */
         post("/group") {
             try {
                 val trainingGroup = call.receive<TrainingGroup>()
@@ -77,7 +77,7 @@ fun Route.socialRoutes() {
             - OK (200) and a relevent message, if the group has its info successfully updated
             - NotFound (404) and a relevent message, if the target group could not be found in the database
             - BadRequest (400) and a relevent message, if given a malformed HTTP request
-        */
+         */
         put("/group/{groupID}") {
             try {
                 val groupID: Int = call.parameters["groupID"]!!.toInt()
@@ -106,7 +106,7 @@ fun Route.socialRoutes() {
             - OK (200) and a relevant message, if the specified group is successfully deleted from the database
             - NotFound (404) and a relevant message, if the target group could not be found in the database (i.e. wrong groupID?)
             - BadRequest (400) and a relevant message, if given a malformed HTTP request
-        */
+         */
         delete("/group/{groupID}") {
             try {
                 val groupID: Int = call.parameters["groupID"]!!.toInt()
@@ -133,7 +133,7 @@ fun Route.socialRoutes() {
             - OK (200) and the group's stored information, if the group was found in the database
             - NotFound (404) and a relevant message, if the group could not be found using the groupID (may be incorrect)
             - BadRequest (400) and a relevant message, if given a malformed HTTP request
-        */
+         */
         get("/group/{groupID}") {
             try {
                 val groupID: Int = call.parameters["groupID"]!!.toInt()
@@ -160,7 +160,7 @@ fun Route.socialRoutes() {
             - OK (200) and a list of all training groups' information, if groups with the user as a member could be found
             - NotFound (404) and a relevant message, if no training groups with the user as a member could be found
             - BadRequest (400) and a relevant message, if given a malformed HTTP request
-        */
+         */
         get("/groups/{userID}") {
             try {
                 val userID: Int = call.parameters["userID"]!!.toInt()
@@ -188,7 +188,7 @@ fun Route.socialRoutes() {
             - OK (200) and a relevant message, if the user was successfully added to the group
             - NotFound (404) and a relevant message, if the user/group could not be found, or user already in group
             - BadRequest (400) and a relevant message, if given a malformed HTTP request
-        */
+         */
         put("/group/{groupID}/{userID}") {
             try {
                 val groupID: Int = call.parameters["groupID"]!!.toInt()
@@ -217,7 +217,7 @@ fun Route.socialRoutes() {
             - OK (200) and a relevent message, if the user was successfully removed from the group
             - NotFound (404) and a relevant message, if the group couldn't be found, or the user is not in said group
             - BadRequest (400) and a relevant message, if given a malformed HTTP request which can't be handled
-        */
+         */
         delete("/group/{groupID}/{userID}") {
             try {
                 val groupID: Int = call.parameters["groupID"]!!.toInt()
@@ -246,7 +246,7 @@ fun Route.socialRoutes() {
             - OK (200) and a list of all the group's members, if the group was found and had active members
             - NotFound (404) and a relevent message, if either the group wasn't found, or the group had no members
             - BadRequest (400) and a relevant message, if given a malformed HTTP request
-        */
+         */
         get("/group/members/{groupID}") {
             try {
                 val groupID: Int = call.parameters["groupID"]!!.toInt()
@@ -278,7 +278,7 @@ fun Route.socialRoutes() {
             - OK (200) and the ID of the newly created group session, if the group session was successfully created
             - InternalServerError (500) and a relevant message, if the group session couldn't be created
             - BadRequest (400) and a relevant message, if provided a malformed HTTP request
-        */
+         */
         post("/session") {
             try {
                 val groupSession: GroupSession = call.receive<GroupSession>()
@@ -304,7 +304,7 @@ fun Route.socialRoutes() {
             - OK (200) and a list of upcoming group sessions, if there could be upcoming sessions found for the target group
             - NotFound (404) and a relevant message, if either the group wasn't found, or no sessions could be found for the group
             - BadRequest (400) and a relevant message, if provided with a malformed HTTP request
-        */
+         */
         get("/sessions/upcoming/{groupID}") {
             try {
                 val groupID: Int = call.parameters["groupID"]!!.toInt()
@@ -331,7 +331,7 @@ fun Route.socialRoutes() {
             - OK (200) and a list of all past sessions, if the group was found and had sessions which have passed
             - NotFound (404) and a relevant message, if the target group wasn't found, or had no past sessions associated with it
             - BadRequest (400) and a relevant message if provided with a malformed HTTP request
-        */
+         */
         get("/sessions/past/{groupID}") {
             try {
                 val groupID: Int = call.parameters["groupID"]!!.toInt()
@@ -358,7 +358,7 @@ fun Route.socialRoutes() {
             - OK (200) and a relevant message, if the group session was successfully deleted from the database
             - NotFound (404) and a relevant message, if the targeted group session could not be found in the database
             - BadRequest (400) and a relevant message, if provided with a malformed HTTP request
-        */
+         */
         delete("/session/{sessionID}") {
             try {
                 val sessionID: Int = call.parameters["sessionID"]!!.toInt()
