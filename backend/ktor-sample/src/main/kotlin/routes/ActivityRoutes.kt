@@ -605,7 +605,20 @@ fun Route.activityRoutes() {
             }
         }
 
-        // Get all exercises
+        /*
+        The GET '/exercises' endpoint is responsible for handling HTTP requests made in order to retrieve all of
+        the exercises which we have stored in our database. It is therefore also responsible for calling all the
+        backend service's function(s) required in order to retrieve these exercises from the database for the
+        requesting client.
+
+        The endpoint does not expect any values to be passed in the HTTP request, as we are not filtering or searching
+        the exercises in the database in any way; we are purely sending everything in the table.
+
+        The endpoint returns:
+            - OK (200) and a list of all exercises, if the database was successfully access and exercises were found in the db table
+            - InternalServerError (500) and a relevant message, if there was an internal error in backend services preventing db access
+            - BadRequest (400) and a relevant message, if a malformed HTTP request is made to the endpoint
+        */
         get("/exercises") {
             try {
                 val exercises: List<Exercise> = db.findAllExercises()
