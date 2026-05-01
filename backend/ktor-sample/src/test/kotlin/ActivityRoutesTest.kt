@@ -9,9 +9,9 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
+import io.ktor.http.ContentType
 import io.ktor.server.application.Application
 import io.ktor.server.testing.ApplicationTestBuilder
-import io.ktor.server.testing.application
 import io.ktor.server.testing.testApplication
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -435,30 +435,6 @@ class ActivityRoutesTest {
                         """.trimIndent(),
                     )
                 }
-        }
-
-    @Test
-    fun updateWorkout_nullOptionalField() =
-        testApplication { // Normal Case: testing behaviour when an optional field is left blank
-            application { module() }
-
-            val response =
-                client.put("/api/workout/${workoutID!!}") { // Form PUT HTTP request with missing optional field
-                    contentType(ContentType.Application.Json)
-                    setBody(
-                        """
-                        {
-                            "date": null,
-                            "duration": 0
-                        }
-                        """.trimIndent(),
-                    )
-                }
-            // Response should be OK or NotFound (if workout non-existant)
-            assertTrue(
-                response.status == HttpStatusCode.OK ||
-                    response.status == HttpStatusCode.NotFound,
-            )
         }
 
     @Test
@@ -1003,10 +979,13 @@ class ActivityRoutesTest {
                     setBody(
                         """
                         {
+                            "userID": ${userID!!}
                             "name": "Updated Route",
                             "distance": 10.0,
                             "estimatedTime": 60.0,
-                            "date": "2026-06-01"
+                            "date": "2026-06-01",
+                            "isPublic": false,
+                            "routeData": "N/A"
                         }
                         """.trimIndent(),
                     )

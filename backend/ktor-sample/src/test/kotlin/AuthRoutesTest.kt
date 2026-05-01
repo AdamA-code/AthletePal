@@ -7,9 +7,9 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
+import io.ktor.http.ContentType
 import io.ktor.server.application.Application
 import io.ktor.server.testing.ApplicationTestBuilder
-import io.ktor.server.testing.application
 import io.ktor.server.testing.testApplication
 import io.mockk.mockk
 import kotlinx.serialization.json.Json
