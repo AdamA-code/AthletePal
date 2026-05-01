@@ -790,7 +790,7 @@ class DatabaseService {
      * Retrieves all exercises from the database.
      * 
      * Each record in the table is mapped to an Exercise object and returned in a list.
-     * If no matching record is found, an empty list is returned.
+     * If the table is empty, an empty list is returned.
      * 
      * @return The list of Exercise objects in the database.
      */
@@ -827,7 +827,7 @@ class DatabaseService {
      *
      * The function only updates the category or optional description, identified by the exercise's name.
      *
-     * If the update is successful, the database is modified and the function returns true. If no matching exercisse
+     * If the update is successful, the database is modified and the function returns true. If no matching exercise
      * is found or validation fails, false is returned.
      * 
      *
@@ -868,7 +868,7 @@ class DatabaseService {
      * Deletes an exercise from the database using the provided exerciseID.
      * 
      * The function executes a DELETE operation on the exercises table if an exercise is found linking
-     * to the given exericseID and true is returned. Otherwise, false is returned.
+     * to the given exerciseID and true is returned. Otherwise, false is returned.
      * 
      * @param exerciseID The exerciseID of the row to delete.
      * @return True if the exercise was deleted, false if not.
@@ -945,11 +945,12 @@ class DatabaseService {
     }
 
     /**
-     * Retrieves all workouts from the database.
+     * Retrieves all workouts for a specific user from the database.
      * 
      * Each record in the table is mapped to a Workout object and returned in a list.
      * If no matching record is found, an empty list is returned.
      * 
+     * @param userID The unique identifier of the user who's workouts are being returned.
      * @return The list of Workout objects in the database.
      */
     fun findAllWorkouts(userID: Int): List<Workout> {
@@ -1164,7 +1165,7 @@ class DatabaseService {
      * The function validates the provided workoutExercisesID, ensuring it's not impossible beforing executing the
      * statement. Sets, reps, and weight are also validated to ensure that if a value is given, that it is greater than 0.
      *
-     * The function only updates the stes, reps, and weight associated with the workout, identified by the workoutExercisesID.
+     * The function only updates the sets, reps, and weight associated with the workout, identified by the workoutExercisesID.
      *
      * If the update is successful, the database is modified and the function returns true. If no matching workout
      * is found or validation fails, false is returned.
@@ -1214,7 +1215,7 @@ class DatabaseService {
      * The function executes a DELETE operation on the workout_exercises table if a workout_exercise is found linking
      * to the given workoutExercisesID and true is returned. Otherwise, false is returned.
      * 
-     * @param workoutID The workoutExercisesID of the row to delete.
+     * @param workoutExercisesID The workoutExercisesID of the row to delete.
      * @return True if the join record was deleted, false if not.
      */
     fun deleteWorkoutExercise(workoutExercisesID: Int): Boolean {
