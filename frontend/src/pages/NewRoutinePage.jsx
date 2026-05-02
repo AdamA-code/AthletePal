@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import Sidebar from "../components/Sidebar"
+import API_BASE_URL from "../config"
 
 function NewRoutinePage() {
     const navigate = useNavigate()
@@ -17,7 +18,7 @@ function NewRoutinePage() {
     useEffect(() => {
         const fetchExercises = async () => {
             try {
-                const res = await fetch("http://localhost:3000/api/exercises")
+                const res = await fetch(`${API_BASE_URL}/api/exercises`)
                 const data = await res.json()
                 setAvailableExercises(Array.isArray(data.Exercises) ? data.Exercises : [])
             } catch (err) {
@@ -71,28 +72,29 @@ function NewRoutinePage() {
         const today = new Date().toISOString().split("T")[0]
 
         const body = {
-            workout: {
-                workoutID: 0,
-                createdBy: userID,
-                assignedTo: userID,
-                date: today,
-                duration: null,
-                workoutType: "weights",
-                notes: routineName,
-                routeID: null
+            "workout": {
+                "workoutID": 0,
+                "createdBy": userID,
+                "assignedTo": userID,
+                "date": today,
+                "duration": null,
+                "workoutType": "weights",
+                "notes": routineName,
+                "routeID": null,
+                "isRoutine": true
             },
-            exercises: selectedExercises.map(ex => ({
-                workoutExercisesID: 0,
-                workoutID: 0,
-                exerciseID: ex.exerciseID,
-                sets: parseInt(ex.sets),
-                reps: null,
-                weight: null
+            "exercises": selectedExercises.map(ex => ({
+                "workoutExercisesID": 0,
+                "workoutID": 0,
+                "exerciseID": ex.exerciseID,
+                "sets": parseInt(ex.sets),
+                "reps": null,
+                "weight": null
             }))
         }
 
         try {
-            const res = await fetch("http://localhost:3000/api/log/workout", {
+            const res = await fetch(`${API_BASE_URL}/api/log/workout`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(body)

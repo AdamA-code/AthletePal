@@ -490,6 +490,19 @@ class DatabaseService {
         }
     }
 
+    /*
+    This function is responsible for making the API call to the Postmark API, allowing for the email containing the token
+    to be sent to the email entered by the user - thereby verifying they have access to the account email. As we do not own a
+    private domain, and public email providers are not permitted as senders on Postmark, we are having to use a university
+    email. This is a limitation which would not exist in a real-world implamentation, but serves as a proof of concept.
+
+    We expect the target email which we are to send to the API (to then send an email to) to be passed as a parameter to
+    the function (as a String data type).
+
+    The function returns:
+        - true, if we generate the token and a successful API request containing the email is made to Postmark (and we recieve confirmation)
+        - false, if we cannot generate the token OR Postmark does not send confirmation of email recieved OR we hit a logical exception
+    */
     fun sendResetEmail(email: String): Boolean {
         try {
             val token: String? = generatePasswordResetToken(email)

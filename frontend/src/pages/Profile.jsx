@@ -2,6 +2,7 @@
 // frontend-backend connection logic and accessibility improvements done with Claude Sonnet (claude.ai)
 import { useState, useEffect } from "react"
 import Sidebar from "../components/Sidebar"
+import API_BASE_URL from "../config"
 
 function ProfilePage() {
     const [user, setUser] = useState(null)
@@ -28,7 +29,7 @@ function ProfilePage() {
 
         const fetchUser = async () => {
             try {
-                const res = await fetch(`http://localhost:3000/auth/user/${email}`)
+                const res = await fetch(`${API_BASE_URL}/auth/user/${email}`)
                 const data = await res.json()
                 if (res.ok) {
                     setUser(data.User)
@@ -54,15 +55,15 @@ function ProfilePage() {
         setSuccess("")
 
         try {
-            const res = await fetch("http://localhost:3000/update/account", {
+            const res = await fetch(`${API_BASE_URL}/update/account`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    email: email,
-                    gender: gender || null,
-                    age: age ? parseInt(age) : null,
-                    height: height ? parseFloat(height) : null,
-                    weight: weight ? parseFloat(weight) : null
+                    "email": email,
+                    "gender": gender || null,
+                    "age": age ? parseInt(age) : null,
+                    "height": height ? parseFloat(height) : null,
+                    "weight": weight ? parseFloat(weight) : null
                 })
             })
             const data = await res.json()
@@ -95,12 +96,12 @@ function ProfilePage() {
         }
 
         try {
-            const res = await fetch(`http://localhost:3000/update/password/${email}`, {
+            const res = await fetch(`${API_BASE_URL}/update/password/${email}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    oldPassword: oldPassword,
-                    newPassword: newPassword
+                    "oldPassword": oldPassword,
+                    "newPassword": newPassword
                 })
             })
             const data = await res.json()

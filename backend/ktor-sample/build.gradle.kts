@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.ktor)
     alias(libs.plugins.kotlin.plugin.serialization)
+    id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
     application
     // id("org.jlleitschuh.gradle.ktlint") version "12.1.0"
 }
@@ -29,8 +30,6 @@ dependencies {
 
     testImplementation(kotlin("test"))
     testImplementation("io.mockk:mockk:1.13.10")
-
-    
 }
 
 application {

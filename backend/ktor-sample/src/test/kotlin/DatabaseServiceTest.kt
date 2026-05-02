@@ -2,7 +2,6 @@ package test
 
 import services.AuthService
 import services.DatabaseService
-import services.DatabaseService.CalendarEvent
 import services.DatabaseService.Competition
 import services.DatabaseService.Exercise
 import services.DatabaseService.GroupSession
@@ -141,6 +140,7 @@ class DatabaseServiceTest {
                 workoutType = null,
                 notes = null,
                 routeID = null,
+                isRoutine = false,
             ),
         )
 

@@ -2,6 +2,7 @@
 // frontend-backend connection logic and accessibility improvements done with Claude Sonnet (claude.ai)
 import { useEffect, useState } from "react"
 import Sidebar from "../components/Sidebar"
+import API_BASE_URL from "../config"
 
 function CompetitionPage() {
     const [competitions, setCompetitions] = useState([])
@@ -36,7 +37,7 @@ function CompetitionPage() {
 
     const fetchCompetitions = async (userID) => {
         try {
-            const res = await fetch(`http://localhost:3000/api/competitions/${userID}`)
+            const res = await fetch(`${API_BASE_URL}/api/competitions/${userID}`)
             const data = await res.json()
             setCompetitions(Array.isArray(data.Competitions) ? data.Competitions : [])
         } catch (err) {
@@ -60,16 +61,16 @@ function CompetitionPage() {
         setSuccess("")
 
         try {
-            const res = await fetch("http://localhost:3000/api/competition", {
+            const res = await fetch(`${API_BASE_URL}/api/competition`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    competitionID: 0,
-                    userID: userID,
-                    name: name,
-                    date: date,
-                    rank: rank ? parseInt(rank) : null,
-                    result: (resultMins || resultSecs) ? (parseInt(resultMins || 0) * 60) + parseInt(resultSecs || 0) : null
+                    "competitionID": 0,
+                    "userID": userID,
+                    "name": name,
+                    "date": date,
+                    "rank": rank ? parseInt(rank) : null,
+                    "result": (resultMins || resultSecs) ? (parseInt(resultMins || 0) * 60) + parseInt(resultSecs || 0) : null
                 })
             })
             const data = await res.json()
@@ -93,7 +94,7 @@ function CompetitionPage() {
 
     const handleDelete = async (competitionID) => {
         try {
-            const res = await fetch(`http://localhost:3000/api/competition/${competitionID}`, {
+            const res = await fetch(`${API_BASE_URL}/api/competition/${competitionID}`, {
                 method: "DELETE"
             })
             if (res.ok) {

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import Sidebar from "../components/Sidebar"
+import API_BASE_URL from "../config"
 
 function StartWorkoutPage() {
     const navigate = useNavigate()
@@ -22,13 +23,13 @@ function StartWorkoutPage() {
     useEffect(() => {
         const fetchExercises = async () => {
             try {
-                const res = await fetch("http://localhost:3000/api/exercises")
+                const res = await fetch(`${API_BASE_URL}/api/exercises`)
                 const data = await res.json()
                 const exercises = Array.isArray(data.Exercises) ? data.Exercises : []
                 setAvailableExercises(exercises)
 
                 if (routineWorkoutID) {
-                    const routineRes = await fetch(`http://localhost:3000/api/workout/exercises/${routineWorkoutID}`)
+                    const routineRes = await fetch(`${API_BASE_URL}/api/workout/exercises/${routineWorkoutID}`)
                     const routineData = await routineRes.json()
 
                     if (Array.isArray(routineData)) {
@@ -95,28 +96,29 @@ function StartWorkoutPage() {
         const today = new Date().toISOString().split("T")[0]
 
         const body = {
-            workout: {
-                workoutID: 0,
-                createdBy: userID,
-                assignedTo: userID,
-                date: today,
-                duration: duration ? parseInt(duration) : null,
-                workoutType: "weights",
-                notes: notes || null,
-                routeID: null
+            "workout": {
+                "workoutID": 0,
+                "createdBy": userID,
+                "assignedTo": userID,
+                "date": today,
+                "duration": duration ? parseInt(duration) : null,
+                "workoutType": "weights",
+                "notes": notes || null,
+                "routeID": null,
+                "isRoutine": false
             },
-            exercises: selectedExercises.map(ex => ({
-                workoutExercisesID: 0,
-                workoutID: 0,
-                exerciseID: ex.exerciseID,
-                sets: parseInt(ex.sets) || 1,
-                reps: ex.reps ? parseInt(ex.reps) : null,
-                weight: ex.weight ? parseFloat(ex.weight) : null
+            "exercises": selectedExercises.map(ex => ({
+                "workoutExercisesID": 0,
+                "workoutID": 0,
+                "exerciseID": ex.exerciseID,
+                "sets": parseInt(ex.sets) || 1,
+                "reps": ex.reps ? parseInt(ex.reps) : null,
+                "weight": ex.weight ? parseFloat(ex.weight) : null
             }))
         }
 
         try {
-            const res = await fetch("http://localhost:3000/api/log/workout", {
+            const res = await fetch(`${API_BASE_URL}/api/log/workout`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(body)

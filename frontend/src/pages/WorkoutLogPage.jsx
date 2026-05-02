@@ -3,6 +3,7 @@
 import { useNavigate } from "react-router-dom"
 import { useEffect, useState } from "react"
 import Sidebar from "../components/Sidebar"
+import API_BASE_URL from "../config"
 
 function WorkoutLogPage() {
     const navigate = useNavigate()
@@ -18,9 +19,10 @@ function WorkoutLogPage() {
 
         const fetchRoutines = async () => {
             try {
-                const res = await fetch(`http://localhost:3000/api/workouts/${userID}`)
+                const res = await fetch(`${API_BASE_URL}/api/workouts/${userID}`)
                 const data = await res.json()
-                setRoutines(Array.isArray(data.Workouts) ? data.Workouts : [])
+                const allWorkouts = Array.isArray(data.Workouts) ? data.Workouts : []
+                setRoutines(allWorkouts.filter(w => w.isRoutine === true))
             } catch (err) {
                 console.error("Error fetching routines:", err)
                 setError("Could not load your routines.")
