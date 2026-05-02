@@ -1,32 +1,53 @@
 import Sidebar from "../components/Sidebar"
+import { useEffect, useState } from "react"
 
 function StatisticsPage() {
-    const summaryStats = [
-        { label: "Total Workouts", value: 48 },
-        { label: "Hours Trained", value: 72 },
-        { label: "Competitions Completed", value: 6 }, 
-        { label: "Personal Bests", value: 5}
-    ]
+    const [summaryStats, setSummaryStats] = useState([])
+    const [progressionData, setProgressionData] = useState([])
+    const [personalBests, setPersonalBests] = useState([])
+    const [error, setError] = useState("")
 
-    const progressionData = [
-        { week: "Week 1", workouts: 4, hours: 6 },
-        { week: "Week 2", workouts: 5, hours: 8 },
-        { week: "Week 3", workouts: 3, hours: 5 },
-        { week: "Week 4", workouts: 6, hours: 9},
-    ]
-    
-    const competitionStats = [
-        { event: "Leeds 10K", date: "12/02/26", result: "48:21", status: "Completed" },
-        { event: "Yorkshire Triathlon", date: "28/03/26", result: "Upcoming", status: "Planned" }
-    ]
+    useEffect(() => {
+        const userID = localStorage.getItem("userID")
 
-    const personalBests = [
-        { activity: "5k run", best: "22:48" },
-        { activity: "10k run", best: "50:21" },
-        { activity: "Bench Press", best: "125kg" },
-        { activity: "Squat", best: "190kg" },
-        { activity: "Deadlift", best: "230kg" },
-    ]
+        if (!userID) {
+            setError("No user found. Please log in again.")
+            return
+        }
+        
+        const fetchStatistics = async () => {
+            try {
+                const [workoutRes, hoursRes, streakRes, historyRes, pbRes] = await Promise.all([
+                    fetch(`http://localhost:3000/api/statistics/user/workouts-completed/${userID}`),
+                    fetch(`http://localhost:3000/api/statistics/user/hours-trained/${userID}`),
+                    fetch(`http://localhost:3000/api/statistics/user/workout-streak/${userID}`),
+                    fetch(`http://localhost:3000/api/statistics/user/training-history/${userID}`),
+                    fetch(`http://localhost:3000/api/statistics/user/personal-bests/${userID}`)
+                ])
+
+            const workoutData = await workoutRes.json()
+            const hoursData = await hoursRes.json()
+            const streakData = await streakRes.json()
+            const historyData = await historyRes.json()
+            const pbsData = await pbRes.json()
+
+            setSummaryStats([
+                { label: "Total Workouts", value: workoutsData["Completed Workouts"] || 0 },
+                { label: "Hours Trained", value: hoursData["Hours Trained"] || 0 },
+                { label: "Current Streak", value: streakData["Current Streak"] || 0 },
+                { label: "Personal Bests", value: pbsData["Personal Bests"]?.length || 0 }
+            ])
+
+                setProgressionData(historyData["Training History"] || [])
+                setPersonalBests(pbsData["Personal Bests"] || [])
+            } catch (err) {
+                console.error("Error fetching statistics:", err)
+                setError("Failed to fetch statistics.")
+            }
+        }
+
+        fetchStatistics()
+    }, [])
 
     return (
         <div className="min-h-screen bg-gray-100 flex">
@@ -36,6 +57,11 @@ function StatisticsPage() {
                 <h1 className="text-3x1 font-bold text-blue-800 mb-6">
                     Statistics / Visualisation
                 </h1>
+                {error && (
+                    <p className="text-red-600 text-sm mb-4">
+                        {error}
+                    </p>
+                )}
 
                 {/* Summary */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 x1:grid-cols-4 gap-6 mb-8">
