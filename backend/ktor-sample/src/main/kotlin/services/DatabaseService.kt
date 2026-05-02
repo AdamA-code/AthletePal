@@ -1531,7 +1531,7 @@ class DatabaseService {
      *
      * The function validates the provided competitionID, ensuring it's greater than 0 before executing the
      * statement. Furthermore, rank and result are also validated to ensure that if a value is given, that it is greater than 0.
-     * The date is also validated to ensure it's in the correct format (YYYY-MM-DD), with name being check to ensure that it is
+     * The date is also validated to ensure it's in the correct format (YYYY-MM-DD), with name being checked to ensure that it is
      * not blank.
      *
      * The function only updates the name, rank, result and date of the record identified by the competitionID.
@@ -1850,7 +1850,7 @@ class DatabaseService {
      *
      * First, the function checks that the name is not blank and that the distance is above 0.0.
      * Furthermore, estimatedTime is also validated to ensure that if a value is given, that it is greater than 0.
-     * The date is also validated to ensure it's in the correct format (YYYY-MM-DD), with name being check to ensure that it is
+     * The date is also validated to ensure it's in the correct format (YYYY-MM-DD), with name being checked to ensure that it is
      * not blank, with the final check being that the routeID given is possible.
      *
      * The function only updates the name, distance, estimatedTime, date, isPublic, and routeData fields
@@ -2148,8 +2148,23 @@ class DatabaseService {
         return null
     }
 
-    // Training groups
-
+    /**
+     * Stores a new group in the database.
+     *
+     * The function first checks that the group name is not blank. It then checks that any provided
+     * description or goal is no longer than 500 characters long.
+     *
+     * The function then inserts the group into the database and the creator is automatically added
+     * as a member. Both actions are performed with a transaction eithe rboth succeed or neither is
+     * saved.
+     * 
+     * If successful, the generated groupID is returned. If unsuccessful, -1 is returned.
+     *
+     * Prepared statements are used to safely insert values.
+     *
+     * @param group The group data to store.
+     * @return The created groupID if successful, -1 if not.
+     */
     fun createGroup(group: TrainingGroup): Int {
         db.connection.autoCommit = false // stops db from saving each statting - keeps atomicty
         // Validation checks
@@ -2211,6 +2226,15 @@ class DatabaseService {
         }
     }
 
+    /**
+     * Deletes a traning group record from the database using the provided groupID.
+     * 
+     * The function executes a DELETE operation on the training_groups table if a group is found linking
+     * to the given groupID and true is returned. Otherwise, false is returned.
+     * 
+     * @param groupID The groupID of the row to delete.
+     * @return True if the record was deleted, false if not.
+     */
     fun deleteGroup(groupID: Int): Boolean {
         val stmt =
             db.connection.prepareStatement(
@@ -2224,6 +2248,12 @@ class DatabaseService {
         return rows > 0
     }
 
+    /**
+     * Retrieves a specific traning group from the database using its groupID.
+     * 
+     * @param groupID The unique identifier of the training group.
+     * @return A TrainingGroup object in the database if found, or null if no record is found.
+     */
     fun findGroup(groupID: Int): TrainingGroup? {
         val stmt =
             db.connection.prepareStatement(
@@ -2252,6 +2282,14 @@ class DatabaseService {
         return group
     }
 
+    /**
+     * Retrieves all training groups a user is in from the database by using the userID.
+     * 
+     * Each record in the table is mapped to a TrainingGroup object and returned in a list.
+     * If no matching record is found, an empty list is returned.
+     * 
+     * @return The list of TrainingGroup objects in the database.
+     */
     fun findAllGroups(userID: Int): List<TrainingGroup> {
         val stmt =
             db.connection.prepareStatement(
@@ -2283,6 +2321,25 @@ class DatabaseService {
         return groups
     }
 
+    /**
+     * Updates a training group record in the database.
+     *
+     * First, the function checks that the name is not blank.
+     * Furthermore, the provided goal and description is also validated to ensure the length of each of
+     *  these is no longer than 500. The final check being that the groupID given is above 0.
+     *
+     * The function only updates the name, description and goal fields of the record identified by the groupID.
+     *
+     * If the update is successful, the database is modified and the function returns true. If no matching training group
+     * is found or validation fails, false is returned.
+     * 
+     *
+     * @param groupID The unique identifier of the group to update.
+     * @param name The name of the group.
+     * @param description Optional description of the training group.
+     * @param goal Optional goal of the training group.
+     * @return True if the update was successful, false if not.
+     */
     fun updateGroup(
         groupID: Int,
         name: String,
