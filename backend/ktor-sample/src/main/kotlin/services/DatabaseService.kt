@@ -2155,7 +2155,7 @@ class DatabaseService {
      * description or goal is no longer than 500 characters long.
      *
      * The function then inserts the group into the database and the creator is automatically added
-     * as a member. Both actions are performed with a transaction eithe rboth succeed or neither is
+     * as a member. Both actions are performed with a transaction so either both succeed or neither is
      * saved.
      * 
      * If successful, the generated groupID is returned. If unsuccessful, -1 is returned.
@@ -2202,7 +2202,7 @@ class DatabaseService {
             rs.close()
             stmt.close()
 
-            // If that failed, retract what happened for atomicty
+            // If that failed, retract what happened for atomicity
             if (groupID == -1) {
                 db.connection.rollback()
                 return -1
@@ -2228,10 +2228,10 @@ class DatabaseService {
     }
 
     /**
-     * Deletes a traning group record from the database using the provided groupID.
+     * Deletes a training group record from the database using the provided groupID.
      * 
-     * The function executes a DELETE operation on the training_groups table if a group is found linking
-     * to the given groupID and true is returned. Otherwise, false is returned.
+     * The function executes a DELETE operation on the training_groups table. If a group with
+     * the given groupID exists, true is returned. Otherwise, false is returned.
      * 
      * @param groupID The groupID of the row to delete.
      * @return True if the record was deleted, false if not.
@@ -2250,7 +2250,7 @@ class DatabaseService {
     }
 
     /**
-     * Retrieves a specific traning group from the database using its groupID.
+     * Retrieves a specific training group from the database using its groupID.
      * 
      * @param groupID The unique identifier of the training group.
      * @return A TrainingGroup object in the database if found, or null if no record is found.
@@ -2289,6 +2289,7 @@ class DatabaseService {
      * Each record in the table is mapped to a TrainingGroup object and returned in a list.
      * If no matching record is found, an empty list is returned.
      * 
+     * @param userID The unique identifier of the user.
      * @return The list of TrainingGroup objects in the database.
      */
     fun findAllGroups(userID: Int): List<TrainingGroup> {
