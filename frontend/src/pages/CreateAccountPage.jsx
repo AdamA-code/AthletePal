@@ -4,11 +4,39 @@ import { useNavigate } from "react-router-dom";
 
 
 function CreateAccountPage() {
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault() 
     if (!fullName || !email || !password || !age || !accountType) {
       setError("Please fill in all the fields.")
       return
+    }
+
+    try {
+      const response = await fetch("https://localhost:3000/auth/create-account", {
+        method: "POST",
+        headers: {
+          "Content-Type": "applications/json"
+        },
+        body: JSON.stringify({
+          name: fullName,
+          email,
+          password,
+          age: Number(age),
+          accountType: accountType === "trainer"
+        })
+      })
+
+      const data = await repsone.json()
+
+      if (response.ok) {
+        setError("")
+        navigate("/")
+      } else {
+        setError(data.message || "Account could not be created.")
+      }
+    } catch (error) {
+      console.error("Create account error:", error)
+      setError("Could not connect to server.")
     }
 
     setError("")
