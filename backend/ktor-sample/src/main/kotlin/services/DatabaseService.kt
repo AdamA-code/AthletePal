@@ -269,7 +269,7 @@ class DatabaseService {
             connection.createStatement().execute("PRAGMA foreign_keys = ON") // Enable deletion cascading
         }
 
-        // Closes the database connectiion if its currently open
+        // Closes the database connectiion if it's currently open
         fun close() {
             if (!connection.isClosed) connection.close()
         }
@@ -988,7 +988,7 @@ class DatabaseService {
     /**
      * Updates a workout in the database.
      *
-     * The function validates the provided workoutID, ensuring it's not impossible beforing executing the
+     * The function validates the provided workoutID, ensuring it's greater than 0 before executing the
      * statement. Date is also validated to ensure it is in the correct YYYY-MM-DD format. Duration is then
      * validated to check that if a value is given, that it is greater than 0.
      *
@@ -1162,7 +1162,7 @@ class DatabaseService {
     /**
      * Updates a workout and exercise join record in the database.
      *
-     * The function validates the provided workoutExercisesID, ensuring it's not impossible beforing executing the
+     * The function validates the provided workoutExercisesID, ensuring it's greater than 0 before executing the
      * statement. Sets, reps, and weight are also validated to ensure that if a value is given, that it is greater than 0.
      *
      * The function only updates the sets, reps, and weight associated with the workout, identified by the workoutExercisesID.
@@ -1235,7 +1235,7 @@ class DatabaseService {
     /**
      * Stores a new statistic in the database.
      *
-     * The function first checks whether the given userId and exerciseID is a possible value.
+     * The function first checks whether the given userID and exerciseID are above 0.
      * The function then checks that if the scoreValue is not null then it is higher than 0, and that the given
      * date is in the correct format (YYYY-MM-DD)
      *
@@ -1324,10 +1324,10 @@ class DatabaseService {
     }
 
     /**
-     * Retrieves the user's best statistics for a given exercise from the database.
+     * Retrieves the user's best statistic for a given exercise from the database.
      * 
-     * @return A Statisitc object with the highest scoreValue for the given userID and exerciseID,
-     * or null is no such value is found.
+     * @return A Statistic object with the highest scoreValue for the given userID and exerciseID,
+     * or null if no such value is found.
      */
     fun getBestStat(
         userID: Int,
@@ -1370,9 +1370,9 @@ class DatabaseService {
     /**
      * Updates a statistic record in the database.
      *
-     * The function validates the provided statisticID, ensuring it's not impossible beforing executing the
+     * The function validates the provided statisticID, ensuring it's greater than 0 before executing the
      * statement. Furthermore, scoreValue is also validated to ensure that if a value is given, that it is greater than 0.
-     * The date is also validated to ensure its in the correct format (YYYY-MM-DD)
+     * The date is also validated to ensure it's in the correct format (YYYY-MM-DD)
      *
      * The function only updates the scoreValue and date of the record identified by the statisticID.
      *
@@ -1439,7 +1439,7 @@ class DatabaseService {
     /**
      * Stores a new competition in the database.
      *
-     * The function first checks that the competition name is not emmpty.
+     * The function first checks that the competition name is not empty.
      * The function then checks that the given date is in the correct format (YYYY-MM-DD) and that
      * if there is a rank and/or result given that they are over 0.
      *
@@ -1529,9 +1529,9 @@ class DatabaseService {
     /**
      * Updates a competition record in the database.
      *
-     * The function validates the provided competitionID, ensuring it's not impossible beforing executing the
+     * The function validates the provided competitionID, ensuring it's greater than 0 before executing the
      * statement. Furthermore, rank and result are also validated to ensure that if a value is given, that it is greater than 0.
-     * The date is also validated to ensure its in the correct format (YYYY-MM-DD), with name being check to ensure that it is
+     * The date is also validated to ensure it's in the correct format (YYYY-MM-DD), with name being check to ensure that it is
      * not blank.
      *
      * The function only updates the name, rank, result and date of the record identified by the competitionID.
@@ -1540,9 +1540,11 @@ class DatabaseService {
      * is found or validation fails, false is returned.
      * 
      *
-     * @param statisticID The unique identifier of the statistic to update.
-     * @param scoreValue The value of the statistic.
-     * @param date The date the statistic was recorded.
+     * @param competitionID The unique identifier of the competition to update.
+     * @param name The value of the competition.
+     * @param date The date the competition was recorded.
+     * @param rank Where the user placed in the competition.
+     * @param result The score the user achieved in the competition.
      * @return True if the update was successful, false if not.
      */
     fun updateCompetition(
@@ -1605,6 +1607,9 @@ class DatabaseService {
     /**
      * Stores a new many-to-many record in the database between competitions and exercises.
      *
+     * The function first checks that the competitonID and exerciseID are greater than 0. Next the function
+     * checks that if there is a given performance, that it is greater than 0.0.
+     * 
      * If successful, the generated competitionExerciseID is returned. If unsuccessful, -1 is returned.
      *
      * Prepared statements are used to safely insert values.
@@ -1613,6 +1618,10 @@ class DatabaseService {
      * @return The created competitionExerciseID if successful, -1 if not.
      */
     fun addExercisetoCompetition(compEx: CompetitionExercise): Int {
+        // Validation checks
+        if (compEx.competitionID <= 0 || compEx.exerciseID <= 0) return -1
+        if (compEx.performance != null && compEx.performance <= 0.0) return -1
+
         val stmt =
             db.connection.prepareStatement(
                 """
@@ -1677,13 +1686,16 @@ class DatabaseService {
     }
 
     /**
-     * Updates a competitiom and exercise join record in the database.
+     * Updates a competition and exercise join record in the database.
      *
+     * * The function first checks that the competitonID and exerciseID are greater than 0. Next the function
+     * checks that if there is a given performance, that it is greater than 0.0. If either fail, false is returned.
+     * 
      * The function only updates the performance associated with the exercise in the competition,
      * identified by the competitionExerciseID.
      *
-     * If the update is successful, the database is modified and the function returns true. If no matching workout
-     * is found, false is returned.
+     * If the update is successful, the database is modified and the function returns true. If no matching
+     * competition_exercises is found, false is returned.
      * 
      *
      * @param competitionExercisesID The unique identifier of the join record to update.
@@ -1694,6 +1706,10 @@ class DatabaseService {
         competitionExerciseID: Int,
         performance: Double?,
     ): Boolean {
+        // Validation checks
+        if (competitionExerciseID <= 0) return -1
+        if (performance != null && performance <= 0.0) return -1
+
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
                 """
@@ -1834,7 +1850,7 @@ class DatabaseService {
      *
      * First, the function checks that the name is not blank and that the distance is above 0.0.
      * Furthermore, estimatedTime is also validated to ensure that if a value is given, that it is greater than 0.
-     * The date is also validated to ensure its in the correct format (YYYY-MM-DD), with name being check to ensure that it is
+     * The date is also validated to ensure it's in the correct format (YYYY-MM-DD), with name being check to ensure that it is
      * not blank, with the final check being that the routeID given is possible.
      *
      * The function only updates the name, distance, estimatedTime, date, isPublic, and routeData fields
@@ -1848,8 +1864,8 @@ class DatabaseService {
      * @param name The name of the route
      * @param distance The distance of the route recorded.
      * @param estimatedTime The estimated time the route will take to complete.
-     * @param date The date the statistic was recorded.
-     * @param isPublic True if the route can be accessed be other users, false otherwise.
+     * @param date The date associated with the route.
+     * @param isPublic True if the route can be accessed by other users, false otherwise.
      * @param routeData The data of the drawing of the route on a map.
      * @return True if the update was successful, false if not.
      */
