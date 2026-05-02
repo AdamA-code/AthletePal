@@ -23,13 +23,13 @@ function StartWorkoutPage() {
     useEffect(() => {
         const fetchExercises = async () => {
             try {
-                const res = await fetch(`http://localhost:3000/api/exercises`)
+                const res = await fetch(`${API_BASE_URL}/api/exercises`)
                 const data = await res.json()
                 const exercises = Array.isArray(data.Exercises) ? data.Exercises : []
                 setAvailableExercises(exercises)
 
                 if (routineWorkoutID) {
-                    const routineRes = await fetch(`http://localhost:3000/api/workout/exercises/${routineWorkoutID}`)
+                    const routineRes = await fetch(`${API_BASE_URL}/api/workout/exercises/${routineWorkoutID}`)
                     const routineData = await routineRes.json()
 
                     if (Array.isArray(routineData)) {
@@ -118,7 +118,7 @@ function StartWorkoutPage() {
         }
 
         try {
-            const res = await fetch(`http://localhost:3000/api/log/workout`, {
+            const res = await fetch(`${API_BASE_URL}/api/log/workout`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(body)

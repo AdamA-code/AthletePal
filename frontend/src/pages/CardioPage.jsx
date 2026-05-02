@@ -36,7 +36,7 @@ function CardioPage() {
 
         const fetchRoutes = async () => {
             try {
-                const res = await fetch(`http://localhost:3000/api/routes/${userID}`)
+                const res = await fetch(`${API_BASE_URL}/api/routes/${userID}`)
                 const data = await res.json()
                 setPublicRoutes(Array.isArray(data.Routes) ? data.Routes : [])
             } catch (err) {
@@ -105,7 +105,7 @@ function CardioPage() {
                     routeData: drawnRouteData
                 }
 
-                const routeRes = await fetch(`http://localhost:3000/api/route`, {
+                const routeRes = await fetch(`${API_BASE_URL}/api/route`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(routeBody)
@@ -141,7 +141,7 @@ function CardioPage() {
                 exercises: []
             }
 
-            const workoutRes = await fetch(`http://localhost:3000/api/log/workout`, {
+            const workoutRes = await fetch(`${API_BASE_URL}/api/log/workout`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(workoutBody)

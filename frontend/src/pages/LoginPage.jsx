@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom"
 import { useState } from "react";
+import API_BASE_URL from "../config";
 
 function LoginPage () {
     const navigate = useNavigate()
@@ -17,14 +18,14 @@ function LoginPage () {
 
         // Implemented logic to communicate with backend for fethcing the username and password and validating the user.
         try {
-            const response = await fetch("http://localhost:3000/auth/login", {
+            const response = await fetch(`${API_BASE_URL}/auth/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({ 
-                    email, 
-                    password 
+                    "email": email, 
+                    "password": password 
                 })
             })
 

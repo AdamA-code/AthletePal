@@ -18,7 +18,7 @@ function NewRoutinePage() {
     useEffect(() => {
         const fetchExercises = async () => {
             try {
-                const res = await fetch(`http://localhost:3000/api/exercises`)
+                const res = await fetch(`${API_BASE_URL}/api/exercises`)
                 const data = await res.json()
                 setAvailableExercises(Array.isArray(data.Exercises) ? data.Exercises : [])
             } catch (err) {
@@ -94,7 +94,7 @@ function NewRoutinePage() {
         }
 
         try {
-            const res = await fetch(`http://localhost:3000/api/log/workout`, {
+            const res = await fetch(`${API_BASE_URL}/api/log/workout`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(body)

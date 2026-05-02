@@ -29,7 +29,7 @@ function ProfilePage() {
 
         const fetchUser = async () => {
             try {
-                const res = await fetch(`http://localhost:3000/auth/user/${email}`)
+                const res = await fetch(`${API_BASE_URL}/auth/user/${email}`)
                 const data = await res.json()
                 if (res.ok) {
                     setUser(data.User)
@@ -55,7 +55,7 @@ function ProfilePage() {
         setSuccess("")
 
         try {
-            const res = await fetch(`http://localhost:3000/update/account`, {
+            const res = await fetch(`${API_BASE_URL}/update/account`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -96,7 +96,7 @@ function ProfilePage() {
         }
 
         try {
-            const res = await fetch(`http://localhost:3000/update/password/${email}`, {
+            const res = await fetch(`${API_BASE_URL}/update/password/${email}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

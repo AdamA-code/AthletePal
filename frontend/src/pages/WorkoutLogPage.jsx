@@ -19,7 +19,7 @@ function WorkoutLogPage() {
 
         const fetchRoutines = async () => {
             try {
-                const res = await fetch(`http://localhost:3000/api/workouts/${userID}`)
+                const res = await fetch(`${API_BASE_URL}/api/workouts/${userID}`)
                 const data = await res.json()
                 const allWorkouts = Array.isArray(data.Workouts) ? data.Workouts : []
                 setRoutines(allWorkouts.filter(w => w.isRoutine === true))

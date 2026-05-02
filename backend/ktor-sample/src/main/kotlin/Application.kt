@@ -24,6 +24,13 @@ fun main() {
 fun Application.module() { // Function for config. of Ktor app.
     install(CORS) { // Install CORS plugin
         anyHost() // Allow requests from any port number
+
+        allowHeader(io.ktor.http.HttpHeaders.ContentType)
+        allowMethod(io.ktor.http.HttpMethod.Get)
+        allowMethod(io.ktor.http.HttpMethod.Post)
+        allowMethod(io.ktor.http.HttpMethod.Put)
+        allowMethod(io.ktor.http.HttpMethod.Delete)
+        allowMethod(io.ktor.http.HttpMethod.Options)
     }
     install(ContentNegotiation) { // Install content negociation plugin
         json() // Automatic JSON handling

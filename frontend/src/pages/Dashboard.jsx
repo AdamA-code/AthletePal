@@ -1,6 +1,7 @@
 
 import Sidebar from "../components/Sidebar"
 import { useEffect, useState } from "react"
+import API_BASE_URL from "../config"
 
 function DashboardPage() {
     const [todaysWorkouts, setTodaysWorkouts] = useState([])
@@ -22,17 +23,17 @@ function DashboardPage() {
                 }
 
                 const [workoutsResponse, activityResponse, competitionsResponse] = await Promise.all([
-                    fetch("http://localhost:3000/dashboard/todays-workouts", {
+                    fetch(`${API_BASE_URL}/dashboard/todays-workouts`, {
                         method: "POST",
                         headers,
                         body: JSON.stringify({ email })
                     }),
-                    fetch("http://localhost:3000/dashboard/recent-activity", {
+                    fetch(`${API_BASE_URL}/dashboard/recent-activity`, {
                         method: "POST",
                         headers,
                         body: JSON.stringify({ email })
                     }),
-                    fetch("http://localhost:3000/dashboard/upcoming-competitions", {
+                    fetch(`${API_BASE_URL}/dashboard/upcoming-competitions`, {
                         method: "POST",
                         headers,
                         body: JSON.stringify({ email })
