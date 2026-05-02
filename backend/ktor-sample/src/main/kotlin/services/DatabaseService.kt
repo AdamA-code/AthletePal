@@ -1735,8 +1735,22 @@ class DatabaseService {
         return rowsDeleted > 0
     }
 
-    // Routes DB
-
+    /**
+     * Stores a new route in the database.
+     *
+     * The function first checks that the route name is not blank. After this, the function checks
+     * that the distance of the route is above 0.0. The function then checks that the given date is
+     * in the correct format (YYYY-MM-DD) and that if there is a estimatedTime given that it is are over 0.0.
+     *
+     * The function then inserts the route into the database.
+     * 
+     * If successful, the generated routeID is returned. If unsuccessful, -1 is returned.
+     *
+     * Prepared statements are used to safely insert values.
+     *
+     * @param route The route data to store.
+     * @return The created routeID if successful, -1 if not.
+     */
     fun createRoute(route: Route): Int {
         // Validation Checks
         if (route.name.isBlank()) return -1
@@ -1777,6 +1791,14 @@ class DatabaseService {
         return id
     }
 
+    /**
+     * Retrieves all of a user's routes from the database, along with all public routes too.
+     * 
+     * Each record in the table is mapped to a Route object and returned in a list.
+     * If no matching record is found, an empty list is returned.
+     * 
+     * @return The list of Route objects in the database.
+     */
     fun findAllRoutes(userID: Int): List<Route> {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -1807,6 +1829,30 @@ class DatabaseService {
         return routes
     }
 
+    /**
+     * Updates a route record in the database.
+     *
+     * First, the function checks that the name is not blank and that the distance is above 0.0.
+     * Furthermore, estimatedTime is also validated to ensure that if a value is given, that it is greater than 0.
+     * The date is also validated to ensure its in the correct format (YYYY-MM-DD), with name being check to ensure that it is
+     * not blank, with the final check being that the routeID given is possible.
+     *
+     * The function only updates the name, distance, estimatedTime, date, isPublic, and routeData fields
+     * of the record identified by the routeID.
+     *
+     * If the update is successful, the database is modified and the function returns true. If no matching route
+     * is found or validation fails, false is returned.
+     * 
+     *
+     * @param routeID The unique identifier of the route to update.
+     * @param name The name of the route
+     * @param distance The distance of the route recorded.
+     * @param estimatedTime The estimated time the route will take to complete.
+     * @param date The date the statistic was recorded.
+     * @param isPublic True if the route can be accessed be other users, false otherwise.
+     * @param routeData The data of the drawing of the route on a map.
+     * @return True if the update was successful, false if not.
+     */
     fun updateRoute(
         routeID: Int,
         name: String,
@@ -1846,6 +1892,15 @@ class DatabaseService {
         return rowsUpdated > 0
     }
 
+    /**
+     * Deletes a route record from the database using the provided routeID.
+     * 
+     * The function executes a DELETE operation on the routes table if a route is found linking
+     * to the given routeID and true is returned. Otherwise, false is returned.
+     * 
+     * @param routeID The routeID of the row to delete.
+     * @return True if the record was deleted, false if not.
+     */
     fun deleteRoute(routeID: Int): Boolean {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
