@@ -1933,6 +1933,11 @@ class DatabaseService {
 
     // Individual find functions
 
+    /**
+     * Retrieves a particular route from the database.
+     * 
+     * @return A Route object in the database, null if no record is found.
+     */
     fun findRoute(routeID: Int): Route? {
         val stmt =
             db.connection.prepareStatement(
@@ -1965,6 +1970,11 @@ class DatabaseService {
         return route
     }
 
+    /**
+     * Retrieves a particular Workout from the database.
+     * 
+     * @return A Workout object in the database if found, null if no record is found.
+     */
     fun findWorkout(workoutID: Int): Workout? {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -1998,6 +2008,11 @@ class DatabaseService {
         return null
     }
 
+    /**
+     * Retrieves a particular Workout and exercise join record from the database.
+     * 
+     * @return A WorkoutExercise object in the database if found, null if no record is found.
+     */
     fun findWorkoutExercise(workoutExercisesID: Int): WorkoutExercise? {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -2027,6 +2042,11 @@ class DatabaseService {
         return null
     }
 
+    /**
+     * Retrieves a particular statistic from the database.
+     * 
+     * @return A Statistic object in the database if found, null if no record is found.
+     */
     fun findStatistic(statisticID: Int): Statistic? {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -2056,6 +2076,11 @@ class DatabaseService {
         return null
     }
 
+    /**
+     * Retrieves a particular competition from the database.
+     * 
+     * @return A Competition object in the database if found, null if no record is found.
+     */
     fun findCompetition(competitionID: Int): Competition? {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -2085,6 +2110,11 @@ class DatabaseService {
         return null
     }
 
+    /**
+     * Retrieves a particular competition and exercise join record from the database.
+     * 
+     * @return A CompetitionExercise object in the database if found, null if no record is found.
+     */
     fun findCompetitionExercise(competitionExerciseID: Int): CompetitionExercise? {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
