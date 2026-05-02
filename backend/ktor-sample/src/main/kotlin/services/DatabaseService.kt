@@ -1232,7 +1232,22 @@ class DatabaseService {
         return rowsDeleted > 0
     }
 
-    // Statistics DB
+    /**
+     * Stores a new statistic in the database.
+     *
+     * The function first checks whether the given userId and exerciseID is a possible value.
+     * The function then checks that if the scoreValue is not null then it is higher than 0, and that the given
+     * date is in the correct format (YYYY-MM-DD)
+     *
+     * The function then inserts the statistic into the database.
+     * 
+     * If successful, the generated statisticID is returned. If unsuccessful, -1 is returned.
+     *
+     * Prepared statements are used to safely insert values.
+     *
+     * @param stat The statistic data to store.
+     * @return The created statisticID if successful, -1 if not.
+     */
     fun createStatistic(stat: Statistic): Int {
         // Validation Checks
         if (stat.userID <= 0 || stat.exerciseID <= 0) return -1
@@ -1269,6 +1284,14 @@ class DatabaseService {
         return id
     }
 
+    /**
+     * Retrieves all of a user's statistics for a given exercise from the database.
+     * 
+     * Each record in the table is mapped to a Statistic object and returned in a list.
+     * If no matching record is found, an empty list is returned.
+     * 
+     * @return The list of Statistic objects in the database.
+     */
     fun findAllStatistics(
         userID: Int,
         exerciseID: Int,
@@ -1300,6 +1323,12 @@ class DatabaseService {
         return stats
     }
 
+    /**
+     * Retrieves the user's best statistics for a given exercise from the database.
+     * 
+     * @return A Satisitc object with the highest scoreValue for the given userID and exerciseID,
+     * or null is no such value is found.
+     */
     fun getBestStat(
         userID: Int,
         exerciseID: Int,
@@ -1338,6 +1367,24 @@ class DatabaseService {
         return stat
     }
 
+    /**
+     * Updates a statistic record in the database.
+     *
+     * The function validates the provided statisticID, ensuring it's not impossible beforing executing the
+     * statement. Furthermore, scoreValue is also validated to ensure that if a value is given, that it is greater than 0.
+     * The date is also validated to ensure its in the correct format (YYYY-MM-DD)
+     *
+     * The function only updates the scoreValue and date of the record identified by the statisticID.
+     *
+     * If the update is successful, the database is modified and the function returns true. If no matching statistic
+     * is found or validation fails, false is returned.
+     * 
+     *
+     * @param statisticID The unique identifier of the statistic to update.
+     * @param scoreValue The value of the statistic.
+     * @param date The date the statistic was recorded.
+     * @return True if the update was successful, false if not.
+     */
     fun updateStatistic(
         statisticID: Int,
         scoreValue: Double,
@@ -1366,6 +1413,15 @@ class DatabaseService {
         return rowsUpdated > 0
     }
 
+    /**
+     * Deletes a statistic record from the database using the provided statisticID.
+     * 
+     * The function executes a DELETE operation on the statistics table if a statistic is found linking
+     * to the given statisticID and true is returned. Otherwise, false is returned.
+     * 
+     * @param statisticID The statisticID of the row to delete.
+     * @return True if the join record was deleted, false if not.
+     */
     fun deleteStatistic(statisticID: Int): Boolean {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
