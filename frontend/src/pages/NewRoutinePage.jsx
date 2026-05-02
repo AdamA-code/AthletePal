@@ -72,24 +72,24 @@ function NewRoutinePage() {
         const today = new Date().toISOString().split("T")[0]
 
         const body = {
-            workout: {
-                workoutID: 0,
-                createdBy: userID,
-                assignedTo: userID,
-                date: today,
-                duration: null,
-                workoutType: "weights",
-                notes: routineName,
-                routeID: null,
-                isRoutine: true
+            "workout": {
+                "workoutID": 0,
+                "createdBy": userID,
+                "assignedTo": userID,
+                "date": today,
+                "duration": null,
+                "workoutType": "weights",
+                "notes": routineName,
+                "routeID": null,
+                "isRoutine": true
             },
-            exercises: selectedExercises.map(ex => ({
-                workoutExercisesID: 0,
-                workoutID: 0,
-                exerciseID: ex.exerciseID,
-                sets: parseInt(ex.sets),
-                reps: null,
-                weight: null
+            "exercises": selectedExercises.map(ex => ({
+                "workoutExercisesID": 0,
+                "workoutID": 0,
+                "exerciseID": ex.exerciseID,
+                "sets": parseInt(ex.sets),
+                "reps": null,
+                "weight": null
             }))
         }
 

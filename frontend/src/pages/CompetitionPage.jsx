@@ -65,12 +65,12 @@ function CompetitionPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    competitionID: 0,
-                    userID: userID,
-                    name: name,
-                    date: date,
-                    rank: rank ? parseInt(rank) : null,
-                    result: (resultMins || resultSecs) ? (parseInt(resultMins || 0) * 60) + parseInt(resultSecs || 0) : null
+                    "competitionID": 0,
+                    "userID": userID,
+                    "name": name,
+                    "date": date,
+                    "rank": rank ? parseInt(rank) : null,
+                    "result": (resultMins || resultSecs) ? (parseInt(resultMins || 0) * 60) + parseInt(resultSecs || 0) : null
                 })
             })
             const data = await res.json()

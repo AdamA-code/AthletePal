@@ -59,11 +59,11 @@ function ProfilePage() {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    email: email,
-                    gender: gender || null,
-                    age: age ? parseInt(age) : null,
-                    height: height ? parseFloat(height) : null,
-                    weight: weight ? parseFloat(weight) : null
+                    "email": email,
+                    "gender": gender || null,
+                    "age": age ? parseInt(age) : null,
+                    "height": height ? parseFloat(height) : null,
+                    "weight": weight ? parseFloat(weight) : null
                 })
             })
             const data = await res.json()
@@ -100,8 +100,8 @@ function ProfilePage() {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    oldPassword: oldPassword,
-                    newPassword: newPassword
+                    "oldPassword": oldPassword,
+                    "newPassword": newPassword
                 })
             })
             const data = await res.json()

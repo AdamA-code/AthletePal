@@ -26,17 +26,17 @@ function DashboardPage() {
                     fetch(`${API_BASE_URL}/dashboard/todays-workouts`, {
                         method: "POST",
                         headers,
-                        body: JSON.stringify({ email })
+                        body: JSON.stringify({ "email": email })
                     }),
                     fetch(`${API_BASE_URL}/dashboard/recent-activity`, {
                         method: "POST",
                         headers,
-                        body: JSON.stringify({ email })
+                        body: JSON.stringify({ "email": email })
                     }),
                     fetch(`${API_BASE_URL}/dashboard/upcoming-competitions`, {
                         method: "POST",
                         headers,
-                        body: JSON.stringify({ email })
+                        body: JSON.stringify({ "email": email })
                     })
                 ])
                 const workoutsData = await workoutsResponse.json()

@@ -96,24 +96,24 @@ function StartWorkoutPage() {
         const today = new Date().toISOString().split("T")[0]
 
         const body = {
-            workout: {
-                workoutID: 0,
-                createdBy: userID,
-                assignedTo: userID,
-                date: today,
-                duration: duration ? parseInt(duration) : null,
-                workoutType: "weights",
-                notes: notes || null,
-                routeID: null,
-                isRoutine: false
+            "workout": {
+                "workoutID": 0,
+                "createdBy": userID,
+                "assignedTo": userID,
+                "date": today,
+                "duration": duration ? parseInt(duration) : null,
+                "workoutType": "weights",
+                "notes": notes || null,
+                "routeID": null,
+                "isRoutine": false
             },
-            exercises: selectedExercises.map(ex => ({
-                workoutExercisesID: 0,
-                workoutID: 0,
-                exerciseID: ex.exerciseID,
-                sets: parseInt(ex.sets) || 1,
-                reps: ex.reps ? parseInt(ex.reps) : null,
-                weight: ex.weight ? parseFloat(ex.weight) : null
+            "exercises": selectedExercises.map(ex => ({
+                "workoutExercisesID": 0,
+                "workoutID": 0,
+                "exerciseID": ex.exerciseID,
+                "sets": parseInt(ex.sets) || 1,
+                "reps": ex.reps ? parseInt(ex.reps) : null,
+                "weight": ex.weight ? parseFloat(ex.weight) : null
             }))
         }
 

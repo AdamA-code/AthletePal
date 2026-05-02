@@ -95,14 +95,14 @@ function CardioPage() {
         if (routeMode === "draw" && drawnRouteData && routeName && distance) {
             try {
                 const routeBody = {
-                    routeID: 0,
-                    userID: userID,
-                    name: routeName,
-                    distance: parseFloat(distance),
-                    estimatedTime: duration ? parseFloat(duration) : null,
-                    date: date,
-                    isPublic: isPublic,
-                    routeData: drawnRouteData
+                    "routeID": 0,
+                    "userID": userID,
+                    "name": routeName,
+                    "distance": parseFloat(distance),
+                    "estimatedTime": duration ? parseFloat(duration) : null,
+                    "date": date,
+                    "isPublic": isPublic,
+                    "routeData": drawnRouteData
                 }
 
                 const routeRes = await fetch(`${API_BASE_URL}/api/route`, {
@@ -129,14 +129,14 @@ function CardioPage() {
         try {
             const workoutBody = {
                 workout: {
-                    workoutID: 0,
-                    createdBy: userID,
-                    assignedTo: userID,
-                    date: date,
-                    duration: parseInt(duration),
-                    workoutType: getWorkoutType(exerciseType),
-                    notes: notes || null,
-                    routeID: savedRouteID
+                    "workoutID": 0,
+                    "createdBy": userID,
+                    "assignedTo": userID,
+                    "date": date,
+                    "duration": parseInt(duration),
+                    "workoutType": getWorkoutType(exerciseType),
+                    "notes": notes || null,
+                    "routeID": savedRouteID
                 },
                 exercises: []
             }
