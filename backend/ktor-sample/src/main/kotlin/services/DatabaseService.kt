@@ -2166,11 +2166,12 @@ class DatabaseService {
      * @return The created groupID if successful, -1 if not.
      */
     fun createGroup(group: TrainingGroup): Int {
-        db.connection.autoCommit = false // stops db from saving each statting - keeps atomicty
         // Validation checks
         if (group.name.isBlank()) return -1
         if (group.description != null && group.description.length > 500) return -1
         if (group.goal != null && group.goal.length > 500) return -1
+
+        db.connection.autoCommit = false // stops db from saving each stating - keeps atomicity
 
         try {
             val stmt =
@@ -2201,7 +2202,7 @@ class DatabaseService {
             rs.close()
             stmt.close()
 
-            // If that failed, retract what happend for atomicty
+            // If that failed, retract what happened for atomicty
             if (groupID == -1) {
                 db.connection.rollback()
                 return -1
@@ -2221,7 +2222,7 @@ class DatabaseService {
             db.connection.rollback()
             return -1
         } finally {
-            // Always restore autocommit if failur eor success
+            // Always restore autocommit if failure or success
             db.connection.autoCommit = true
         }
     }
