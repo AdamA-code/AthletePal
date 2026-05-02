@@ -7,12 +7,14 @@ function DashboardPage() {
     const [recentActivity, setRecentActivity] = useState(null)
     const [upcomingCompetitions, setUpcomingCompetitions] = useState([])
     const [error, setError] = useState("")
+    const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         const email = localStorage.getItem("email")
         if (!email) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
+            
             setError("No email found. Please log in again.")
+            setLoading(false)
             return
         }
         { /* Fetch dashboard data from backend */ }
@@ -46,6 +48,9 @@ function DashboardPage() {
             } catch (err) {
                 console.error("Error fetching dashboard data:", err)
                 setError("Failed to load dashboard data. Please try again later.")
+            } finally {
+                setLoading(false)
+        
             }
         }
         fetchDashboardData()
