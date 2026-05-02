@@ -8,13 +8,18 @@ function CompetitionPage() {
     const [competitions, setCompetitions] = useState([])
     const [name, setName] = useState("")
     const [date, setDate] = useState("")
-    const [rank, setRank] = useState("")
-    const [resultMins, setResultMins] = useState("")
-    const [resultSecs, setResultSecs] = useState("")
     const [error, setError] = useState("")
     const [success, setSuccess] = useState("")
+    const [editingID, setEditingID] = useState(null)
+    const [editRank, setEditRank] = useState("")
+    const [editMins, setEditMins] = useState("")
+    const [editSecs, setEditSecs] = useState("")
 
     const today = new Date().toISOString().split("T")[0]
+
+    const upcoming = competitions.filter(c => c.date > today)
+    const todayComps = competitions.filter(c => c.date === today)
+    const completed = competitions.filter(c => c.date < today)
 
     const formatResult = (seconds) => {
         if (!seconds) return null
@@ -22,9 +27,6 @@ function CompetitionPage() {
         const secs = seconds % 60
         return `${mins}:${secs.toString().padStart(2, "0")}`
     }
-
-    const upcoming = competitions.filter(c => c.date >= today)
-    const completed = competitions.filter(c => c.date < today)
 
     useEffect(() => {
         const userID = localStorage.getItem("userID")
@@ -65,12 +67,12 @@ function CompetitionPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    "competitionID": 0,
-                    "userID": userID,
-                    "name": name,
-                    "date": date,
-                    "rank": rank ? parseInt(rank) : null,
-                    "result": (resultMins || resultSecs) ? (parseInt(resultMins || 0) * 60) + parseInt(resultSecs || 0) : null
+                    competitionID: 0,
+                    userID: userID,
+                    name: name,
+                    date: date,
+                    rank: null,
+                    result: null
                 })
             })
             const data = await res.json()
@@ -79,9 +81,6 @@ function CompetitionPage() {
                 setSuccess("Competition added!")
                 setName("")
                 setDate("")
-                setRank("")
-                setResultMins("")
-                setResultSecs("")
                 fetchCompetitions(userID)
             } else {
                 setError(data.message || "Failed to add competition.")
@@ -109,6 +108,154 @@ function CompetitionPage() {
         }
     }
 
+    const startEditing = (comp) => {
+        setEditingID(comp.competitionID)
+        setEditRank(comp.rank || "")
+        if (comp.result) {
+            setEditMins(Math.floor(comp.result / 60).toString())
+            setEditSecs((comp.result % 60).toString())
+        } else {
+            setEditMins("")
+            setEditSecs("")
+        }
+    }
+
+    const cancelEditing = () => {
+        setEditingID(null)
+        setEditRank("")
+        setEditMins("")
+        setEditSecs("")
+    }
+
+    const handleSaveEdit = async (comp) => {
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/competition/${comp.competitionID}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: comp.name,
+                    date: comp.date,
+                    rank: editRank ? parseInt(editRank) : null,
+                    result: (editMins || editSecs)
+                        ? (parseInt(editMins || 0) * 60) + parseInt(editSecs || 0)
+                        : null
+                })
+            })
+
+            if (res.ok) {
+                setSuccess("Competition updated!")
+                setEditingID(null)
+                const userID = localStorage.getItem("userID")
+                fetchCompetitions(userID)
+            } else {
+                setError("Failed to update competition.")
+            }
+        } catch (err) {
+            console.error(err)
+            setError("Could not connect to server.")
+        }
+    }
+
+    const renderCompCard = (comp, showEdit) => (
+        <div key={comp.competitionID} className="bg-white p-4 rounded shadow mb-4">
+            <div className="flex justify-between items-start">
+                <div>
+                    <p className="font-semibold">{comp.name}</p>
+                    <p className="text-sm text-gray-600">{comp.date}</p>
+                    {comp.rank && (
+                        <p className="text-sm text-gray-600">Position: {comp.rank}</p>
+                    )}
+                    {comp.result && (
+                        <p className="text-sm text-gray-600">Result: {formatResult(comp.result)}</p>
+                    )}
+                </div>
+                <div className="flex gap-3 items-center">
+                    {showEdit && editingID !== comp.competitionID && (
+                        <button
+                            onClick={() => startEditing(comp)}
+                            className="text-blue-600 text-sm hover:underline"
+                            aria-label={`Edit result for ${comp.name}`}
+                        >
+                            {comp.rank || comp.result ? "Edit Result" : "Add Result"}
+                        </button>
+                    )}
+                    <button
+                        onClick={() => handleDelete(comp.competitionID)}
+                        className="text-red-700 text-sm hover:underline"
+                        aria-label={`Remove ${comp.name}`}
+                    >
+                        Remove
+                    </button>
+                </div>
+            </div>
+
+            {/* Inline edit form */}
+            {showEdit && editingID === comp.competitionID && (
+                <div className="mt-4 border-t pt-4">
+                    <p className="text-sm font-semibold text-gray-700 mb-3">Edit Result</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label htmlFor={`edit-rank-${comp.competitionID}`} className="block text-sm text-gray-700 mb-1">
+                                Finishing Position (optional)
+                            </label>
+                            <input
+                                id={`edit-rank-${comp.competitionID}`}
+                                type="number"
+                                value={editRank}
+                                onChange={(e) => setEditRank(e.target.value)}
+                                placeholder="e.g. 3"
+                                className="border rounded p-2 w-full"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm text-gray-700 mb-1">
+                                Result (optional)
+                            </label>
+                            <div className="flex gap-2">
+                                <div className="flex-1">
+                                    <label htmlFor={`edit-mins-${comp.competitionID}`} className="sr-only">Minutes</label>
+                                    <input
+                                        id={`edit-mins-${comp.competitionID}`}
+                                        type="number"
+                                        value={editMins}
+                                        onChange={(e) => setEditMins(e.target.value)}
+                                        placeholder="mins"
+                                        className="border rounded p-2 w-full"
+                                    />
+                                </div>
+                                <div className="flex-1">
+                                    <label htmlFor={`edit-secs-${comp.competitionID}`} className="sr-only">Seconds</label>
+                                    <input
+                                        id={`edit-secs-${comp.competitionID}`}
+                                        type="number"
+                                        value={editSecs}
+                                        onChange={(e) => setEditSecs(e.target.value)}
+                                        placeholder="secs"
+                                        className="border rounded p-2 w-full"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => handleSaveEdit(comp)}
+                            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
+                        >
+                            Save
+                        </button>
+                        <button
+                            onClick={cancelEditing}
+                            className="border border-gray-400 text-gray-600 px-4 py-2 rounded hover:bg-gray-100 text-sm"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+
     return (
         <div className="min-h-screen bg-gray-100 flex">
             <Sidebar />
@@ -118,10 +265,9 @@ function CompetitionPage() {
                 {error && <p className="text-red-700 mb-4" role="alert">{error}</p>}
                 {success && <p className="text-green-700 mb-4" role="status">{success}</p>}
 
-                {/* Add competition form */}
+                {/* Add competition form — name and date only */}
                 <div className="bg-white p-6 rounded-lg shadow mb-8">
                     <h3 className="text-xl font-semibold mb-4">Add Competition</h3>
-
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
                             <label htmlFor="comp-name" className="block text-sm text-gray-700 mb-1">
@@ -148,50 +294,7 @@ function CompetitionPage() {
                                 className="border rounded p-2 w-full"
                             />
                         </div>
-                        <div>
-                            <label htmlFor="comp-rank" className="block text-sm text-gray-700 mb-1">
-                                Finishing Position (optional)
-                            </label>
-                            <input
-                                id="comp-rank"
-                                type="number"
-                                value={rank}
-                                onChange={(e) => setRank(e.target.value)}
-                                placeholder="e.g. 3"
-                                className="border rounded p-2 w-full"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm text-gray-700 mb-1">
-                                Result (optional)
-                            </label>
-                            <div className="flex gap-2">
-                                <div className="flex-1">
-                                    <label htmlFor="comp-mins" className="sr-only">Minutes</label>
-                                    <input
-                                        id="comp-mins"
-                                        type="number"
-                                        value={resultMins}
-                                        onChange={(e) => setResultMins(e.target.value)}
-                                        placeholder="mins"
-                                        className="border rounded p-2 w-full"
-                                    />
-                                </div>
-                                <div className="flex-1">
-                                    <label htmlFor="comp-secs" className="sr-only">Seconds</label>
-                                    <input
-                                        id="comp-secs"
-                                        type="number"
-                                        value={resultSecs}
-                                        onChange={(e) => setResultSecs(e.target.value)}
-                                        placeholder="secs"
-                                        className="border rounded p-2 w-full"
-                                    />
-                                </div>
-                            </div>
-                        </div>
                     </div>
-
                     <button
                         onClick={handleAddCompetition}
                         className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
@@ -200,27 +303,23 @@ function CompetitionPage() {
                     </button>
                 </div>
 
+                {/* Today's competitions */}
+                {todayComps.length > 0 && (
+                    <div className="mb-8">
+                        <h3 className="text-xl font-semibold mb-4">
+                            Today's Competitions 🏁
+                        </h3>
+                        {todayComps.map(comp => renderCompCard(comp, true))}
+                    </div>
+                )}
+
                 {/* Upcoming competitions */}
                 <div className="mb-8">
                     <h3 className="text-xl font-semibold mb-4">Upcoming Competitions</h3>
                     {upcoming.length === 0 ? (
                         <p className="text-gray-600">No upcoming competitions.</p>
                     ) : (
-                        upcoming.map(comp => (
-                            <div key={comp.competitionID} className="bg-white p-4 rounded shadow mb-4 flex justify-between items-center">
-                                <div>
-                                    <p className="font-semibold">{comp.name}</p>
-                                    <p className="text-sm text-gray-600">{comp.date}</p>
-                                </div>
-                                <button
-                                    onClick={() => handleDelete(comp.competitionID)}
-                                    className="text-red-700 text-sm hover:underline"
-                                    aria-label={`Remove ${comp.name}`}
-                                >
-                                    Remove
-                                </button>
-                            </div>
-                        ))
+                        upcoming.map(comp => renderCompCard(comp, false))
                     )}
                 </div>
 
@@ -230,31 +329,7 @@ function CompetitionPage() {
                     {completed.length === 0 ? (
                         <p className="text-gray-600">No completed competitions.</p>
                     ) : (
-                        completed.map(comp => (
-                            <div key={comp.competitionID} className="bg-white p-4 rounded shadow mb-4 flex justify-between items-center">
-                                <div>
-                                    <p className="font-semibold">{comp.name}</p>
-                                    <p className="text-sm text-gray-600">{comp.date}</p>
-                                    {comp.rank && (
-                                        <p className="text-sm text-gray-600">
-                                            Position: {comp.rank}
-                                        </p>
-                                    )}
-                                    {comp.result && (
-                                        <p className="text-sm text-gray-600">
-                                            Result: {formatResult(comp.result)}
-                                        </p>
-                                    )}
-                                </div>
-                                <button
-                                    onClick={() => handleDelete(comp.competitionID)}
-                                    className="text-red-700 text-sm hover:underline"
-                                    aria-label={`Remove ${comp.name}`}
-                                >
-                                    Remove
-                                </button>
-                            </div>
-                        ))
+                        completed.map(comp => renderCompCard(comp, true))
                     )}
                 </div>
 
