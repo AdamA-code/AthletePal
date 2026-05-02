@@ -1934,9 +1934,10 @@ class DatabaseService {
     // Individual find functions
 
     /**
-     * Retrieves a particular route from the database.
+     * Retrieves a specific route from the database using its routeID.
      * 
-     * @return A Route object in the database, null if no record is found.
+     * @param routeID The unique identifier of the route.
+     * @return A Route object in the database, or null if no record is found.
      */
     fun findRoute(routeID: Int): Route? {
         val stmt =
@@ -1971,9 +1972,10 @@ class DatabaseService {
     }
 
     /**
-     * Retrieves a particular Workout from the database.
+     * Retrieves a specific workout from the database using its workoutID.
      * 
-     * @return A Workout object in the database if found, null if no record is found.
+     * @param workoutID The unique identifier of the workout.
+     * @return A Workout object in the database if found, or null if no record is found.
      */
     fun findWorkout(workoutID: Int): Workout? {
         val stmt: PreparedStatement =
@@ -2009,9 +2011,10 @@ class DatabaseService {
     }
 
     /**
-     * Retrieves a particular Workout and exercise join record from the database.
+     * Retrieves a specific workout-exercise join record from the database using its workoutExerciseID.
      * 
-     * @return A WorkoutExercise object in the database if found, null if no record is found.
+     * @param workoutExerciseID The unique identifier of the join record.
+     * @return A WorkoutExercise object in the database if found, or null if no record is found.
      */
     fun findWorkoutExercise(workoutExercisesID: Int): WorkoutExercise? {
         val stmt: PreparedStatement =
@@ -2043,9 +2046,10 @@ class DatabaseService {
     }
 
     /**
-     * Retrieves a particular statistic from the database.
+     * Retrieves a specific statistic from the database using its statisticID.
      * 
-     * @return A Statistic object in the database if found, null if no record is found.
+     * @param statisticID The unique identifier of the statistic.
+     * @return A Statistic object in the database if found, or null if no record is found.
      */
     fun findStatistic(statisticID: Int): Statistic? {
         val stmt: PreparedStatement =
@@ -2077,9 +2081,10 @@ class DatabaseService {
     }
 
     /**
-     * Retrieves a particular competition from the database.
+     * Retrieves a specific competition from the database using its competitionID.
      * 
-     * @return A Competition object in the database if found, null if no record is found.
+     * @param competitionID The unique identifier of the competition.
+     * @return A Competition object in the database if found, or null if no record is found.
      */
     fun findCompetition(competitionID: Int): Competition? {
         val stmt: PreparedStatement =
@@ -2111,9 +2116,10 @@ class DatabaseService {
     }
 
     /**
-     * Retrieves a particular competition and exercise join record from the database.
+     * Retrieves a specific competition-exercise join record from the database.
      * 
-     * @return A CompetitionExercise object in the database if found, null if no record is found.
+     * @param competitionExerciseID The unique identifier of the join record.
+     * @return A CompetitionExercise object in the database if found, or null if no record is found.
      */
     fun findCompetitionExercise(competitionExerciseID: Int): CompetitionExercise? {
         val stmt: PreparedStatement =
@@ -2385,7 +2391,6 @@ class DatabaseService {
         return members
     }
 
-    // Group training sessions
 
     fun addGroupSession(session: GroupSession): Int {
         // Validation Checks
