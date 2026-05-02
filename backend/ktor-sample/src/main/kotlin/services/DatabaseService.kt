@@ -2371,8 +2371,22 @@ class DatabaseService {
         return rows > 0
     }
 
-    // Group members
-
+    /**
+     * Allows a user to join a training group.
+     *
+     * The function first checks that the userID and groupID are greater than 0. Next the function
+     * checks if the user is already in the training group. If either fail, false is returned.
+     * 
+     * The arguments are then added into the group-members join table.
+     * 
+     * If successful, the generated competitionExerciseID is returned. If unsuccessful, -1 is returned.
+     *
+     * Prepared statements are used to safely insert values.
+     *
+     * @param groupID The unique identifier of the training group.
+     * @param userID The unique identifier of the user.
+     * @return True if the insertion was successful, otherwise false.
+     */
     fun joinGroup(
         groupID: Int,
         userID: Int,
@@ -2396,6 +2410,16 @@ class DatabaseService {
         return rows > 0
     }
 
+    /**
+     * Deletes a user-group join record from group_members based on the provided groupID and userID.
+     * 
+     * The function executes a DELETE operation on the group_members table. If a group with
+     * the given groupID and userID exists, true is returned. Otherwise, false is returned.
+     * 
+     * @param userID The unique identifier of the user.
+     * @param groupID The unique identifer of the training group.
+     * @return True if the record was deleted, false if not.
+     */    
     fun leaveGroup(
         groupID: Int,
         userID: Int,
@@ -2413,6 +2437,15 @@ class DatabaseService {
         return rows > 0
     }
 
+    /**
+     * Retrieves all users in a group from the database using the provided groupID.
+     * 
+     * Each record in the table is mapped to an USer object and returned in a list.
+     * If the table is empty, an empty list is returned.
+     * 
+     * @param groupID The unique identifier of the training group.
+     * @return The list of User objects in the database.
+     */
     fun findGroupMembers(groupID: Int): List<User> {
         val stmt =
             db.connection.prepareStatement(
