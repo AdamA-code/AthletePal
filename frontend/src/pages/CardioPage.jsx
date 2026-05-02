@@ -13,11 +13,11 @@ function CardioPage() {
     const [notes, setNotes] = useState("")
     const [isPublic, setIsPublic] = useState(false)
     const [routeName, setRouteName] = useState("")
-    const [distance, setDistance] = useState("")
     const [drawnRouteData, setDrawnRouteData] = useState(null)
+    const [drawnRouteDistance, setDrawnRouteDistance] = useState(0)
     const [publicRoutes, setPublicRoutes] = useState([])
     const [selectedRoute, setSelectedRoute] = useState(null)
-    const [routeMode, setRouteMode] = useState(null) // null, "draw" or "select"
+    const [routeMode, setRouteMode] = useState(null)
     const [error, setError] = useState("")
     const [success, setSuccess] = useState("")
 
@@ -51,20 +51,21 @@ function CardioPage() {
         setSelectedRoute(route)
         setRouteMode("select")
         setDrawnRouteData(null)
+        setDrawnRouteDistance(0)
         setRouteName("")
-        setDistance("")
     }
 
     const handleClearRoute = () => {
         setRouteMode(null)
         setSelectedRoute(null)
         setDrawnRouteData(null)
+        setDrawnRouteDistance(0)
         setRouteName("")
-        setDistance("")
     }
 
-    const handleRouteDrawn = (data) => {
+    const handleRouteDrawn = (data, distance) => {
         setDrawnRouteData(data)
+        setDrawnRouteDistance(distance || 0)
         if (data) setRouteMode("draw")
     }
 
@@ -83,6 +84,18 @@ function CardioPage() {
             return
         }
 
+        // Validate route if user has drawn one
+        if (routeMode === "draw") {
+            if (!drawnRouteData) {
+                setError("Please draw your route on the map.")
+                return
+            }
+            if (!routeName.trim()) {
+                setError("Please enter a name for your route.")
+                return
+            }
+        }
+
         setError("")
         let savedRouteID = null
 
@@ -92,17 +105,17 @@ function CardioPage() {
         }
 
         // If user drew their own route save it first
-        if (routeMode === "draw" && drawnRouteData && routeName && distance) {
+        if (routeMode === "draw" && drawnRouteData && routeName) {
             try {
                 const routeBody = {
-                    "routeID": 0,
-                    "userID": userID,
-                    "name": routeName,
-                    "distance": parseFloat(distance),
-                    "estimatedTime": duration ? parseFloat(duration) : null,
-                    "date": date,
-                    "isPublic": isPublic,
-                    "routeData": drawnRouteData
+                    routeID: 0,
+                    userID: userID,
+                    name: routeName,
+                    distance: drawnRouteDistance,
+                    estimatedTime: duration ? parseFloat(duration) : null,
+                    date: date,
+                    isPublic: isPublic,
+                    routeData: drawnRouteData
                 }
 
                 const routeRes = await fetch(`${API_BASE_URL}/api/route`, {
@@ -129,14 +142,14 @@ function CardioPage() {
         try {
             const workoutBody = {
                 workout: {
-                    "workoutID": 0,
-                    "createdBy": userID,
-                    "assignedTo": userID,
-                    "date": date,
-                    "duration": parseInt(duration),
-                    "workoutType": getWorkoutType(exerciseType),
-                    "notes": notes || null,
-                    "routeID": savedRouteID
+                    workoutID: 0,
+                    createdBy: userID,
+                    assignedTo: userID,
+                    date: date,
+                    duration: parseInt(duration),
+                    workoutType: getWorkoutType(exerciseType),
+                    notes: notes || null,
+                    routeID: savedRouteID
                 },
                 exercises: []
             }
@@ -263,25 +276,14 @@ function CardioPage() {
                                 />
                             </div>
                             <div className="mb-4">
-                                <label htmlFor="route-distance" className="block font-semibold mb-2">
-                                    Distance (km)
-                                </label>
-                                <input
-                                    id="route-distance"
-                                    type="number"
-                                    placeholder="e.g. 5.2"
-                                    value={distance}
-                                    onChange={(e) => setDistance(e.target.value)}
-                                    className="border rounded p-2 w-full"
-                                />
-                            </div>
-                            <div className="mb-4">
                                 <label className="block font-semibold mb-2">
                                     Draw Your Route on the Map
                                 </label>
                                 <RouteMap onRouteDrawn={handleRouteDrawn} />
                                 {drawnRouteData && (
-                                    <p className="text-green-700 text-sm mt-2">Route drawn ✓</p>
+                                    <p className="text-green-700 text-sm mt-2">
+                                        Route drawn ✓ — {drawnRouteDistance} km
+                                    </p>
                                 )}
                             </div>
                             <fieldset>
@@ -310,11 +312,48 @@ function CardioPage() {
                         </div>
                     )}
 
-                    {/* Draw mode — route being drawn */}
+                    {/* Draw mode — route drawn */}
                     {routeMode === "draw" && (
                         <div>
-                            <p className="text-green-700 text-sm mb-2">Route drawn ✓</p>
-                            <p className="text-gray-600 text-sm">Press Clear Route to start over or select a different route</p>
+                            <p className="text-green-700 text-sm mb-2">
+                                Route drawn ✓ — {drawnRouteDistance} km
+                            </p>
+                            <div className="mb-4">
+                                <label htmlFor="route-name-draw" className="block font-semibold mb-2">
+                                    Route Name
+                                </label>
+                                <input
+                                    id="route-name-draw"
+                                    placeholder="e.g. Morning run around the park"
+                                    value={routeName}
+                                    onChange={(e) => setRouteName(e.target.value)}
+                                    className="border rounded p-2 w-full"
+                                />
+                            </div>
+                            <fieldset>
+                                <legend className="block font-semibold mb-2">Make Route Public</legend>
+                                <div className="flex gap-6">
+                                    <label className="flex items-center gap-2">
+                                        <input
+                                            type="radio"
+                                            name="isPublicDraw"
+                                            checked={isPublic === true}
+                                            onChange={() => setIsPublic(true)}
+                                        />
+                                        Yes
+                                    </label>
+                                    <label className="flex items-center gap-2">
+                                        <input
+                                            type="radio"
+                                            name="isPublicDraw"
+                                            checked={isPublic === false}
+                                            onChange={() => setIsPublic(false)}
+                                        />
+                                        No
+                                    </label>
+                                </div>
+                            </fieldset>
+                            <p className="text-gray-500 text-sm mt-3">Press Clear Route to redraw</p>
                         </div>
                     )}
 
@@ -326,7 +365,7 @@ function CardioPage() {
                             </p>
                             <p className="text-gray-600 text-sm mb-3">{selectedRoute.distance} km</p>
                             <RouteMap viewRouteData={selectedRoute.routeData} />
-                            <p className="text-gray-600 text-sm mt-2">Press Clear Route to draw your own instead</p>
+                            <p className="text-gray-500 text-sm mt-2">Press Clear Route to draw your own instead</p>
                         </div>
                     )}
                 </div>
