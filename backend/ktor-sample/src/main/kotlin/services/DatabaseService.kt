@@ -1326,7 +1326,7 @@ class DatabaseService {
     /**
      * Retrieves the user's best statistics for a given exercise from the database.
      * 
-     * @return A Satisitc object with the highest scoreValue for the given userID and exerciseID,
+     * @return A Statisitc object with the highest scoreValue for the given userID and exerciseID,
      * or null is no such value is found.
      */
     fun getBestStat(
@@ -1420,7 +1420,7 @@ class DatabaseService {
      * to the given statisticID and true is returned. Otherwise, false is returned.
      * 
      * @param statisticID The statisticID of the row to delete.
-     * @return True if the join record was deleted, false if not.
+     * @return True if the record was deleted, false if not.
      */
     fun deleteStatistic(statisticID: Int): Boolean {
         val stmt: PreparedStatement =
@@ -1436,7 +1436,22 @@ class DatabaseService {
         return rowsDeleted > 0
     }
 
-    // Competitions DB
+    /**
+     * Stores a new competition in the database.
+     *
+     * The function first checks that the competition name is not emmpty.
+     * The function then checks that the given date is in the correct format (YYYY-MM-DD) and that
+     * if there is a rank and/or result given that they are over 0.
+     *
+     * The function then inserts the competition into the database.
+     * 
+     * If successful, the generated competitionID is returned. If unsuccessful, -1 is returned.
+     *
+     * Prepared statements are used to safely insert values.
+     *
+     * @param comp The competition data to store.
+     * @return The created competitionID if successful, -1 if not.
+     */
     fun createCompetition(comp: Competition): Int {
         // Validation Checks
         if (comp.name.isBlank()) return -1
@@ -1475,6 +1490,14 @@ class DatabaseService {
         return id
     }
 
+    /**
+     * Retrieves all of a user's competitions for a given exercise from the database.
+     * 
+     * Each record in the table is mapped to a Competition object and returned in a list.
+     * If no matching record is found, an empty list is returned.
+     * 
+     * @return The list of Competition objects in the database.
+     */
     fun findAllCompetitions(userID: Int): List<Competition> {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -1503,6 +1526,25 @@ class DatabaseService {
         return comps
     }
 
+    /**
+     * Updates a competition record in the database.
+     *
+     * The function validates the provided competitionID, ensuring it's not impossible beforing executing the
+     * statement. Furthermore, rank and result are also validated to ensure that if a value is given, that it is greater than 0.
+     * The date is also validated to ensure its in the correct format (YYYY-MM-DD), with name being check to ensure that it is
+     * not blank.
+     *
+     * The function only updates the name, rank, result and date of the record identified by the competitionID.
+     *
+     * If the update is successful, the database is modified and the function returns true. If no matching competition
+     * is found or validation fails, false is returned.
+     * 
+     *
+     * @param statisticID The unique identifier of the statistic to update.
+     * @param scoreValue The value of the statistic.
+     * @param date The date the statistic was recorded.
+     * @return True if the update was successful, false if not.
+     */
     fun updateCompetition(
         competitionID: Int,
         name: String,
@@ -1537,6 +1579,15 @@ class DatabaseService {
         return rowsUpdated > 0
     }
 
+    /**
+     * Deletes a competition record from the database using the provided competitionID.
+     * 
+     * The function executes a DELETE operation on the competition table if a competition is found linking
+     * to the given competitionID and true is returned. Otherwise, false is returned.
+     * 
+     * @param competitionID The competitionID of the row to delete.
+     * @return True if the record was deleted, false if not.
+     */
     fun deleteCompetition(competitionID: Int): Boolean {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
