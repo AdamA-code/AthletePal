@@ -2377,9 +2377,10 @@ class DatabaseService {
      * The function first checks that the userID and groupID are greater than 0. Next the function
      * checks if the user is already in the training group. If either fail, false is returned.
      * 
-     * The arguments are then added into the group-members join table.
+     * The provided IDs are then inserted into the group_members join table.
      * 
-     * If successful, the generated competitionExerciseID is returned. If unsuccessful, -1 is returned.
+     * If the user is successfully added to the group, true is returned.
+     * If validation fails, the user is already a member, or the insert fails, false is returned.
      *
      * Prepared statements are used to safely insert values.
      *
@@ -2413,11 +2414,12 @@ class DatabaseService {
     /**
      * Deletes a user-group join record from group_members based on the provided groupID and userID.
      * 
-     * The function executes a DELETE operation on the group_members table. If a group with
-     * the given groupID and userID exists, true is returned. Otherwise, false is returned.
+     * The function executes a DELETE operation on the group_members table.
+     * If a matching membership record exists, it is removed and true is returned.
+     * Otherwise, false is returned.
      * 
      * @param userID The unique identifier of the user.
-     * @param groupID The unique identifer of the training group.
+     * @param groupID The unique identifier of the training group.
      * @return True if the record was deleted, false if not.
      */    
     fun leaveGroup(
@@ -2440,8 +2442,8 @@ class DatabaseService {
     /**
      * Retrieves all users in a group from the database using the provided groupID.
      * 
-     * Each record in the table is mapped to an USer object and returned in a list.
-     * If the table is empty, an empty list is returned.
+     * Each record in the table is mapped to an User object and returned in a list.
+     * If no matching members are found, an empty list is returned.
      * 
      * @param groupID The unique identifier of the training group.
      * @return The list of User objects in the database.
