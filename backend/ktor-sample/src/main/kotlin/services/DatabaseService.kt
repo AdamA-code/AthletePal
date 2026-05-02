@@ -1602,7 +1602,16 @@ class DatabaseService {
         return rowsDeleted > 0
     }
 
-    // CompetitionsAndExercise DB
+    /**
+     * Stores a new many-to-many record in the database between competitions and exercises.
+     *
+     * If successful, the generated competitionExerciseID is returned. If unsuccessful, -1 is returned.
+     *
+     * Prepared statements are used to safely insert values.
+     *
+     * @param compEx The CompetitionExercise data to store.
+     * @return The created competitionExerciseID if successful, -1 if not.
+     */
     fun addExercisetoCompetition(compEx: CompetitionExercise): Int {
         val stmt =
             db.connection.prepareStatement(
@@ -1633,6 +1642,14 @@ class DatabaseService {
         return id
     }
 
+    /**
+     * Retrieves all competition and exercises join records from the database.
+     * 
+     * Each record in the table is mapped to a CompetitionExercise object and returned in a list.
+     * If no matching record is found, an empty list is returned.
+     * 
+     * @return The list of CompetitionExercise objects in the database.
+     */
     fun findAllCompetitionExercises(competitionID: Int): List<CompetitionExercise> {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -1659,6 +1676,20 @@ class DatabaseService {
         return compExs
     }
 
+    /**
+     * Updates a competitiom and exercise join record in the database.
+     *
+     * The function only updates the performance associated with the exercise in the competition,
+     * identified by the competitionExerciseID.
+     *
+     * If the update is successful, the database is modified and the function returns true. If no matching workout
+     * is found, false is returned.
+     * 
+     *
+     * @param competitionExercisesID The unique identifier of the join record to update.
+     * @param performance The value the user achieved in exercise.
+     * @return True if the update was successful, false if not.
+     */
     fun updateCompetitionExercise(
         competitionExerciseID: Int,
         performance: Double?,
@@ -1681,6 +1712,15 @@ class DatabaseService {
         return rowsUpdated > 0
     }
 
+    /**
+     * Deletes a many-to-many join record from the database using the provided competitionExerciseID.
+     * 
+     * The function executes a DELETE operation on the competition_exercises table if a competition is found linking
+     * to the given competitionExerciseID and true is returned. Otherwise, false is returned.
+     * 
+     * @param competitionExerciseID The competitionExerciseID of the row to delete.
+     * @return True if the record was deleted, false if not.
+     */
     fun deleteCompetitionExercise(competitionExerciseID: Int): Boolean {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
