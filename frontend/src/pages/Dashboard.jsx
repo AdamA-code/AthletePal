@@ -11,6 +11,9 @@ function DashboardPage() {
 
     useEffect(() => {
         const email = localStorage.getItem("email")
+        console.log("DashboardPage: Retrieved email from localStorage:", email)
+        console.log("DashboardPage: API_BASE_URL is", API_BASE_URL)
+        console.log("Email being used is:", email)
         if (!email) {
             
             setError("No email found. Please log in again.")
@@ -25,21 +28,9 @@ function DashboardPage() {
             try {
 
                 const [workoutsResponse, activityResponse, competitionsResponse] = await Promise.all([
-                    fetch(`${API_BASE_URL}/dashboard/todays-workouts`, {
-                        method: "POST",
-                        headers,
-                        body: JSON.stringify({ "email": email })
-                    }),
-                    fetch(`${API_BASE_URL}/dashboard/recent-activity`, {
-                        method: "POST",
-                        headers,
-                        body: JSON.stringify({ "email": email })
-                    }),
-                    fetch(`${API_BASE_URL}/dashboard/upcoming-competitions`, {
-                        method: "POST",
-                        headers,
-                        body: JSON.stringify({ "email": email })
-                    })
+                    fetch(`${API_BASE_URL}/api/workouts/today/${email}`),
+                    fetch(`${API_BASE_URL}/api/activity/recent/${email}`),
+                    fetch(`${API_BASE_URL}/api/competitions/upcoming/${email}`)
                 ])
                 const workoutsData = await workoutsResponse.json()
                 const activityData = await activityResponse.json()
