@@ -1,3 +1,4 @@
+// page structure, layout, and frontend -> backend request connections aided with chatgpt chat.openai.com
 import Sidebar from "../components/Sidebar"
 import { useEffect, useState } from "react"
 import API_BASE_URL from "../config"
@@ -11,9 +12,11 @@ function DashboardPage() {
 
     useEffect(() => {
         const email = localStorage.getItem("email")
+        {/* Console Logs for testing purposes 
         console.log("DashboardPage: Retrieved email from localStorage:", email)
         console.log("DashboardPage: API_BASE_URL is", API_BASE_URL)
         console.log("Email being used is:", email)
+        */}
         if (!email) {
             
             setError("No email found. Please log in again.")
