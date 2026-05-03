@@ -2643,6 +2643,17 @@ class DatabaseService {
 
     // Functions for the dashboard of the frontend
 
+    /**
+     * Retrieves all past-dated workouts for a user from the database for the specified email.
+     * 
+     * Each record in the table is mapped to a Workout object and returned in a list in descending order.
+     * If no matching record is found, an empty list is returned.
+     * 
+     * Too be used on the dashboard in the frontend.
+     * 
+     * @param email The user's email address.
+     * @return The list of Workout objects in the database.
+     */
     fun getRecentWorkouts(email: String): List<Workout> {
         val user = findUser(email) ?: return emptyList()
         val results = mutableListOf<Workout>()
@@ -2680,7 +2691,18 @@ class DatabaseService {
         return results
     }
 
-    // Frontend potentially want to split it into 3 most recent of each
+    /**
+     * Retrieves all past-dated workouts for a user from the database for the specified userID.
+     * 
+     * The function calls findAllWorkouts() and then filters out workouts with a null type. Next,
+     * workouts are sorted in descending order, grouped by workoutType and mapped to their workoutType
+     * and filtered to only 3 per workoutType.
+     * 
+     * Too be used on the dashboard in the frontend.
+     * 
+     * @param userID The unique identifier of the user.
+     * @return A map where the key is the workoutType and the value is a list of 3 Workouts of that type.
+     */
     fun getRecentWorkoutsByType(userID: Int): Map<String, List<Workout>> {
         return findAllWorkouts(
             userID,
@@ -2690,6 +2712,16 @@ class DatabaseService {
         }
     }
 
+    /**
+     * Retrieves all workouts a user has scheduled for todays current date by using
+     * the provided email address and LocalDate.now().
+     * 
+     * This function will appear on the dashboard in the frontend.
+     * 
+     * @param email The user's email address.
+     * @param today Today's current date.
+     * @return A list of workouts that are scheduled for today.
+     */
     fun getTodaysWorkout(
         email: String,
         today: LocalDate = LocalDate.now(),
@@ -2729,6 +2761,15 @@ class DatabaseService {
         return results
     }
 
+    /**
+     * Retrieves all future-dated competitions for a user from the database by using the email.
+     * 
+     * Each record in the table is mapped to a Competition object and returned in a list in ascending order.
+     * If no matching record is found, an empty list is returned.
+     * 
+     * @param email The users email address.
+     * @return The list of Competition objects in the database if successful, or an empty list.
+     */
     fun getUpcomingCompetitions(email: String): List<Competition> {
         val user = findUser(email) ?: return emptyList()
 
@@ -2764,6 +2805,16 @@ class DatabaseService {
         return results
     }
 
+    /**
+     * Retrieves the most recent 5 past-dated routes for a user from the
+     * database for the specified email address.
+     * 
+     * Each record in the table is mapped to a Route object and returned in a list in descending order.
+     * If no matching record is found, an empty list is returned.
+     * 
+     * @param email The user's email address.
+     * @return The list of Route objects in the database if successful, or an empty list if not.
+     */
     fun getRecentRoutes(email: String): List<Route> {
         val user = findUser(email) ?: return emptyList()
 
@@ -2801,6 +2852,16 @@ class DatabaseService {
         return results
     }
 
+    /**
+     * Retrieves the most recent 5 past-dated competitions for a user from the
+     * database for the specified email address.
+     * 
+     * Each record in the table is mapped to a Competition object and returned in a list in descending order.
+     * If no matching record is found, an empty list is returned.
+     * 
+     * @param email The user's email address.
+     * @return The list of Competition objects in the database if successful, or an empty list if not.
+     */
     fun getRecentCompetitions(email: String): List<Competition> {
         val user = findUser(email) ?: return emptyList()
 
