@@ -14,4 +14,3 @@ data class CreateAccountRequest(
     val weight: Double? = 0.0,
     val accountType: Boolean,
 )
-
