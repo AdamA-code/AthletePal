@@ -10,11 +10,17 @@ function StartWorkoutPage() {
     const location = useLocation()
 
     const routineWorkoutID = location.state?.workoutID || null
+    const isScheduled = location.state?.scheduled || false
+    const fromScheduled = location.state?.fromScheduled || false
+    const scheduledWorkoutID = location.state?.workoutID || null
+
+    const today = new Date().toISOString().split("T")[0]
 
     const [availableExercises, setAvailableExercises] = useState([])
     const [selectedExercises, setSelectedExercises] = useState([])
     const [notes, setNotes] = useState("")
     const [duration, setDuration] = useState("")
+    const [date, setDate] = useState(today)
     const [searchTerm, setSearchTerm] = useState("")
     const [showDropdown, setShowDropdown] = useState(false)
     const [error, setError] = useState("")
@@ -46,6 +52,15 @@ function StartWorkoutPage() {
                         setSelectedExercises(preloaded)
                     }
                 }
+
+                if (fromScheduled && scheduledWorkoutID) {
+                    const workoutRes = await fetch(`${API_BASE_URL}/api/workout/${scheduledWorkoutID}`)
+                    const workoutData = await workoutRes.json()
+                    if (workoutData && workoutData.Workout && workoutData.Workout.notes) {
+                        setNotes(workoutData.Workout.notes)
+                    }
+                }
+
             } catch (err) {
                 console.error("Error loading exercises:", err)
                 setError("Could not load exercises. Is the server running?")
@@ -93,14 +108,12 @@ function StartWorkoutPage() {
             return
         }
 
-        const today = new Date().toISOString().split("T")[0]
-
         const body = {
             "workout": {
                 "workoutID": 0,
                 "createdBy": userID,
                 "assignedTo": userID,
-                "date": today,
+                "date": date,
                 "duration": duration ? parseInt(duration) : null,
                 "workoutType": "weights",
                 "notes": notes || null,
@@ -126,7 +139,12 @@ function StartWorkoutPage() {
             const data = await res.json()
 
             if (res.ok) {
-                setSuccess("Workout saved!")
+                if (fromScheduled && scheduledWorkoutID) {
+                    await fetch(`${API_BASE_URL}/api/workout/${scheduledWorkoutID}`, {
+                        method: "DELETE"
+                    })
+                }
+                setSuccess(isScheduled ? "Workout scheduled!" : "Workout saved!")
                 setError("")
                 setTimeout(() => navigate("/workout-log"), 1500)
             } else {
@@ -143,29 +161,46 @@ function StartWorkoutPage() {
             <Sidebar />
             <main className="flex-1 p-8 max-w-3xl">
                 <h2 className="text-3xl font-bold mb-6">
-                    {routineWorkoutID ? "Start Workout" : "Empty Workout"}
+                    {isScheduled ? "Schedule Workout" : fromScheduled ? "Start Scheduled Workout" : routineWorkoutID ? "Start Workout" : "Empty Workout"}
                 </h2>
 
                 {error && <p className="text-red-700 text-sm mb-4" role="alert">{error}</p>}
                 {success && <p className="text-green-700 text-sm mb-4" role="status">{success}</p>}
 
-                <div className="flex gap-4 mb-6">
-                    <div className="flex flex-col">
-                        <label htmlFor="workout-duration" className="sr-only">Duration in minutes</label>
-                        <input
-                            id="workout-duration"
-                            type="number"
-                            placeholder="Duration (mins)"
-                            value={duration}
-                            onChange={(e) => setDuration(e.target.value)}
-                            className="border p-2 rounded w-40"
-                        />
-                    </div>
-                    <div className="flex-1">
-                        <label htmlFor="workout-notes" className="sr-only">Notes</label>
+                <div className="flex gap-4 mb-6 items-end">
+                    {isScheduled && (
+                        <div className="flex flex-col">
+                            <label htmlFor="workout-date" className="text-sm text-gray-700 mb-1">Date</label>
+                            <input
+                                id="workout-date"
+                                type="date"
+                                value={date}
+                                min={today}
+                                onChange={(e) => setDate(e.target.value)}
+                                className="border p-2 rounded w-40"
+                            />
+                        </div>
+                    )}
+                    {!isScheduled && (
+                        <div className="flex flex-col">
+                            <label htmlFor="workout-duration" className="text-sm text-gray-700 mb-1">Duration (mins)</label>
+                            <input
+                                id="workout-duration"
+                                type="number"
+                                placeholder="e.g. 60"
+                                value={duration}
+                                onChange={(e) => setDuration(e.target.value)}
+                                className="border p-2 rounded w-40"
+                            />
+                        </div>
+                    )}
+                    <div className="flex-1 flex flex-col">
+                        <label htmlFor="workout-notes" className="text-sm text-gray-700 mb-1">
+                            {isScheduled ? "Name" : "Workout Name"}
+                        </label>
                         <input
                             id="workout-notes"
-                            placeholder="Notes (optional)"
+                            placeholder={isScheduled ? "e.g. Upper Body" : "e.g. Upper Body Session"}
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                             className="border p-2 rounded w-full"
@@ -204,7 +239,6 @@ function StartWorkoutPage() {
                     )}
                 </div>
 
-                {/* Exercises — sets, reps and weight */}
                 {selectedExercises.length === 0 ? (
                     <p className="text-gray-600 mb-6">No exercises added yet.</p>
                 ) : (
@@ -231,28 +265,32 @@ function StartWorkoutPage() {
                                         className="border p-2 rounded w-20"
                                     />
                                 </div>
-                                <div className="flex flex-col">
-                                    <label htmlFor={`reps-${ex.exerciseID}`} className="text-xs text-gray-700 mb-1">Reps</label>
-                                    <input
-                                        id={`reps-${ex.exerciseID}`}
-                                        type="number"
-                                        value={ex.reps}
-                                        placeholder="optional"
-                                        onChange={(e) => updateExercise(ex.exerciseID, "reps", e.target.value)}
-                                        className="border p-2 rounded w-24"
-                                    />
-                                </div>
-                                <div className="flex flex-col">
-                                    <label htmlFor={`weight-${ex.exerciseID}`} className="text-xs text-gray-700 mb-1">Weight (kg)</label>
-                                    <input
-                                        id={`weight-${ex.exerciseID}`}
-                                        type="number"
-                                        value={ex.weight}
-                                        placeholder="optional"
-                                        onChange={(e) => updateExercise(ex.exerciseID, "weight", e.target.value)}
-                                        className="border p-2 rounded w-28"
-                                    />
-                                </div>
+                                {!isScheduled && (
+                                    <>
+                                        <div className="flex flex-col">
+                                            <label htmlFor={`reps-${ex.exerciseID}`} className="text-xs text-gray-700 mb-1">Reps</label>
+                                            <input
+                                                id={`reps-${ex.exerciseID}`}
+                                                type="number"
+                                                value={ex.reps}
+                                                placeholder="optional"
+                                                onChange={(e) => updateExercise(ex.exerciseID, "reps", e.target.value)}
+                                                className="border p-2 rounded w-24"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <label htmlFor={`weight-${ex.exerciseID}`} className="text-xs text-gray-700 mb-1">Weight (kg)</label>
+                                            <input
+                                                id={`weight-${ex.exerciseID}`}
+                                                type="number"
+                                                value={ex.weight}
+                                                placeholder="optional"
+                                                onChange={(e) => updateExercise(ex.exerciseID, "weight", e.target.value)}
+                                                className="border p-2 rounded w-28"
+                                            />
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
                     ))
@@ -263,7 +301,7 @@ function StartWorkoutPage() {
                         onClick={saveWorkout}
                         className="bg-green-700 text-white px-6 py-2 rounded font-semibold hover:bg-green-800"
                     >
-                        Save Workout
+                        {isScheduled ? "Schedule Workout" : "Save Workout"}
                     </button>
                     <button
                         onClick={() => navigate("/workout-log")}
