@@ -1707,8 +1707,8 @@ class DatabaseService {
         performance: Double?,
     ): Boolean {
         // Validation checks
-        if (competitionExerciseID <= 0) return -1
-        if (performance != null && performance <= 0.0) return -1
+        if (competitionExerciseID <= 0) return false
+        if (performance != null && performance <= 0.0) return false
 
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -2284,7 +2284,7 @@ class DatabaseService {
     }
 
     /**
-     * Retrieves all training groups a user is in from the database by using the userID.
+     * Retrieves all training groups a user is in from the database for the specified userID.
      * 
      * Each record in the table is mapped to a TrainingGroup object and returned in a list.
      * If no matching record is found, an empty list is returned.
@@ -2537,7 +2537,7 @@ class DatabaseService {
     }
 
     /**
-     * Retrieves all future-dated sessions for a training group from the database by using the groupID.
+     * Retrieves all future-dated sessions for a training group from the database for the specified groupID.
      * 
      * Each record in the table is mapped to a GroupSession object and returned in a list in ascending order.
      * If no matching record is found, an empty list is returned.
@@ -2649,7 +2649,7 @@ class DatabaseService {
      * Each record in the table is mapped to a Workout object and returned in a list in descending order.
      * If no matching record is found, an empty list is returned.
      * 
-     * Too be used on the dashboard in the frontend.
+     * To be used on the dashboard in the frontend.
      * 
      * @param email The user's email address.
      * @return The list of Workout objects in the database.
@@ -2660,13 +2660,14 @@ class DatabaseService {
 
         val query = """
             SELECT * FROM workouts
-            WHERE assignedTo = ?
+            WHERE assignedTo = ? AND date <= ?
             ORDER BY date DESC
             LIMIT 5
         """
 
         val stmt = db.connection.prepareStatement(query)
         stmt.setInt(1, user.userID)
+        stmt.setString(2, LocalDate.now().toString())
 
         val rs = stmt.executeQuery()
 
@@ -2698,7 +2699,7 @@ class DatabaseService {
      * workouts are sorted in descending order, grouped by workoutType and mapped to their workoutType
      * and filtered to only 3 per workoutType.
      * 
-     * Too be used on the dashboard in the frontend.
+     *  be used on the dashboard in the frontend.
      * 
      * @param userID The unique identifier of the user.
      * @return A map where the key is the workoutType and the value is a list of 3 Workouts of that type.
@@ -2706,21 +2707,21 @@ class DatabaseService {
     fun getRecentWorkoutsByType(userID: Int): Map<String, List<Workout>> {
         return findAllWorkouts(
             userID,
-        ).filter { it.workoutType != null }.sortedByDescending { it.date }.groupBy { it.workoutType!! }.mapValues {
+        ).filter { it.workoutType != null && it.date <= LocalDate.now().toString() }.sortedByDescending { it.date }.groupBy { it.workoutType!! }.mapValues {
                 (_, workouts) ->
             workouts.take(3)
         }
     }
 
     /**
-     * Retrieves all workouts a user has scheduled for todays current date by using
-     * the provided email address and LocalDate.now().
+     * Retrieves all workouts a user has scheduled on a specific day by using
+     * the provided email address and specified date that defaults to LocalDate.now().
      * 
-     * This function will appear on the dashboard in the frontend.
+     * The results will appear on the dashboard in the frontend.
      * 
      * @param email The user's email address.
-     * @param today Today's current date.
-     * @return A list of workouts that are scheduled for today.
+     * @param today The date to check for workouts. Defaults to the current date.
+     * @return A list of workouts scheduled for the specified date.
      */
     fun getTodaysWorkout(
         email: String,
@@ -2762,12 +2763,12 @@ class DatabaseService {
     }
 
     /**
-     * Retrieves all future-dated competitions for a user from the database by using the email.
+     * Retrieves all future-dated competitions for a user from the database for the specified email address.
      * 
      * Each record in the table is mapped to a Competition object and returned in a list in ascending order.
      * If no matching record is found, an empty list is returned.
      * 
-     * @param email The users email address.
+     * @param email The user's email address.
      * @return The list of Competition objects in the database if successful, or an empty list.
      */
     fun getUpcomingCompetitions(email: String): List<Competition> {
@@ -2822,13 +2823,14 @@ class DatabaseService {
 
         val query = """
             SELECT * FROM routes
-            WHERE userID = ?
+            WHERE userID = ? AND date <= ?
             ORDER BY date DESC
             LIMIT 5
         """
 
         val stmt = db.connection.prepareStatement(query)
         stmt.setInt(1, user.userID)
+        stmt.setString(2, LocalDate.now().toString())
 
         val rs = stmt.executeQuery()
 
@@ -2869,13 +2871,14 @@ class DatabaseService {
 
         val query = """
             SELECT * FROM competitions
-            WHERE userID = ?
+            WHERE userID = ? AND date <= ?
             ORDER BY date DESC
             LIMIT 5
         """
 
         val stmt = db.connection.prepareStatement(query)
         stmt.setInt(1, user.userID)
+        stmt.setString(2, LocalDate.now().toString())
 
         val rs = stmt.executeQuery()
 
