@@ -146,7 +146,7 @@ function StartWorkoutPage() {
                 }
                 setSuccess(isScheduled ? "Workout scheduled!" : "Workout saved!")
                 setError("")
-                setTimeout(() => navigate("/workout-log"), 1500)
+                setTimeout(() => navigate("/workout-log"), 2500)
             } else {
                 setError(data.message || "Failed to save workout.")
             }
@@ -208,7 +208,6 @@ function StartWorkoutPage() {
                     </div>
                 </div>
 
-                {/* Exercise search */}
                 <div className="relative mb-6">
                     <label htmlFor="exercise-search" className="sr-only">Search and add an exercise</label>
                     <input
