@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import Sidebar from "../components/Sidebar"
+import API_BASE_URL from "../config"
 
 function ActivityHistoryPage() {
     const [searchTerm, setSearchTerm] = useState("")
-    const [cardioWorkours, setCardioWorkouts] = useState([])
+    const [cardioWorkouts, setCardioWorkouts] = useState([])
     const [weightTraining, setWeightTraining] = useState([])
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(true)
@@ -20,7 +21,7 @@ function ActivityHistoryPage() {
 
         const fetchActivityHistory = async () => {
             try {
-                const response = await fetch(`http://localhost:3000/api/activity/${userID}`)
+                const response = await fetch(`${API_BASE_URL}/api/activity/${userID}`)
                 const data = await response.json()
 
                 const workouts = data.Workouts || []
@@ -29,7 +30,7 @@ function ActivityHistoryPage() {
                     workouts.filter((workout) => workout.workoutType === "cardio")
                 )
 
-                setCardioWorkouts(
+                setWeightTraining(
                     workouts.filter((workout) => workout.workoutType === "weights")
                 )
             } catch (err){
