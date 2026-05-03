@@ -113,7 +113,7 @@ class DatabaseService {
     @Serializable
     data class WorkoutExercise(
         val workoutExercisesID: Int = 0,
-        val workoutID: Int = 0, // Still a required field for adding workout exercise to workout
+        val workoutID: Int = 0,
         val exerciseID: Int,
         val sets: Int? = 1,
         val reps: Int? = 1,
@@ -300,8 +300,8 @@ class DatabaseService {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """
                         .trimIndent(),
-                    Statement.RETURN_GENERATED_KEYS, // Needed to return created ID
-                )
+                    Statement.RETURN_GENERATED_KEYS,
+                ) // Needed to return created ID
 
             stmt.setString(1, user.name)
             stmt.setString(2, user.email)
