@@ -2987,7 +2987,7 @@ class DatabaseService {
     fun getHoursTrained(userID: Int): Double {
         return findAllWorkouts(
             userID,
-        ).filter { it.date < LocalDate.now().toString() && it.duration != null }.sumOf { it.duration ?: 0 }.div(60.0)
+        ).filter { it.date <= LocalDate.now().toString() && it.duration != null }.sumOf { it.duration ?: 0 }.div(60.0)
     }
 
     /**
@@ -3000,12 +3000,11 @@ class DatabaseService {
      * The completed workout dates are converted into LocalDate values and sorted with
      * duplicate values being removed. The list is then ordered from most revent the oldest.
      *
-     * A streak begins from yesterday, as today's workout may not yet be fully
-     * completed. The function then checks whether the user completed a workout on each
+     * A streak begins from today. The function then checks whether the user completed a workout on each
      * consecutive previous day.
      *
      * The streak increases by one for each uninterrupted day with at least one
-     * completed workout. If a day is missed, the streak is set back to 0.
+     * completed workout. If a day is missed, the loop ends and the current streak count is returned.
      *
      * Multiple workouts completed on the same day only count as one streak day.
      *
@@ -3019,10 +3018,10 @@ class DatabaseService {
         val completed =
             findAllWorkouts(
                 userID,
-            ).filter { it.date < today.toString() }.map { LocalDate.parse(it.date) }.toSortedSet().reversed()
+            ).filter { it.date <= today.toString() }.map { LocalDate.parse(it.date) }.toSortedSet().reversed()
 
         var streak = 0
-        var current = today.minusDays(1)
+        var current = today
 
         for (date in completed) {
             if (date == current) {
