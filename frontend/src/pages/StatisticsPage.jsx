@@ -1,3 +1,4 @@
+// page structure, layout, and frontend -> backend request connections aided with chatgpt chat.openai.com
 import Sidebar from "../components/Sidebar"
 import { useEffect, useState } from "react"
 import API_BASE_URL from "../config"
@@ -35,12 +36,14 @@ function StatisticsPage() {
             const streakData = await streakRes.json()
             const historyData = await historyRes.json()
             const pbsData = await pbRes.json()
-
+            
+            {/* Console Logs for testing purposes 
             console.log("Workout data:", workoutData)
             console.log("Hours data:", hoursData)
             console.log("Streak data:", streakData)
             console.log("History data:", historyData)
             console.log("Personal bests data:", pbsData)
+            */}
 
             setSummaryStats([
                 { label: "Total Workouts", value: workoutData["Completed Workouts"] || 0 },

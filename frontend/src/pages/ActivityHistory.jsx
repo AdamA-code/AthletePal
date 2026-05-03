@@ -1,5 +1,6 @@
+// page structure, layout, and frontend -> backend request connections aided with chatgpt chat.openai.com
 import { useEffect, useState } from "react"
-import { data, Link } from "react-router-dom"
+import { data } from "react-router-dom"
 import Sidebar from "../components/Sidebar"
 import API_BASE_URL from "../config"
 
@@ -45,9 +46,11 @@ function ActivityHistoryPage() {
             }
         }
 
+        {/* Commented out code
         const workouts = data.Workouts || []
         console.log("Fetched workouts:", workouts)
         console.log("Activity history data:", data)
+        */}
 
         fetchActivityHistory()
     }, [])

@@ -1,3 +1,4 @@
+// page structure, layout, and frontend -> backend request connections aided with chatgpt chat.openai.com
 import { Link, useNavigate } from "react-router-dom"
 import { useState } from "react";
 import API_BASE_URL from "../config";

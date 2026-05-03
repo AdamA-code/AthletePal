@@ -1,3 +1,4 @@
+// page structure, layout, and frontend -> backend request connections aided with chatgpt chat.openai.com
 import { Link } from "react-router-dom"
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -28,7 +29,7 @@ function CreateAccountPage() {
     setError("")
 
     try {
-      const response = await fetch(`${API_BASE_URL}auth/create-account`, {
+      const response = await fetch(`${API_BASE_URL}/auth/create-account`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
