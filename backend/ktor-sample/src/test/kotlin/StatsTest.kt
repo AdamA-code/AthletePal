@@ -1,6 +1,5 @@
 package test
 
-
 class StatsTest {
     @Test
     fun testStatsFunction() {
@@ -20,7 +19,7 @@ class StatsTest {
                 age = 25,
                 height = 180.0,
                 weight = 75.0,
-                accountType = false
+                accountType = false,
             )
         )
         assertTrue(userId > 0)
@@ -52,7 +51,6 @@ class StatsTest {
         ds.addExerciseToWorkout(WorkoutExercise(0, w2, run, null, null, null))
         ds.addExerciseToWorkout(WorkoutExercise(0, w3, benchPress, 3, 10, 110.0))
         ds.addExerciseToWorkout(WorkoutExercise(0, w4, cycle, null, null, null))
-
 
         // Hours Trained
         val hours = ds.getHoursTrained(userId)
