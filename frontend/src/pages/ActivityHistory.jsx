@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Link } from "react-router-dom"
+import { data, Link } from "react-router-dom"
 import Sidebar from "../components/Sidebar"
 import API_BASE_URL from "../config"
 
@@ -27,11 +27,15 @@ function ActivityHistoryPage() {
                 const workouts = data.Workouts || []
 
                 setCardioWorkouts(
-                    workouts.filter((workout) => workout.workoutType === "cardio")
+                    workouts.filter((workout) => 
+                        workout.workoutType?.toLowerCase() === "cardio"
+                )
                 )
 
                 setWeightTraining(
-                    workouts.filter((workout) => workout.workoutType === "weights")
+                    workouts.filter((workout) => 
+                        workout.workoutType?.toLowerCase() === "weights"
+                )
                 )
             } catch (err){
                 console.error("Activity history error:", err)
@@ -40,6 +44,10 @@ function ActivityHistoryPage() {
                 setLoading(false)
             }
         }
+
+        const workouts = data.Workouts || []
+        console.log("Fetched workouts:", workouts)
+        console.log("Activity history data:", data)
 
         fetchActivityHistory()
     }, [])

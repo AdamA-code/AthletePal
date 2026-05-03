@@ -33,9 +33,18 @@ function StatisticsPage() {
             const historyData = await historyRes.json()
             const pbsData = await pbRes.json()
 
+            console.log("Workout data:", workoutData)
+            console.log("Hours data:", hoursData)
+            console.log("Streak data:", streakData)
+            console.log("History data:", historyData)
+            console.log("Personal bests data:", pbsData)
+
             setSummaryStats([
                 { label: "Total Workouts", value: workoutData["Completed Workouts"] || 0 },
-                { label: "Hours Trained", value: hoursData["Hours Trained"] || 0 },
+                { 
+                    label: "Hours Trained",
+                    value: Number(hoursData["Hours Trained"] || 0).toFixed(1)
+                },
                 { label: "Current Streak", value: streakData["Current Streak"] || 0 },
                 { label: "Personal Bests", value: pbsData["Personal Bests"]?.length || 0 }
             ])
@@ -182,10 +191,10 @@ function StatisticsPage() {
                                     className="border border-gray-200 rounded-lg p-4 flex justify-between"
                                 >
                                     <span className="font-medium text-gray-700">
-                                        {pb.activity}
+                                        {pb.activity || `Exercise ${pb.exerciseID}`}
                                     </span>
                                     <span className="font-bold text-gray-800">
-                                        {pb.best}
+                                        {pb.best || pb.storeValue}
                                     </span>
                                 </div>
                             ))}
