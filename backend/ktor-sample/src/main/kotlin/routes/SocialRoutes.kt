@@ -98,17 +98,17 @@ fun Route.socialRoutes() {
             }
         }
 
-        // Get all training groups a user is in
+        // Get all training groups
         get("/groups/{userID}") {
             try {
                 val userID: Int = call.parameters["userID"]!!.toInt()
-                val trainingGroups: List<TrainingGroup> = db.findAllGroups(userID)
+                val trainingGroups: List<TrainingGroup> = db.findAllGroups()
 
                 if (!trainingGroups.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.OK, mapOf("Training Groups" to trainingGroups))
                 }
                 else if (trainingGroups.isNullOrEmpty()) {
-                    call.respond(HttpStatusCode.NotFound, mapOf("message" to "No training groups found for user"))
+                    call.respond(HttpStatusCode.NotFound, mapOf("message" to "No training groups found"))
                 }
             }
             catch (e: Exception) {

@@ -2282,24 +2282,20 @@ class DatabaseService {
     }
 
     /**
-     * Retrieves all training groups a user is in from the database for the specified userID.
+     * Retrieves all training groups from the database.
      * 
      * Each record in the table is mapped to a TrainingGroup object and returned in a list.
      * If no matching record is found, an empty list is returned.
      * 
-     * @param userID The unique identifier of the user.
      * @return The list of TrainingGroup objects in the database.
      */
-    fun findAllGroups(userID: Int): List<TrainingGroup> {
+    fun findAllGroups(): List<TrainingGroup> {
         val stmt =
             db.connection.prepareStatement(
                 """
-                SELECT training_groups.* FROM training_groups
-                JOIN group_members ON training_groups.groupID = group_members.groupID
-                WHERE group_members.userID = ?
+                SELECT * FROM training_groups
                 """.trimIndent(),
             )
-        stmt.setInt(1, userID)
 
         val rs = stmt.executeQuery()
         val groups = mutableListOf<TrainingGroup>()
@@ -2319,6 +2315,30 @@ class DatabaseService {
         stmt.close()
 
         return groups
+    }
+
+    /**
+     * Returns all groups a user is in.
+     * 
+     * @param userID The unique identifier for a user.
+     * @return A list of TrainingGroup objects the user is in.
+     */
+    fun findAllUserGroups(userID: Int): List<TrainingGroup> {
+        return findAllGroups().filter { group ->
+            findGroupMembers(group.groupID).any { it.userID == userID }
+        }
+    }
+
+    /**
+     * Returns all groups a user is not in.
+     * 
+     * @param userID The unique identifier for a user.
+     * @return A list of TrainingGroup objects the user is not in.
+     */
+    fun findAllNonUserGroups(userID: Int): List<TrainingGroup> {
+        return findAllGroups().filter { group ->
+            findGroupMembers(group.groupID).none { it.userID == userID }
+        }
     }
 
     /**
