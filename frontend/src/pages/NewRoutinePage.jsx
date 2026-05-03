@@ -121,17 +121,18 @@ function NewRoutinePage() {
                 {error && <p className="text-red-700 text-sm mb-4" role="alert">{error}</p>}
 
                 <div className="mb-6">
-                    <label htmlFor="routine-name" className="sr-only">Routine Name</label>
+                    <label htmlFor="routine-name" className="block text-sm font-semibold text-gray-700 mb-1">
+                        Routine Name <span className="text-red-600 font-normal">*required</span>
+                    </label>
                     <input
                         id="routine-name"
-                        placeholder="Routine Name (e.g. Upper Day)"
+                        placeholder="e.g. Upper Day"
                         value={routineName}
                         onChange={(e) => setRoutineName(e.target.value)}
                         className="border p-2 rounded w-full"
                     />
                 </div>
 
-                {/* Exercise search */}
                 <div className="relative mb-6">
                     <label htmlFor="exercise-search" className="sr-only">Search exercises</label>
                     <input
@@ -162,7 +163,6 @@ function NewRoutinePage() {
                     )}
                 </div>
 
-                {/* Selected exercises — sets only */}
                 {selectedExercises.length === 0 ? (
                     <p className="text-gray-600 mb-6">No exercises added yet.</p>
                 ) : (
