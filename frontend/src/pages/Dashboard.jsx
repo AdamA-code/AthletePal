@@ -19,6 +19,9 @@ function DashboardPage() {
         }
         { /* Fetch dashboard data from backend */ }
         const fetchDashboardData = async () => {
+            const headers = {
+                "Content-Type": "application/json"
+            }
             try {
 
                 const [workoutsResponse, activityResponse, competitionsResponse] = await Promise.all([

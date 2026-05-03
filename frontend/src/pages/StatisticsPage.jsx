@@ -1,11 +1,13 @@
 import Sidebar from "../components/Sidebar"
 import { useEffect, useState } from "react"
+import API_BASE_URL from "../config"
 
 function StatisticsPage() {
     const [summaryStats, setSummaryStats] = useState([])
     const [progressionData, setProgressionData] = useState([])
     const [personalBests, setPersonalBests] = useState([])
     const [error, setError] = useState("")
+    const [competitionStats, setCompetitionStats] = useState([])
 
     useEffect(() => {
         const userID = localStorage.getItem("userID")
@@ -18,11 +20,11 @@ function StatisticsPage() {
         const fetchStatistics = async () => {
             try {
                 const [workoutRes, hoursRes, streakRes, historyRes, pbRes] = await Promise.all([
-                    fetch(`http://localhost:3000/api/statistics/user/workouts-completed/${userID}`),
-                    fetch(`http://localhost:3000/api/statistics/user/hours-trained/${userID}`),
-                    fetch(`http://localhost:3000/api/statistics/user/workout-streak/${userID}`),
-                    fetch(`http://localhost:3000/api/statistics/user/training-history/${userID}`),
-                    fetch(`http://localhost:3000/api/statistics/user/personal-bests/${userID}`)
+                    fetch(`${API_BASE_URL}/api/statistic/user/workouts-completed/${userID}`),
+                    fetch(`${API_BASE_URL}/api/statistic/user/hours-trained/${userID}`),
+                    fetch(`${API_BASE_URL}/api/statistic/user/workout-streak/${userID}`),
+                    fetch(`${API_BASE_URL}/api/statistic/user/training-history/${userID}`),
+                    fetch(`${API_BASE_URL}/api/statistics/user/personal-bests/${userID}`)
                 ])
 
             const workoutData = await workoutRes.json()
@@ -32,7 +34,7 @@ function StatisticsPage() {
             const pbsData = await pbRes.json()
 
             setSummaryStats([
-                { label: "Total Workouts", value: workoutsData["Completed Workouts"] || 0 },
+                { label: "Total Workouts", value: workoutData["Completed Workouts"] || 0 },
                 { label: "Hours Trained", value: hoursData["Hours Trained"] || 0 },
                 { label: "Current Streak", value: streakData["Current Streak"] || 0 },
                 { label: "Personal Bests", value: pbsData["Personal Bests"]?.length || 0 }
@@ -40,6 +42,7 @@ function StatisticsPage() {
 
                 setProgressionData(historyData["Training History"] || [])
                 setPersonalBests(pbsData["Personal Bests"] || [])
+                setCompetitionStats([])
             } catch (err) {
                 console.error("Error fetching statistics:", err)
                 setError("Failed to fetch statistics.")

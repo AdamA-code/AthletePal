@@ -9,6 +9,7 @@ function WorkoutLogPage() {
     const navigate = useNavigate()
     const [routines, setRoutines] = useState([])
     const [error, setError] = useState("")
+    const [success, setSuccess] = useState("")
 
     useEffect(() => {
         const userID = localStorage.getItem("userID")
@@ -16,21 +17,40 @@ function WorkoutLogPage() {
             setError("Not logged in. Please log in again.")
             return
         }
-
-        const fetchRoutines = async () => {
-            try {
-                const res = await fetch(`${API_BASE_URL}/api/workouts/${userID}`)
-                const data = await res.json()
-                const allWorkouts = Array.isArray(data.Workouts) ? data.Workouts : []
-                setRoutines(allWorkouts.filter(w => w.isRoutine === true))
-            } catch (err) {
-                console.error("Error fetching routines:", err)
-                setError("Could not load your routines.")
-            }
-        }
-
-        fetchRoutines()
+        fetchRoutines(userID)
     }, [])
+
+    const fetchRoutines = async (userID) => {
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/workouts/${userID}`)
+            const data = await res.json()
+            const allWorkouts = Array.isArray(data.Workouts) ? data.Workouts : []
+            setRoutines(allWorkouts.filter(w => w.isRoutine === true))
+        } catch (err) {
+            console.error("Error fetching routines:", err)
+            setError("Could not load your routines.")
+        }
+    }
+
+    const handleDelete = async (workoutID, routineName) => {
+        if (!window.confirm(`Are you sure you want to delete "${routineName}"?`)) return
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/workouts/${workoutID}`, {
+                method: "DELETE"
+            })
+            if (res.ok) {
+                setSuccess("Routine deleted.")
+                const userID = localStorage.getItem("userID")
+                fetchRoutines(userID)
+            } else {
+                setError("Failed to delete routine.")
+            }
+        } catch (err) {
+            console.error(err)
+            setError("Could not connect to server.")
+        }
+    }
 
     return (
         <div className="min-h-screen bg-gray-100 flex">
@@ -39,6 +59,7 @@ function WorkoutLogPage() {
                 <h2 className="text-3xl font-bold mb-6">Workouts</h2>
 
                 {error && <p className="text-red-700 text-sm mb-4" role="alert">{error}</p>}
+                {success && <p className="text-green-700 text-sm mb-4" role="status">{success}</p>}
 
                 <button
                     onClick={() => navigate("/start-workout")}
@@ -71,13 +92,22 @@ function WorkoutLogPage() {
                                     </p>
                                     <p className="text-sm text-gray-600">{routine.date}</p>
                                 </div>
-                                <button
-                                    onClick={() => navigate("/start-workout", { state: { workoutID: routine.workoutID } })}
-                                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                                    aria-label={`Start ${routine.notes || "Untitled Routine"}`}
-                                >
-                                    Start
-                                </button>
+                                <div className="flex gap-3 items-center">
+                                    <button
+                                        onClick={() => navigate("/start-workout", { state: { workoutID: routine.workoutID } })}
+                                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                                        aria-label={`Start ${routine.notes || "Untitled Routine"}`}
+                                    >
+                                        Start
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(routine.workoutID, routine.notes || "Untitled Routine")}
+                                        className="text-red-700 text-sm hover:underline"
+                                        aria-label={`Delete ${routine.notes || "Untitled Routine"}`}
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
                             </div>
                         ))
                     )}
