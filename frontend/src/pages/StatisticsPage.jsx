@@ -8,6 +8,9 @@ function StatisticsPage() {
     const [personalBests, setPersonalBests] = useState([])
     const [error, setError] = useState("")
     const [competitionStats, setCompetitionStats] = useState([])
+    const [exerciseID, setExerciseID] = useState("")
+    const [scoreValue, setScoreValue] = useState("")
+    const [pbSuccess, setPbSuccess] = useState("")
 
     useEffect(() => {
         const userID = localStorage.getItem("userID")
@@ -61,6 +64,18 @@ function StatisticsPage() {
         fetchStatistics()
     }, [])
 
+    const handleAddPersonalBest = async (event) => {
+        event.preventDefault()
+        const userID = localStorage.getItem("userID")
+        if (!userID) {
+            setError("No user found. Please log in again.")
+            return
+        }
+
+        if (!exerciseID || !scoreValue) {
+            setError("Please enter both exerciseID")
+        }
+    }
     return (
         <div className="min-h-screen bg-gray-100 flex">
             <Sidebar />
