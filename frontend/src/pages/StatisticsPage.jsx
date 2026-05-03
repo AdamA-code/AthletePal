@@ -1,32 +1,65 @@
 import Sidebar from "../components/Sidebar"
+import { useEffect, useState } from "react"
+import API_BASE_URL from "../config"
 
 function StatisticsPage() {
-    const summaryStats = [
-        { label: "Total Workouts", value: 48 },
-        { label: "Hours Trained", value: 72 },
-        { label: "Competitions Completed", value: 6 }, 
-        { label: "Personal Bests", value: 5}
-    ]
+    const [summaryStats, setSummaryStats] = useState([])
+    const [progressionData, setProgressionData] = useState([])
+    const [personalBests, setPersonalBests] = useState([])
+    const [error, setError] = useState("")
+    const [competitionStats, setCompetitionStats] = useState([])
 
-    const progressionData = [
-        { week: "Week 1", workouts: 4, hours: 6 },
-        { week: "Week 2", workouts: 5, hours: 8 },
-        { week: "Week 3", workouts: 3, hours: 5 },
-        { week: "Week 4", workouts: 6, hours: 9},
-    ]
-    
-    const competitionStats = [
-        { event: "Leeds 10K", date: "12/02/26", result: "48:21", status: "Completed" },
-        { event: "Yorkshire Triathlon", date: "28/03/26", result: "Upcoming", status: "Planned" }
-    ]
+    useEffect(() => {
+        const userID = localStorage.getItem("userID")
 
-    const personalBests = [
-        { activity: "5k run", best: "22:48" },
-        { activity: "10k run", best: "50:21" },
-        { activity: "Bench Press", best: "125kg" },
-        { activity: "Squat", best: "190kg" },
-        { activity: "Deadlift", best: "230kg" },
-    ]
+        if (!userID) {
+            setError("No user found. Please log in again.")
+            return
+        }
+        
+        const fetchStatistics = async () => {
+            try {
+                const [workoutRes, hoursRes, streakRes, historyRes, pbRes] = await Promise.all([
+                    fetch(`${API_BASE_URL}/api/statistic/user/workouts-completed/${userID}`),
+                    fetch(`${API_BASE_URL}/api/statistic/user/hours-trained/${userID}`),
+                    fetch(`${API_BASE_URL}/api/statistic/user/workout-streak/${userID}`),
+                    fetch(`${API_BASE_URL}/api/statistic/user/training-history/${userID}`),
+                    fetch(`${API_BASE_URL}/api/statistics/user/personal-bests/${userID}`)
+                ])
+
+            const workoutData = await workoutRes.json()
+            const hoursData = await hoursRes.json()
+            const streakData = await streakRes.json()
+            const historyData = await historyRes.json()
+            const pbsData = await pbRes.json()
+
+            console.log("Workout data:", workoutData)
+            console.log("Hours data:", hoursData)
+            console.log("Streak data:", streakData)
+            console.log("History data:", historyData)
+            console.log("Personal bests data:", pbsData)
+
+            setSummaryStats([
+                { label: "Total Workouts", value: workoutData["Completed Workouts"] || 0 },
+                { 
+                    label: "Hours Trained",
+                    value: Number(hoursData["Hours Trained"] || 0).toFixed(1)
+                },
+                { label: "Current Streak", value: streakData["Current Streak"] || 0 },
+                { label: "Personal Bests", value: pbsData["Personal Bests"]?.length || 0 }
+            ])
+
+                setProgressionData(historyData["Training History"] || [])
+                setPersonalBests(pbsData["Personal Bests"] || [])
+                setCompetitionStats([])
+            } catch (err) {
+                console.error("Error fetching statistics:", err)
+                setError("Failed to fetch statistics.")
+            }
+        }
+
+        fetchStatistics()
+    }, [])
 
     return (
         <div className="min-h-screen bg-gray-100 flex">
@@ -36,6 +69,11 @@ function StatisticsPage() {
                 <h1 className="text-3x1 font-bold text-blue-800 mb-6">
                     Statistics / Visualisation
                 </h1>
+                {error && (
+                    <p className="text-red-600 text-sm mb-4">
+                        {error}
+                    </p>
+                )}
 
                 {/* Summary */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 x1:grid-cols-4 gap-6 mb-8">
@@ -153,10 +191,10 @@ function StatisticsPage() {
                                     className="border border-gray-200 rounded-lg p-4 flex justify-between"
                                 >
                                     <span className="font-medium text-gray-700">
-                                        {pb.activity}
+                                        {pb.activity || `Exercise ${pb.exerciseID}`}
                                     </span>
                                     <span className="font-bold text-gray-800">
-                                        {pb.best}
+                                        {pb.best || pb.storeValue}
                                     </span>
                                 </div>
                             ))}

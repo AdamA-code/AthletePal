@@ -1,10 +1,10 @@
 package models
 
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.Serializable // Import kotlinx serialisation
 
-@Serializable
-data class UpdateWorkoutExerciseRequest (
+@Serializable // Declare model to be serialisable
+data class UpdateWorkoutExerciseRequest(
     val sets: Int?,
     val reps: Int?,
-    val weight: Double?
+    val weight: Double?,
 )
