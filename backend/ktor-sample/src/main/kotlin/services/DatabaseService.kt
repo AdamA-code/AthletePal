@@ -1,21 +1,18 @@
-// Formatting assisted by ktlint
 package services
-import kotlinx.serialization.Serializable // Helps routes
-import java.sql.Connection // Interface for database connection
-import java.sql.DriverManager // To connect to the DB
-import java.sql.PreparedStatement // Precompiled SQL statement
-import java.sql.ResultSet // Represents results of SQL queries
-import java.sql.Statement
-import java.time.DayOfWeek
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.util.UUID // Univversal unique identifier for reset tokens
-
-// Imports for sending reset emails to API for sending to user(s)
+import kotlinx.serialization.Serializable
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import java.sql.Connection
+import java.sql.DriverManager
+import java.sql.PreparedStatement
+import java.sql.ResultSet
+import java.sql.Statement
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.util.UUID
 
 /**
  * Provides all database operations for the application.
@@ -23,13 +20,12 @@ import okhttp3.RequestBody.Companion.toRequestBody
  * This class acts as the main service layer between the backend logic
  * and the SQL database, handling CRUD operations, authentication,
  * and relational queries.
- * 
+ *
  * It is responsible for maintaining data integrity, managing transactions,
  * and ensuring consistent communication between the application and database.
  */
 class DatabaseService {
-
-// Data classes to finitely store inputs (and potentially outputs) to database
+    // Data classes used to store inputs and outputs for database operations
 
     /**
      * Represents a registered user stored in the database.
@@ -62,7 +58,7 @@ class DatabaseService {
     /**
      * Represents an exercise stored in the database.
      *
-     * @property exerciseID Unique identifier for the exercise.
+     * @property exerciseID Unique identifier for the exercise, defaulting to 0.
      * @property name Exercise's display name.
      * @property category The category of exercise (e.g. weights, running, etc).
      * @property description A description of the exercise.
@@ -78,7 +74,7 @@ class DatabaseService {
     /**
      * Represents a workout stored in the database.
      *
-     * @property workoutID Unique identifier for the workout.
+     * @property workoutID Unique identifier for the workout, defaulting to 0.
      * @property createdBy The userID of the user who created the workout.
      * @property assignedTo The userID of the user who will be attempting the workout.
      * @property date The date the workout is scheduled for.
@@ -86,7 +82,7 @@ class DatabaseService {
      * @property workoutType Optional type of the workout such as weights or swimming.
      * @property notes Optional notes added to the workout.
      * @property routeID Optional routeID to link cardio workouts to a route on a map.
-     * @property isRoutine True if the workout is aa regular routine, false if not.
+     * @property isRoutine True if the workout is a regular routine, false if not.
      */
     @Serializable
     data class Workout(
@@ -104,7 +100,7 @@ class DatabaseService {
     /**
      * Represents a many-to-many relationship between workouts and exercises.
      *
-     * @property workoutExercisesID Unique identifier for the exercise in the workout.
+     * @property workoutExercisesID Unique identifier for the exercise in the workout, defaulting to 0.
      * @property workoutID The workoutID of the workout the exercise belongs to.
      * @property exerciseID The exerciseID of the exercise in the workout.
      * @property sets Optional number of sets for the exercise.
@@ -114,25 +110,44 @@ class DatabaseService {
     @Serializable
     data class WorkoutExercise(
         val workoutExercisesID: Int = 0,
-        val workoutID: Int = 0, // Still a required field for adding workout exercise to workout
+        val workoutID: Int = 0,
         val exerciseID: Int,
         val sets: Int? = 1,
         val reps: Int? = 1,
-        val weight: Double? = 1.0
+        val weight: Double? = 1.0,
     )
 
+    /**
+     * Represents a user statistic stored in the database.
+     *
+     * @property statisticID Unique identifier for the statistic, defaulting to 0.
+     * @property userID The userID of the user the statistic belongs to.
+     * @property exerciseID The exerciseID of the exercise the statistic is based off.
+     * @property scoreValue The score the user achieved (e.g. 70kg for bench press, 240 minutes for a marathon).
+     * @property date The date the user achieved this statistic.
+     */
     @Serializable
     data class Statistic(
-        val statisticID: Int? = 0,
+        val statisticID: Int = 0,
         val userID: Int,
         val exerciseID: Int,
         val scoreValue: Double,
         val date: String,
     )
 
+    /**
+     * Represents competition stored in a the database.
+     *
+     * @property competitionID Unique identifier for the competition in the database, defaulting to 0.
+     * @property userID The userID of the user the competition belongs to.
+     * @property name The name of the competition.
+     * @property date The date the competition is scheduled for.
+     * @property rank Optional placement of the user in the competition (e.g. first, third, etc).
+     * @property result Optional score the user achieved in the competition.
+     */
     @Serializable
     data class Competition(
-        val competitionID: Int? = 0,
+        val competitionID: Int = 0,
         val userID: Int,
         val name: String,
         val date: String,
@@ -140,17 +155,37 @@ class DatabaseService {
         val result: Int? = null,
     )
 
+    /**
+     * Represents a many-to-many relationship between competitions and exercises.
+     *
+     * @property competitionExerciseID Unique identifier for the exercise in the competition, defaulting to 0.
+     * @property competitionID Unique identifier for the competition in the database.
+     * @property exerciseID The exerciseID of the exercise in the competition.
+     * @property performance Optional score of the user exercise (e.g. 70kg or 40 minutes).
+     */
     @Serializable
     data class CompetitionExercise(
-        val competitionExerciseID: Int? = 0,
+        val competitionExerciseID: Int = 0,
         val competitionID: Int,
         val exerciseID: Int,
         val performance: Double?,
     )
 
+    /**
+     * Represents a route associated with a cardio workout in the database.
+     *
+     * @property routeID Unique identifier for the route in the workout, defaulting to 0.
+     * @property userID The userID of the user who owns the route.
+     * @property name The name of the route.
+     * @property distance The distance of the route.
+     * @property estimatedTime Optional estimated time the route to be completed.
+     * @property date The date the route is scheduled for.
+     * @property isPublic True if the route is available to the public, false if not.
+     * @property routeData The data that represents where the route is on the map.
+     */
     @Serializable
     data class Route(
-        val routeID: Int? = 0,
+        val routeID: Int = 0,
         val userID: Int,
         val name: String,
         val distance: Double,
@@ -160,54 +195,101 @@ class DatabaseService {
         val routeData: String,
     )
 
+    /**
+     * Represents a training group users can join.
+     *
+     * @property groupID Unique identifier for the training group users can join, defaulting to 0.
+     * @property createdBy The userID of the user who created the workout.
+     * @property name The name of the training group.
+     * @property description Optional description describing the training group.
+     * @property goal Optional overall goal users in the group are working towards.
+     */
     @Serializable
     data class TrainingGroup(
-        val groupID: Int? = 0,
+        val groupID: Int = 0,
         val createdBy: Int,
         val name: String,
         val description: String? = null,
-        val goal: String? = null
+        val goal: String? = null,
     )
 
+    /**
+     * Represents a many-to-many relationship between training groups and users.
+     *
+     * @property memberID Unique identifier for the users in a training group, defaulting to 0.
+     * @property groupID Unique identifier for the group the user is in.
+     * @property userID Unique identifier for user
+     */
     @Serializable
     data class GroupMember(
-        val memberID: Int? = 0,
+        val memberID: Int = 0,
         val groupID: Int,
         val userID: Int,
     )
 
+    /**
+     * Represents a many-to-many relationship between training groups and workouts.
+     *
+     * @property sessionID Unique identifier for the workout session the group will be completing together, defaulting to 0.
+     * @property groupID Unique identifier for the group the user is in.
+     * @property workoutID Unique identifier for the workout.
+     * @property scheduledDate The date the group session is scheduled to be held on.
+     */
     @Serializable
     data class GroupSession(
-        val sessionID: Int? = 0,
+        val sessionID: Int = 0,
         val groupID: Int,
         val workoutID: Int,
         val scheduledDate: String,
     )
 
-    // Connect to DB
+    /**
+     * Manages the application's connection to the SQLite database.
+     *
+     * This class creates a JDBC connection to the users.db database file located in the project's resources directory.
+     *
+     * When an instance is created, foreign key constraints are enabled using PRAGMA foreign_keys = ON
+     * so relational integrity rules such as cascading deletes are enabled.
+     *
+     * The connection can be reused by database service functions until close() is called.
+     */
     class DatabaseConnection {
-        // open connection to database
+        // File path used to connect to the database
         val connectionLocation = "jdbc:sqlite:${System.getProperty("user.dir")}/src/main/resources/users.db"
+
+        // Open connection used to communicate with database
         val connection: Connection = DriverManager.getConnection(connectionLocation)
 
-        // Runs automatically on creation
+        // Runs automatically on creation - enables foreign key contstraint enforcement
         init {
             connection.createStatement().execute("PRAGMA foreign_keys = ON") // Enable deletion cascading
         }
 
+        // Closes the database connectiion if it's currently open
         fun close() {
             if (!connection.isClosed) connection.close()
         }
     }
 
+    // Shared connection used by all service functions
     val db = DatabaseConnection()
-    // User db
 
+    /**
+     * Stores a new user in the database.
+     *
+     * The function first checks whether the given email address is already associated with an existing account.
+     * If the email is unique, the user record is inserted into the users table.
+     *
+     * If successful, the generated userID is returned. If the email already exists or the insert fails,
+     * -1 is returned.
+     *
+     * Prepared statements are used to safely insert values.
+     *
+     * @param user The user data to store.
+     * @return The created userID if successful, -1 if not.
+     */
     fun createUser(user: User): Int {
         if (findUser(user.email) == null) {
-            // Connect to db, pepare query struct, use object that allows updating
-            // and prevent SQL injection, store to set values and exec
-            // SQL INSERT statement with "?"" as a placeholder
             val stmt: PreparedStatement =
                 db.connection.prepareStatement(
                     """
@@ -218,7 +300,6 @@ class DatabaseService {
                     Statement.RETURN_GENERATED_KEYS,
                 ) // Needed to return created ID
 
-            // Set placeholder values based on given data
             stmt.setString(1, user.name)
             stmt.setString(2, user.email)
             stmt.setString(3, user.passwordHash)
@@ -247,15 +328,19 @@ class DatabaseService {
         return -1
     }
 
+    /**
+     * Retrieves a user from the database using their email address.
+     *
+     * @param email The email address of the user to find.
+     * @return The matching User object if found, null if no user exists.
+     */
     fun findUser(email: String): User? {
-        // Connect to db, pepare query struct, use object that allows updating
-        // and prevent SQL injection, store to set values and exec
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
                 "SELECT * FROM users WHERE email = ?",
             )
 
-        stmt.setString(1, email) // Put email value in placeholder (?)
+        stmt.setString(1, email)
 
         val rs: ResultSet = stmt.executeQuery()
 
@@ -281,6 +366,25 @@ class DatabaseService {
         return null
     }
 
+    /**
+     * Updates optional profile details for a user account.
+     *
+     * The function validates the provided email, ensuring it's in a valid format before attempting the update.
+     * Age is also validated to ensure it falls in a realistic range.
+     *
+     * The update modifies only non-authentication profile fields such as gender, age, height, and weight.
+     * The user is identified using their email address.
+     *
+     * If the update is successful, the database is modified and the function returns true. If no matching user
+     * is found or validation fails, false is returned.
+     *
+     * @param email The email address of the user to update.
+     * @param gender Optional gender value.
+     * @param age Optional age value.
+     * @param height Optional height in cm.
+     * @param weight Optional weight in kg.
+     * @return True if the update was successful, false if not.
+     */
     fun updateAccount(
         email: String,
         gender: String?,
@@ -288,9 +392,6 @@ class DatabaseService {
         height: Double?,
         weight: Double?,
     ): Boolean {
-        // Connect to db, pepare query struct, use object that allows updating
-        // and prevent SQL injection, store to set values and exec
-
         //  Validation checks
         if (email.isBlank() || !email.contains("@") || !email.contains(".")) return false
         if (age != null && (age < 0 || age > 120)) return false
@@ -304,20 +405,36 @@ class DatabaseService {
                 """.trimIndent(),
             )
 
-        // Set placeholder values based on given data
         stmt.setString(1, gender)
         stmt.setObject(2, age)
         stmt.setObject(3, height)
         stmt.setObject(4, weight)
         stmt.setString(5, email)
 
-        val rowsUpdated = stmt.executeUpdate() // smt.executeUpdate returns 0 if nothing updated and 1 if updated
+        val rowsUpdated = stmt.executeUpdate()
         stmt.close()
 
-        return rowsUpdated > 0 // Returns True is rowsUpdated == 1
+        return rowsUpdated > 0
     }
 
-    // Voluntary change, not forgot password
+    /**
+     * Updates a user's password after verifying their current password.
+     *
+     * At first, the function validates that both passwords meet minimum security requirements and
+     * ensures the user exists in the database.
+     *
+     * It then verifies the given old password against the stored hash using the user's stored salt.
+     * If authentication succeeds, a new salt and hash are generated for the new password.
+     *
+     * The password hash and salt are then updated in the database.
+     *
+     * This function is used for voluntary password changes, not password recovery.
+     *
+     * @param email The email address of the user.
+     * @param oldPassword The user's current password.
+     * @param newPassword The new password to be set.
+     * @return True if the password was successfully updated, false if not.
+     */
     fun updatePassword(
         email: String,
         oldPassword: String,
@@ -329,7 +446,7 @@ class DatabaseService {
 
         val authService = AuthService()
 
-        // Verify old password is correct via reverse of func
+        // Verify old password is correct via reverse
         if (!authService.verifyPassword(oldPassword, user.passwordKey, user.passwordHash)) {
             return false
         }
@@ -356,7 +473,18 @@ class DatabaseService {
         return rowsUpdated > 0
     }
 
-    // Forgot password (email token)
+    /**
+     * Generates a password reset token for a user account.
+     *
+     * The function validates the email and ensures the user exists in the database.
+     * If valid, a unique token is generated and stored in the password_reset_tokens table.
+     * An expiry time is set to 1 hour from creation to add security.
+     *
+     * The token is returned so it can be sent to the user's email for password recovery.
+     *
+     * @param email The email address of the account requesting a password reset.
+     * @return The generated reset token if successful, or null if validation fails or the user doesn't exit.
+     */
     fun generatePasswordResetToken(email: String): String? {
         // Validation checks
         if (!email.contains("@") || !email.contains(".")) return null
@@ -391,6 +519,21 @@ class DatabaseService {
         }
     }
 
+    /**
+     * Resets a user's password using a valid password reset token.
+     *
+     * The function checks the token has not passed expiry or has already been used. If it has,
+     * the function returns false. If valid, the user's password is updated using a newly generated salt
+     * and hash based off the given input.
+     *
+     *
+     * The reset is performed inside a transaction using a try-catch block to ensure atomicity.
+     * Both the password update and token invalidation must succeed or all changes are undone using rollback().
+     *
+     * @param token The password reset token provided to the user.
+     * @param newPassword The new password.
+     * @return True if the password was successfully reset, false if not.
+     */
     fun resetPasswordWithToken(
         token: String,
         newPassword: String,
@@ -482,7 +625,7 @@ class DatabaseService {
             db.connection.commit()
             return true
             // Find any unexpected errors and rollback if so, set connection back to autocommit either way
-        } catch (erro: Exception) {
+        } catch (error: Exception) {
             db.connection.rollback()
             return false
         } finally {
@@ -502,7 +645,7 @@ class DatabaseService {
     The function returns:
         - true, if we generate the token and a successful API request containing the email is made to Postmark (and we recieve confirmation)
         - false, if we cannot generate the token OR Postmark does not send confirmation of email recieved OR we hit a logical exception
-    */
+     */
     fun sendResetEmail(email: String): Boolean {
         try {
             val token: String? = generatePasswordResetToken(email)
@@ -514,33 +657,44 @@ class DatabaseService {
             val client = OkHttpClient() // create HTTP client instance
             val postmarkAPIToken = "28ac09e0-0c09-462f-9438-ccabc99a56e2"
 
-            val json = """
+            val json =
+                """
                 {
                     "From": "dwbt7640@leeds.ac.uk",
-                    "To": "${email}",
+                    "To": "$email",
                     "Subject": "Password Reset Code",
-                    "TextBody": "Your password reset code is: ${token}",
+                    "TextBody": "Your password reset code is: $token",
                     "MessageStream": "outbound"
                 }
-            """.trimIndent() // Defines body of API email request
+                """.trimIndent() // Defines body of API email request
 
-            val request = Request.Builder() // Begin building HTTP request for API
-                .url("https://api.postmarkapp.com/email") // Send to API (Postmark)
-                .post(json.toRequestBody("application/json".toMediaType())) // Attach JSON body defined above as POST request
-                .header("Accept", "application/json")
-                .header("Content-Type", "application/json")
-                .header("X-Postmark-Server-Token", postmarkAPIToken) // Add Postmark Server API token for authentication
-                .build()
+            val request =
+                Request.Builder() // Begin building HTTP request for API
+                    .url("https://api.postmarkapp.com/email") // Send to API (Postmark)
+                    .post(json.toRequestBody("application/json".toMediaType())) // Attach JSON body defined above as POST request
+                    .header("Accept", "application/json")
+                    .header("Content-Type", "application/json")
+                    .header("X-Postmark-Server-Token", postmarkAPIToken) // Add Postmark Server API token for authentication
+                    .build()
 
             client.newCall(request).execute().use { response ->
                 return response.isSuccessful // Returns true if confirmation recieved from API that email was accepted for sending
             }
-        }
-        catch(e: Exception) { // If an exception is hit at any point, return false
+        } catch (e: Exception) {
+            // If an exception is hit at any point, return false
             return false
         }
     }
 
+    /**
+     * Deletes a user account from the database using their email address.
+     *
+     * The function executes a DELETE operation on the users table if a user is found linking
+     * to the given email address and true is returned. Otherwise, false is returned.
+     *
+     * @param email The email address of the user to delete.
+     * @return True if the user was deleted, false if not.
+     */
     fun deleteUser(email: String): Boolean {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -558,15 +712,23 @@ class DatabaseService {
         return rowsDeleted > 0
     }
 
-    // Exercise db
-
+    /**
+     * Creates a new exercise and stores it in the database.
+     *
+     * The function checks the exercise name isn't blank and ensures the category is one of the
+     * predefined types: ("weights", "running", "cycling", "swimming", "walking").
+     *
+     * If validation is passed, the exercise is inserted into the database and the exerciseID is returned.
+     *
+     * @param exercise The exercise object containing name, category, and description.
+     * @return The generated exerciseID if successful, -1  if not.
+     */
     fun createExercise(exercise: Exercise): Int {
-        
         // Validation Checks
         if (exercise.name.isBlank()) return -1
         val validCategories = listOf("weights", "running", "cycling", "swimming", "walking")
         if (exercise.category !in validCategories) return -1
-    
+
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
                 """
@@ -596,6 +758,15 @@ class DatabaseService {
         return id
     }
 
+    /**
+     * Retrieves an exercise from the database using its unique ID.
+     *
+     * If an exercise with the given ID exists, it is returned in an Exercise object.
+     * If no matching record is found, null is returned instead.
+     *
+     * @param exerciseID The unique identifier of the exercise.
+     * @return The corresponding Exercise object, or null if no record is found.
+     */
     fun findExercise(exerciseID: Int): Exercise? {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -624,6 +795,14 @@ class DatabaseService {
         return exercise
     }
 
+    /**
+     * Retrieves all exercises from the database.
+     *
+     * Each record in the table is mapped to an Exercise object and returned in a list.
+     * If the table is empty, an empty list is returned.
+     *
+     * @return The list of Exercise objects in the database.
+     */
     fun findAllExercises(): List<Exercise> {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -649,6 +828,23 @@ class DatabaseService {
         return exercises
     }
 
+    /**
+     * Updates an exercise in the database.
+     *
+     * The function validates the provided name, ensuring it's not blank before attempting the update.
+     * category is also validated to ensure it falls the list of predefined acceptable values.
+     *
+     * The function only updates the category or optional description, identified by the exercise's name.
+     *
+     * If the update is successful, the database is modified and the function returns true. If no matching exercise
+     * is found or validation fails, false is returned.
+     *
+     *
+     * @param name The name of the exercise used to identify the record.
+     * @param category The new category value of the exercise.
+     * @param description Optional updated description of the exercise.
+     * @return True if the update was successful, false if not.
+     */
     fun updateExercise(
         name: String,
         category: String,
@@ -677,6 +873,15 @@ class DatabaseService {
         return rowsUpdated > 0
     }
 
+    /**
+     * Deletes an exercise from the database using the provided exerciseID.
+     *
+     * The function executes a DELETE operation on the exercises table if an exercise is found linking
+     * to the given exerciseID and true is returned. Otherwise, false is returned.
+     *
+     * @param exerciseID The exerciseID of the row to delete.
+     * @return True if the exercise was deleted, false if not.
+     */
     fun deleteExercise(exerciseID: Int): Boolean {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -691,7 +896,22 @@ class DatabaseService {
         return rowsDeleted > 0
     }
 
-    // Workout to DB
+    /**
+     * Stores a new workout in the database.
+     *
+     * The function first checks whether the given date is not blank and in the correct format.
+     * The function then checks that if the duration is not null then it is longer than 0, and that the given
+     * workoutType of the workout is in the valid types list, if it iss not null.
+     *
+     * The function then inserts the workout into the database.
+     *
+     * If successful, the generated workoutID is returned. If unsuccessful, -1 is returned.
+     *
+     * Prepared statements are used to safely insert values.
+     *
+     * @param workout The workout data to store.
+     * @return The created workoutID if successful, -1 if not.
+     */
     fun createWorkout(workout: Workout): Int {
         // Validation Checks
         if (workout.date.isBlank() || !workout.date.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) return -1
@@ -733,6 +953,15 @@ class DatabaseService {
         return id
     }
 
+    /**
+     * Retrieves all workouts for a specific user from the database.
+     *
+     * Each record in the table is mapped to a Workout object and returned in a list.
+     * If no matching record is found, an empty list is returned.
+     *
+     * @param userID The unique identifier of the user who's workouts are being returned.
+     * @return The list of Workout objects in the database.
+     */
     fun findAllWorkouts(userID: Int): List<Workout> {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -765,6 +994,68 @@ class DatabaseService {
         return workouts
     }
 
+    /**
+     * Retrieves a specific workout from the database using its workoutID.
+     *
+     * @param workoutID The unique identifier of the workout.
+     * @return A Workout object in the database if found, or null if no record is found.
+     */
+    fun findWorkout(workoutID: Int): Workout? {
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "SELECT * FROM workouts WHERE workoutID = ?",
+            )
+
+        stmt.setInt(1, workoutID)
+
+        val rs: ResultSet = stmt.executeQuery()
+
+        if (rs.next()) {
+            val workout =
+                Workout(
+                    workoutID = rs.getInt("workoutID"),
+                    createdBy = rs.getInt("createdBy"),
+                    assignedTo = rs.getInt("assignedTo"),
+                    date = rs.getString("date"),
+                    duration = rs.getObject("duration") as Int?,
+                    workoutType = rs.getObject("workoutType") as String?,
+                    notes = rs.getObject("notes") as String?,
+                    routeID = rs.getObject("routeID") as Int?,
+                    isRoutine = rs.getBoolean("isRoutine"),
+                )
+            rs.close()
+            stmt.close()
+            return workout
+        }
+
+        rs.close()
+        stmt.close()
+        return null
+    }
+
+    /**
+     * Updates a workout in the database.
+     *
+     * The function validates the provided workoutID, ensuring it's greater than 0 before executing the
+     * statement. Date is also validated to ensure it is in the correct YYYY-MM-DD format. Duration is then
+     * validated to check that if a value is given, that it is greater than 0.
+     *
+     * The function only updates the date, duration, workoutType, notes, routeID, and isRoutine associated
+     * with the workout, identified by the workoutID.
+     *
+     * If the update is successful, the database is modified and the function returns true. If no matching workout
+     * is found or validation fails, false is returned.
+     *
+     *
+     * @param workoutID The unique identifier of the workout to update.
+     * @param date The new date value of the workout.
+     * @param duration Optional updated duration of the workout.
+     * @param workoutType Optional new type descriptor of workout.
+     * @param notes Optional new notes about the workout
+     * @param routeID Optional new routeID linked to the workout.
+     * @param isRoutine New flag that's true if the workout is a regular routine, false if not.
+     * @return True if the update was successful, false if not.
+     */
     fun updateWorkout(
         workoutID: Int,
         date: String,
@@ -802,6 +1093,15 @@ class DatabaseService {
         return rowsUpdated > 0
     }
 
+    /**
+     * Deletes a workout from the database using the provided workoutID.
+     *
+     * The function executes a DELETE operation on the workouts table if a workout is found linking
+     * to the given workoutID and true is returned. Otherwise, false is returned.
+     *
+     * @param workoutID The workoutID of the row to delete.
+     * @return True if the workout was deleted, false if not.
+     */
     fun deleteWorkout(workoutID: Int): Boolean {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -816,8 +1116,22 @@ class DatabaseService {
         return rowsDeleted > 0
     }
 
-    // Workout_exercise join table
-
+    /**
+     * Stores a new many-to-many record in the database between workouts and exercises.
+     *
+     * The function first checks that the given exercise and workout IDs are possible
+     * The function then validates that if sets, reps, or weight are not equal to null, then they are
+     * above 0.
+     *
+     * The function then inserts the join record into the database.
+     *
+     * If successful, the generated workoutExercisesID is returned. If unsuccessful, -1 is returned.
+     *
+     * Prepared statements are used to safely insert values.
+     *
+     * @param workout_exercise The workout_exercise data to store.
+     * @return The created workoutExercisesID if successful, -1 if not.
+     */
     fun addExerciseToWorkout(workout_exercise: WorkoutExercise): Int {
         // Validation Checks
         if (workout_exercise.workoutID <= 0 || workout_exercise.exerciseID <= 0) return -1
@@ -856,6 +1170,14 @@ class DatabaseService {
         return id
     }
 
+    /**
+     * Retrieves all workout and exercises join records from the database.
+     *
+     * Each record in the table is mapped to a WorkoutExercise object and returned in a list.
+     * If no matching record is found, an empty list is returned.
+     *
+     * @return The list of WorkoutExercise objects in the database.
+     */
     fun findAllWorkoutExercises(workoutID: Int): List<WorkoutExercise> {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -884,6 +1206,59 @@ class DatabaseService {
         return workoutExs
     }
 
+    /**
+     * Retrieves a specific workout-exercise join record from the database using its workoutExerciseID.
+     *
+     * @param workoutExerciseID The unique identifier of the join record.
+     * @return A WorkoutExercise object in the database if found, or null if no record is found.
+     */
+    fun findWorkoutExercise(workoutExercisesID: Int): WorkoutExercise? {
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "SELECT * FROM workout_exercises WHERE workoutExercisesID = ?",
+            )
+
+        stmt.setInt(1, workoutExercisesID)
+
+        val rs: ResultSet = stmt.executeQuery()
+        if (rs.next()) {
+            val we =
+                WorkoutExercise(
+                    workoutExercisesID = rs.getInt("workoutExercisesID"),
+                    workoutID = rs.getInt("workoutID"),
+                    exerciseID = rs.getInt("exerciseID"),
+                    sets = rs.getObject("sets") as Int?,
+                    reps = rs.getObject("reps") as Int?,
+                    weight = rs.getObject("weight") as Double?,
+                )
+            rs.close()
+            stmt.close()
+            return we
+        }
+
+        rs.close()
+        stmt.close()
+        return null
+    }
+
+    /**
+     * Updates a workout and exercise join record in the database.
+     *
+     * The function validates the provided workoutExercisesID, ensuring it's greater than 0 before executing the
+     * statement. Sets, reps, and weight are also validated to ensure that if a value is given, that it is greater than 0.
+     *
+     * The function only updates the sets, reps, and weight associated with the workout, identified by the workoutExercisesID.
+     *
+     * If the update is successful, the database is modified and the function returns true. If no matching workout
+     * is found or validation fails, false is returned.
+     *
+     *
+     * @param workoutExercisesID The unique identifier of the join record to update.
+     * @param sets Optional sets of an exercise in the workout to update.
+     * @param reps Optional new reps of a set in an exercise in a workout.
+     * @param weight Optional new weight of an exercise in a rep.
+     * @return True if the update was successful, false if not.
+     */
     fun updateWorkoutExercise(
         workoutExercisesID: Int,
         sets: Int?,
@@ -916,6 +1291,15 @@ class DatabaseService {
         return rowsUpdated > 0
     }
 
+    /**
+     * Deletes a workout and exercise join record from the database using the provided workoutExercisesID.
+     *
+     * The function executes a DELETE operation on the workout_exercises table if a workout_exercise is found linking
+     * to the given workoutExercisesID and true is returned. Otherwise, false is returned.
+     *
+     * @param workoutExercisesID The workoutExercisesID of the row to delete.
+     * @return True if the join record was deleted, false if not.
+     */
     fun deleteWorkoutExercise(workoutExercisesID: Int): Boolean {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -930,7 +1314,22 @@ class DatabaseService {
         return rowsDeleted > 0
     }
 
-    // Statistics DB
+    /**
+     * Stores a new statistic in the database.
+     *
+     * The function first checks whether the given userID and exerciseID are above 0.
+     * The function then checks that if the scoreValue is not null then it is higher than 0, and that the given
+     * date is in the correct format (YYYY-MM-DD)
+     *
+     * The function then inserts the statistic into the database.
+     *
+     * If successful, the generated statisticID is returned. If unsuccessful, -1 is returned.
+     *
+     * Prepared statements are used to safely insert values.
+     *
+     * @param stat The statistic data to store.
+     * @return The created statisticID if successful, -1 if not.
+     */
     fun createStatistic(stat: Statistic): Int {
         // Validation Checks
         if (stat.userID <= 0 || stat.exerciseID <= 0) return -1
@@ -967,6 +1366,14 @@ class DatabaseService {
         return id
     }
 
+    /**
+     * Retrieves all of a user's statistics for a given exercise from the database.
+     *
+     * Each record in the table is mapped to a Statistic object and returned in a list.
+     * If no matching record is found, an empty list is returned.
+     *
+     * @return The list of Statistic objects in the database.
+     */
     fun findAllStatistics(
         userID: Int,
         exerciseID: Int,
@@ -998,6 +1405,47 @@ class DatabaseService {
         return stats
     }
 
+    /**
+     * Retrieves a specific statistic from the database using its statisticID.
+     *
+     * @param statisticID The unique identifier of the statistic.
+     * @return A Statistic object in the database if found, or null if no record is found.
+     */
+    fun findStatistic(statisticID: Int): Statistic? {
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "SELECT * FROM statistics WHERE statisticID = ?",
+            )
+
+        stmt.setInt(1, statisticID)
+
+        val rs: ResultSet = stmt.executeQuery()
+
+        if (rs.next()) {
+            val stat =
+                Statistic(
+                    statisticID = rs.getInt("statisticID"),
+                    userID = rs.getInt("userID"),
+                    exerciseID = rs.getInt("exerciseID"),
+                    scoreValue = rs.getDouble("scoreValue"),
+                    date = rs.getString("date"),
+                )
+            rs.close()
+            stmt.close()
+            return stat
+        }
+
+        rs.close()
+        stmt.close()
+        return null
+    }
+
+    /**
+     * Retrieves the user's best statistic for a given exercise from the database.
+     *
+     * @return A Statistic object with the highest scoreValue for the given userID and exerciseID,
+     * or null if no such value is found.
+     */
     fun getBestStat(
         userID: Int,
         exerciseID: Int,
@@ -1036,6 +1484,24 @@ class DatabaseService {
         return stat
     }
 
+    /**
+     * Updates a statistic record in the database.
+     *
+     * The function validates the provided statisticID, ensuring it's greater than 0 before executing the
+     * statement. Furthermore, scoreValue is also validated to ensure that if a value is given, that it is greater than 0.
+     * The date is also validated to ensure it's in the correct format (YYYY-MM-DD)
+     *
+     * The function only updates the scoreValue and date of the record identified by the statisticID.
+     *
+     * If the update is successful, the database is modified and the function returns true. If no matching statistic
+     * is found or validation fails, false is returned.
+     *
+     *
+     * @param statisticID The unique identifier of the statistic to update.
+     * @param scoreValue The value of the statistic.
+     * @param date The date the statistic was recorded.
+     * @return True if the update was successful, false if not.
+     */
     fun updateStatistic(
         statisticID: Int,
         scoreValue: Double,
@@ -1064,6 +1530,15 @@ class DatabaseService {
         return rowsUpdated > 0
     }
 
+    /**
+     * Deletes a statistic record from the database using the provided statisticID.
+     *
+     * The function executes a DELETE operation on the statistics table if a statistic is found linking
+     * to the given statisticID and true is returned. Otherwise, false is returned.
+     *
+     * @param statisticID The statisticID of the row to delete.
+     * @return True if the record was deleted, false if not.
+     */
     fun deleteStatistic(statisticID: Int): Boolean {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -1078,7 +1553,22 @@ class DatabaseService {
         return rowsDeleted > 0
     }
 
-    // Competitions DB
+    /**
+     * Stores a new competition in the database.
+     *
+     * The function first checks that the competition name is not empty.
+     * The function then checks that the given date is in the correct format (YYYY-MM-DD) and that
+     * if there is a rank and/or result given that they are over 0.
+     *
+     * The function then inserts the competition into the database.
+     *
+     * If successful, the generated competitionID is returned. If unsuccessful, -1 is returned.
+     *
+     * Prepared statements are used to safely insert values.
+     *
+     * @param comp The competition data to store.
+     * @return The created competitionID if successful, -1 if not.
+     */
     fun createCompetition(comp: Competition): Int {
         // Validation Checks
         if (comp.name.isBlank()) return -1
@@ -1117,6 +1607,14 @@ class DatabaseService {
         return id
     }
 
+    /**
+     * Retrieves all of a user's competitions for a given exercise from the database.
+     *
+     * Each record in the table is mapped to a Competition object and returned in a list.
+     * If no matching record is found, an empty list is returned.
+     *
+     * @return The list of Competition objects in the database.
+     */
     fun findAllCompetitions(userID: Int): List<Competition> {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -1145,6 +1643,62 @@ class DatabaseService {
         return comps
     }
 
+    /**
+     * Retrieves a specific competition from the database using its competitionID.
+     *
+     * @param competitionID The unique identifier of the competition.
+     * @return A Competition object in the database if found, or null if no record is found.
+     */
+    fun findCompetition(competitionID: Int): Competition? {
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "SELECT * FROM competitions WHERE competitionID = ?",
+            )
+
+        stmt.setInt(1, competitionID)
+
+        val rs: ResultSet = stmt.executeQuery()
+        if (rs.next()) {
+            val comp =
+                Competition(
+                    competitionID = rs.getInt("competitionID"),
+                    userID = rs.getInt("userID"),
+                    name = rs.getString("name"),
+                    date = rs.getString("date"),
+                    rank = rs.getObject("rank") as Int?,
+                    result = rs.getObject("result") as Int?,
+                )
+            rs.close()
+            stmt.close()
+            return comp
+        }
+
+        rs.close()
+        stmt.close()
+        return null
+    }
+
+    /**
+     * Updates a competition record in the database.
+     *
+     * The function validates the provided competitionID, ensuring it's greater than 0 before executing the
+     * statement. Furthermore, rank and result are also validated to ensure that if a value is given, that it is greater than 0.
+     * The date is also validated to ensure it's in the correct format (YYYY-MM-DD), with name being checked to ensure that it is
+     * not blank.
+     *
+     * The function only updates the name, rank, result and date of the record identified by the competitionID.
+     *
+     * If the update is successful, the database is modified and the function returns true. If no matching competition
+     * is found or validation fails, false is returned.
+     *
+     *
+     * @param competitionID The unique identifier of the competition to update.
+     * @param name The value of the competition.
+     * @param date The date the competition was recorded.
+     * @param rank Where the user placed in the competition.
+     * @param result The score the user achieved in the competition.
+     * @return True if the update was successful, false if not.
+     */
     fun updateCompetition(
         competitionID: Int,
         name: String,
@@ -1179,6 +1733,15 @@ class DatabaseService {
         return rowsUpdated > 0
     }
 
+    /**
+     * Deletes a competition record from the database using the provided competitionID.
+     *
+     * The function executes a DELETE operation on the competition table if a competition is found linking
+     * to the given competitionID and true is returned. Otherwise, false is returned.
+     *
+     * @param competitionID The competitionID of the row to delete.
+     * @return True if the record was deleted, false if not.
+     */
     fun deleteCompetition(competitionID: Int): Boolean {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -1193,8 +1756,24 @@ class DatabaseService {
         return rowsDeleted > 0
     }
 
-    // CompetitionsAndExercise DB
+    /**
+     * Stores a new many-to-many record in the database between competitions and exercises.
+     *
+     * The function first checks that the competitonID and exerciseID are greater than 0. Next the function
+     * checks that if there is a given performance, that it is greater than 0.0.
+     *
+     * If successful, the generated competitionExerciseID is returned. If unsuccessful, -1 is returned.
+     *
+     * Prepared statements are used to safely insert values.
+     *
+     * @param compEx The CompetitionExercise data to store.
+     * @return The created competitionExerciseID if successful, -1 if not.
+     */
     fun addExercisetoCompetition(compEx: CompetitionExercise): Int {
+        // Validation checks
+        if (compEx.competitionID <= 0 || compEx.exerciseID <= 0) return -1
+        if (compEx.performance != null && compEx.performance <= 0.0) return -1
+
         val stmt =
             db.connection.prepareStatement(
                 """
@@ -1224,6 +1803,14 @@ class DatabaseService {
         return id
     }
 
+    /**
+     * Retrieves all competition and exercises join records from the database.
+     *
+     * Each record in the table is mapped to a CompetitionExercise object and returned in a list.
+     * If no matching record is found, an empty list is returned.
+     *
+     * @return The list of CompetitionExercise objects in the database.
+     */
     fun findAllCompetitionExercises(competitionID: Int): List<CompetitionExercise> {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -1250,10 +1837,64 @@ class DatabaseService {
         return compExs
     }
 
+    /**
+     * Retrieves a specific competition-exercise join record from the database.
+     *
+     * @param competitionExerciseID The unique identifier of the join record.
+     * @return A CompetitionExercise object in the database if found, or null if no record is found.
+     */
+    fun findCompetitionExercise(competitionExerciseID: Int): CompetitionExercise? {
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "SELECT * FROM competition_exercises WHERE competitionExerciseID = ?",
+            )
+
+        stmt.setInt(1, competitionExerciseID)
+
+        val rs: ResultSet = stmt.executeQuery()
+        if (rs.next()) {
+            val compEx =
+                CompetitionExercise(
+                    competitionExerciseID = rs.getInt("competitionExerciseID"),
+                    competitionID = rs.getInt("competitionID"),
+                    exerciseID = rs.getInt("exerciseID"),
+                    performance = rs.getObject("performance") as Double?,
+                )
+            rs.close()
+            stmt.close()
+            return compEx
+        }
+
+        rs.close()
+        stmt.close()
+        return null
+    }
+
+    /**
+     * Updates a competition and exercise join record in the database.
+     *
+     * * The function first checks that the competitonID and exerciseID are greater than 0. Next the function
+     * checks that if there is a given performance, that it is greater than 0.0. If either fail, false is returned.
+     *
+     * The function only updates the performance associated with the exercise in the competition,
+     * identified by the competitionExerciseID.
+     *
+     * If the update is successful, the database is modified and the function returns true. If no matching
+     * competition_exercises is found, false is returned.
+     *
+     *
+     * @param competitionExercisesID The unique identifier of the join record to update.
+     * @param performance The value the user achieved in exercise.
+     * @return True if the update was successful, false if not.
+     */
     fun updateCompetitionExercise(
         competitionExerciseID: Int,
         performance: Double?,
     ): Boolean {
+        // Validation checks
+        if (competitionExerciseID <= 0) return false
+        if (performance != null && performance <= 0.0) return false
+
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
                 """
@@ -1272,6 +1913,15 @@ class DatabaseService {
         return rowsUpdated > 0
     }
 
+    /**
+     * Deletes a many-to-many join record from the database using the provided competitionExerciseID.
+     *
+     * The function executes a DELETE operation on the competition_exercises table if a competition is found linking
+     * to the given competitionExerciseID and true is returned. Otherwise, false is returned.
+     *
+     * @param competitionExerciseID The competitionExerciseID of the row to delete.
+     * @return True if the record was deleted, false if not.
+     */
     fun deleteCompetitionExercise(competitionExerciseID: Int): Boolean {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -1286,8 +1936,22 @@ class DatabaseService {
         return rowsDeleted > 0
     }
 
-    // Routes DB
-
+    /**
+     * Stores a new route in the database.
+     *
+     * The function first checks that the route name is not blank. After this, the function checks
+     * that the distance of the route is above 0.0. The function then checks that the given date is
+     * in the correct format (YYYY-MM-DD) and that if there is a estimatedTime given that it is are over 0.0.
+     *
+     * The function then inserts the route into the database.
+     *
+     * If successful, the generated routeID is returned. If unsuccessful, -1 is returned.
+     *
+     * Prepared statements are used to safely insert values.
+     *
+     * @param route The route data to store.
+     * @return The created routeID if successful, -1 if not.
+     */
     fun createRoute(route: Route): Int {
         // Validation Checks
         if (route.name.isBlank()) return -1
@@ -1328,6 +1992,14 @@ class DatabaseService {
         return id
     }
 
+    /**
+     * Retrieves all of a user's routes from the database, along with all public routes too.
+     *
+     * Each record in the table is mapped to a Route object and returned in a list.
+     * If no matching record is found, an empty list is returned.
+     *
+     * @return The list of Route objects in the database.
+     */
     fun findAllRoutes(userID: Int): List<Route> {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -1358,6 +2030,68 @@ class DatabaseService {
         return routes
     }
 
+    /**
+     * Retrieves a specific route from the database using its routeID.
+     *
+     * @param routeID The unique identifier of the route.
+     * @return A Route object in the database, or null if no record is found.
+     */
+    fun findRoute(routeID: Int): Route? {
+        val stmt =
+            db.connection.prepareStatement(
+                "SELECT * FROM routes WHERE routeID = ?",
+            )
+
+        stmt.setInt(1, routeID)
+
+        val rs = stmt.executeQuery()
+
+        val route =
+            if (rs.next()) {
+                Route(
+                    routeID = rs.getInt("routeID"),
+                    userID = rs.getInt("userID"),
+                    name = rs.getString("name"),
+                    distance = rs.getDouble("distance"),
+                    estimatedTime = rs.getObject("estimatedTime") as Double?,
+                    date = rs.getString("date"),
+                    isPublic = rs.getBoolean("isPublic"),
+                    routeData = rs.getString("routeData"),
+                )
+            } else {
+                null
+            }
+
+        rs.close()
+        stmt.close()
+
+        return route
+    }
+
+    /**
+     * Updates a route record in the database.
+     *
+     * First, the function checks that the name is not blank and that the distance is above 0.0.
+     * Furthermore, estimatedTime is also validated to ensure that if a value is given, that it is greater than 0.
+     * The date is also validated to ensure it's in the correct format (YYYY-MM-DD), with name being checked to ensure that it is
+     * not blank, with the final check being that the routeID given is possible.
+     *
+     * The function only updates the name, distance, estimatedTime, date, isPublic, and routeData fields
+     * of the record identified by the routeID.
+     *
+     * If the update is successful, the database is modified and the function returns true. If no matching route
+     * is found or validation fails, false is returned.
+     *
+     *
+     * @param routeID The unique identifier of the route to update.
+     * @param name The name of the route
+     * @param distance The distance of the route recorded.
+     * @param estimatedTime The estimated time the route will take to complete.
+     * @param date The date associated with the route.
+     * @param isPublic True if the route can be accessed by other users, false otherwise.
+     * @param routeData The data of the drawing of the route on a map.
+     * @return True if the update was successful, false if not.
+     */
     fun updateRoute(
         routeID: Int,
         name: String,
@@ -1397,6 +2131,15 @@ class DatabaseService {
         return rowsUpdated > 0
     }
 
+    /**
+     * Deletes a route record from the database using the provided routeID.
+     *
+     * The function executes a DELETE operation on the routes table if a route is found linking
+     * to the given routeID and true is returned. Otherwise, false is returned.
+     *
+     * @param routeID The routeID of the row to delete.
+     * @return True if the record was deleted, false if not.
+     */
     fun deleteRoute(routeID: Int): Boolean {
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
@@ -1411,195 +2154,30 @@ class DatabaseService {
         return rowsDeleted > 0
     }
 
-    // Individual find functions
-
-    fun findRoute(routeID: Int): Route? {
-        val stmt =
-            db.connection.prepareStatement(
-                "SELECT * FROM routes WHERE routeID = ?",
-            )
-
-        stmt.setInt(1, routeID)
-
-        val rs = stmt.executeQuery()
-
-        val route =
-            if (rs.next()) {
-                Route(
-                    routeID = rs.getInt("routeID"),
-                    userID = rs.getInt("userID"),
-                    name = rs.getString("name"),
-                    distance = rs.getDouble("distance"),
-                    estimatedTime = rs.getObject("estimatedTime") as Double?,
-                    date = rs.getString("date"),
-                    isPublic = rs.getBoolean("isPublic"),
-                    routeData = rs.getString("routeData"),
-                )
-            } else {
-                null
-            }
-
-        rs.close()
-        stmt.close()
-
-        return route
-    }
-
-    fun findWorkout(workoutID: Int): Workout? {
-        val stmt: PreparedStatement =
-            db.connection.prepareStatement(
-                "SELECT * FROM workouts WHERE workoutID = ?",
-            )
-
-        stmt.setInt(1, workoutID)
-
-        val rs: ResultSet = stmt.executeQuery()
-
-        if (rs.next()) {
-            val workout =
-                Workout(
-                    workoutID = rs.getInt("workoutID"),
-                    createdBy = rs.getInt("createdBy"),
-                    assignedTo = rs.getInt("assignedTo"),
-                    date = rs.getString("date"),
-                    duration = rs.getObject("duration") as Int?,
-                    workoutType = rs.getObject("workoutType") as String?,
-                    notes = rs.getObject("notes") as String?,
-                    routeID = rs.getObject("routeID") as Int?,
-                    isRoutine = rs.getBoolean("isRoutine"),
-                )
-            rs.close()
-            stmt.close()
-            return workout
-        }
-
-        rs.close()
-        stmt.close()
-        return null
-    }
-
-    fun findWorkoutExercise(workoutExercisesID: Int): WorkoutExercise? {
-        val stmt: PreparedStatement =
-            db.connection.prepareStatement(
-                "SELECT * FROM workout_exercises WHERE workoutExercisesID = ?",
-            )
-
-        stmt.setInt(1, workoutExercisesID)
-
-        val rs: ResultSet = stmt.executeQuery()
-        if (rs.next()) {
-            val we =
-                WorkoutExercise(
-                    workoutExercisesID = rs.getInt("workoutExercisesID"),
-                    workoutID = rs.getInt("workoutID"),
-                    exerciseID = rs.getInt("exerciseID"),
-                    sets = rs.getObject("sets") as Int?,
-                    reps = rs.getObject("reps") as Int?,
-                    weight = rs.getObject("weight") as Double?,
-                )
-            rs.close()
-            stmt.close()
-            return we
-        }
-
-        rs.close()
-        stmt.close()
-        return null
-    }
-
-    fun findStatistic(statisticID: Int): Statistic? {
-        val stmt: PreparedStatement =
-            db.connection.prepareStatement(
-                "SELECT * FROM statistics WHERE statisticID = ?",
-            )
-
-        stmt.setInt(1, statisticID)
-
-        val rs: ResultSet = stmt.executeQuery()
-
-        if (rs.next()) {
-            val stat =
-                Statistic(
-                    statisticID = rs.getInt("statisticID"),
-                    userID = rs.getInt("userID"),
-                    exerciseID = rs.getInt("exerciseID"),
-                    scoreValue = rs.getDouble("scoreValue"),
-                    date = rs.getString("date"),
-                )
-            rs.close()
-            stmt.close()
-            return stat
-        }
-
-        rs.close()
-        stmt.close()
-        return null
-    }
-
-    fun findCompetition(competitionID: Int): Competition? {
-        val stmt: PreparedStatement =
-            db.connection.prepareStatement(
-                "SELECT * FROM competitions WHERE competitionID = ?",
-            )
-
-        stmt.setInt(1, competitionID)
-
-        val rs: ResultSet = stmt.executeQuery()
-        if (rs.next()) {
-            val comp =
-                Competition(
-                    competitionID = rs.getInt("competitionID"),
-                    userID = rs.getInt("userID"),
-                    name = rs.getString("name"),
-                    date = rs.getString("date"),
-                    rank = rs.getObject("rank") as Int?,
-                    result = rs.getObject("result") as Int?,
-                )
-            rs.close()
-            stmt.close()
-            return comp
-        }
-
-        rs.close()
-        stmt.close()
-        return null
-    }
-
-    fun findCompetitionExercise(competitionExerciseID: Int): CompetitionExercise? {
-        val stmt: PreparedStatement =
-            db.connection.prepareStatement(
-                "SELECT * FROM competition_exercises WHERE competitionExerciseID = ?",
-            )
-
-        stmt.setInt(1, competitionExerciseID)
-
-        val rs: ResultSet = stmt.executeQuery()
-        if (rs.next()) {
-            val compEx =
-                CompetitionExercise(
-                    competitionExerciseID = rs.getInt("competitionExerciseID"),
-                    competitionID = rs.getInt("competitionID"),
-                    exerciseID = rs.getInt("exerciseID"),
-                    performance = rs.getObject("performance") as Double?,
-                )
-            rs.close()
-            stmt.close()
-            return compEx
-        }
-
-        rs.close()
-        stmt.close()
-        return null
-    }
-
-    // Training groups
-
+    /**
+     * Stores a new group in the database.
+     *
+     * The function first checks that the group name is not blank. It then checks that any provided
+     * description or goal is no longer than 500 characters long.
+     *
+     * The function then inserts the group into the database and the creator is automatically added
+     * as a member. Both actions are performed with a transaction so either both succeed or neither is
+     * saved.
+     *
+     * If successful, the generated groupID is returned. If unsuccessful, -1 is returned.
+     *
+     * Prepared statements are used to safely insert values.
+     *
+     * @param group The group data to store.
+     * @return The created groupID if successful, -1 if not.
+     */
     fun createGroup(group: TrainingGroup): Int {
-        db.connection.autoCommit = false // stops db from saving each statting - keeps atomicty
         // Validation checks
         if (group.name.isBlank()) return -1
         if (group.description != null && group.description.length > 500) return -1
         if (group.goal != null && group.goal.length > 500) return -1
+
+        db.connection.autoCommit = false // stops db from saving each stating - keeps atomicity
 
         try {
             val stmt =
@@ -1630,7 +2208,7 @@ class DatabaseService {
             rs.close()
             stmt.close()
 
-            // If that failed, retract what happend for atomicty
+            // If that failed, retract what happened for atomicity
             if (groupID == -1) {
                 db.connection.rollback()
                 return -1
@@ -1650,11 +2228,20 @@ class DatabaseService {
             db.connection.rollback()
             return -1
         } finally {
-            // Always restore autocommit if failur eor success
+            // Always restore autocommit if failure or success
             db.connection.autoCommit = true
         }
     }
 
+    /**
+     * Deletes a training group record from the database using the provided groupID.
+     *
+     * The function executes a DELETE operation on the training_groups table. If a group with
+     * the given groupID exists, true is returned. Otherwise, false is returned.
+     *
+     * @param groupID The groupID of the row to delete.
+     * @return True if the record was deleted, false if not.
+     */
     fun deleteGroup(groupID: Int): Boolean {
         val stmt =
             db.connection.prepareStatement(
@@ -1668,6 +2255,12 @@ class DatabaseService {
         return rows > 0
     }
 
+    /**
+     * Retrieves a specific training group from the database using its groupID.
+     *
+     * @param groupID The unique identifier of the training group.
+     * @return A TrainingGroup object in the database if found, or null if no record is found.
+     */
     fun findGroup(groupID: Int): TrainingGroup? {
         val stmt =
             db.connection.prepareStatement(
@@ -1696,16 +2289,21 @@ class DatabaseService {
         return group
     }
 
-    fun findAllGroups(userID: Int): List<TrainingGroup> {
+    /**
+     * Retrieves all training groups from the database.
+     *
+     * Each record in the table is mapped to a TrainingGroup object and returned in a list.
+     * If no matching record is found, an empty list is returned.
+     *
+     * @return The list of TrainingGroup objects in the database.
+     */
+    fun findAllGroups(): List<TrainingGroup> {
         val stmt =
             db.connection.prepareStatement(
                 """
-                SELECT training_groups.* FROM training_groups
-                JOIN group_members ON training_groups.groupID = group_members.groupID
-                WHERE group_members.userID = ?
+                SELECT * FROM training_groups
                 """.trimIndent(),
             )
-        stmt.setInt(1, userID)
 
         val rs = stmt.executeQuery()
         val groups = mutableListOf<TrainingGroup>()
@@ -1727,6 +2325,49 @@ class DatabaseService {
         return groups
     }
 
+    /**
+     * Returns all groups a user is in.
+     *
+     * @param userID The unique identifier for a user.
+     * @return A list of TrainingGroup objects the user is in.
+     */
+    fun findAllUserGroups(userID: Int): List<TrainingGroup> {
+        return findAllGroups().filter { group ->
+            findGroupMembers(group.groupID).any { it.userID == userID }
+        }
+    }
+
+    /**
+     * Returns all groups a user is not in.
+     *
+     * @param userID The unique identifier for a user.
+     * @return A list of TrainingGroup objects the user is not in.
+     */
+    fun findAllNonUserGroups(userID: Int): List<TrainingGroup> {
+        return findAllGroups().filter { group ->
+            findGroupMembers(group.groupID).none { it.userID == userID }
+        }
+    }
+
+    /**
+     * Updates a training group record in the database.
+     *
+     * First, the function checks that the name is not blank.
+     * Furthermore, the provided goal and description is also validated to ensure the length of each of
+     *  these is no longer than 500. The final check being that the groupID given is above 0.
+     *
+     * The function only updates the name, description and goal fields of the record identified by the groupID.
+     *
+     * If the update is successful, the database is modified and the function returns true. If no matching training group
+     * is found or validation fails, false is returned.
+     *
+     *
+     * @param groupID The unique identifier of the group to update.
+     * @param name The name of the group.
+     * @param description Optional description of the training group.
+     * @param goal Optional goal of the training group.
+     * @return True if the update was successful, false if not.
+     */
     fun updateGroup(
         groupID: Int,
         name: String,
@@ -1756,8 +2397,23 @@ class DatabaseService {
         return rows > 0
     }
 
-    // Group members
-
+    /**
+     * Allows a user to join a training group.
+     *
+     * The function first checks that the userID and groupID are greater than 0. Next the function
+     * checks if the user is already in the training group. If either fail, false is returned.
+     *
+     * The provided IDs are then inserted into the group_members join table.
+     *
+     * If the user is successfully added to the group, true is returned.
+     * If validation fails, the user is already a member, or the insert fails, false is returned.
+     *
+     * Prepared statements are used to safely insert values.
+     *
+     * @param groupID The unique identifier of the training group.
+     * @param userID The unique identifier of the user.
+     * @return True if the insertion was successful, otherwise false.
+     */
     fun joinGroup(
         groupID: Int,
         userID: Int,
@@ -1781,6 +2437,17 @@ class DatabaseService {
         return rows > 0
     }
 
+    /**
+     * Deletes a user-group join record from group_members based on the provided groupID and userID.
+     *
+     * The function executes a DELETE operation on the group_members table.
+     * If a matching membership record exists, it is removed and true is returned.
+     * Otherwise, false is returned.
+     *
+     * @param userID The unique identifier of the user.
+     * @param groupID The unique identifier of the training group.
+     * @return True if the record was deleted, false if not.
+     */
     fun leaveGroup(
         groupID: Int,
         userID: Int,
@@ -1798,6 +2465,15 @@ class DatabaseService {
         return rows > 0
     }
 
+    /**
+     * Retrieves all users in a group from the database using the provided groupID.
+     *
+     * Each record in the table is mapped to an User object and returned in a list.
+     * If no matching members are found, an empty list is returned.
+     *
+     * @param groupID The unique identifier of the training group.
+     * @return The list of User objects in the database.
+     */
     fun findGroupMembers(groupID: Int): List<User> {
         val stmt =
             db.connection.prepareStatement(
@@ -1835,8 +2511,19 @@ class DatabaseService {
         return members
     }
 
-    // Group training sessions
-
+    /**
+     * Creates a scheduled session for a training group using an existing workout.
+     *
+     * The function first checks that the workoutID and groupID are greater than 0. Next the function
+     * checks that the scheduledDate is in the format YYYY-MM-DD. If either fail, -1 is returned.
+     *
+     * The provided IDs and scheduledDate are then inserted into the group_sessions join table.
+     *
+     * Prepared statements are used to safely insert values.
+     *
+     * @param session The session data to be stored.
+     * @return sessionID if the insertion was successful, otherwise -1.
+     */
     fun addGroupSession(session: GroupSession): Int {
         // Validation Checks
         if (session.groupID <= 0 || session.workoutID <= 0) return -1
@@ -1875,6 +2562,15 @@ class DatabaseService {
         return id
     }
 
+    /**
+     * Retrieves all future-dated sessions for a training group from the database for the specified groupID.
+     *
+     * Each record in the table is mapped to a GroupSession object and returned in a list in ascending order.
+     * If no matching record is found, an empty list is returned.
+     *
+     * @param groupID The unique identifier of the training group.
+     * @return The list of GroupSession objects in the database.
+     */
     fun getUpcomingGroupSessions(groupID: Int): List<GroupSession> {
         val today = LocalDate.now().toString()
         val stmt =
@@ -1908,6 +2604,15 @@ class DatabaseService {
         return sessions
     }
 
+    /**
+     * Retrieves all past-dated sessions for a training group from the database for the specified groupID.
+     *
+     * Each record in the table is mapped to a GroupSession object and returned in a list in descending order.
+     * If no matching record is found, an empty list is returned.
+     *
+     * @param groupID The unique identifier of the training group.
+     * @return The list of GroupSession objects in the database.
+     */
     fun getPastGroupSessions(groupID: Int): List<GroupSession> {
         val today = LocalDate.now().toString()
         val stmt =
@@ -1940,6 +2645,15 @@ class DatabaseService {
         return sessions
     }
 
+    /**
+     * Deletes a group session record from the database using the provided sessionID.
+     *
+     * The function executes a DELETE operation on the group_sessions table. If a session with
+     * the given sessionID exists, true is returned. Otherwise, false is returned.
+     *
+     * @param sessionID The sessionID of the row to delete.
+     * @return True if the record was deleted, false if not.
+     */
     fun deleteGroupSession(sessionID: Int): Boolean {
         val stmt =
             db.connection.prepareStatement(
@@ -1955,19 +2669,31 @@ class DatabaseService {
 
     // Functions for the dashboard of the frontend
 
+    /**
+     * Retrieves all past-dated workouts for a user from the database for the specified email.
+     *
+     * Each record in the table is mapped to a Workout object and returned in a list in descending order.
+     * If no matching record is found, an empty list is returned.
+     *
+     * To be used on the dashboard in the frontend.
+     *
+     * @param email The user's email address.
+     * @return The list of Workout objects in the database.
+     */
     fun getRecentWorkouts(email: String): List<Workout> {
         val user = findUser(email) ?: return emptyList()
         val results = mutableListOf<Workout>()
 
         val query = """
             SELECT * FROM workouts
-            WHERE assignedTo = ?
+            WHERE assignedTo = ? AND date <= ?
             ORDER BY date DESC
             LIMIT 5
         """
 
         val stmt = db.connection.prepareStatement(query)
         stmt.setInt(1, user.userID)
+        stmt.setString(2, LocalDate.now().toString())
 
         val rs = stmt.executeQuery()
 
@@ -1992,16 +2718,39 @@ class DatabaseService {
         return results
     }
 
-    // Frontend potentially want to split it into 3 most recent of each
+    /**
+     * Retrieves all past-dated workouts for a user from the database for the specified userID.
+     *
+     * The function calls findAllWorkouts() and then filters out workouts with a null type. Next,
+     * workouts are sorted in descending order, grouped by workoutType and mapped to their workoutType
+     * and filtered to only 3 per workoutType.
+     *
+     *  be used on the dashboard in the frontend.
+     *
+     * @param userID The unique identifier of the user.
+     * @return A map where the key is the workoutType and the value is a list of 3 Workouts of that type.
+     */
     fun getRecentWorkoutsByType(userID: Int): Map<String, List<Workout>> {
         return findAllWorkouts(
             userID,
-        ).filter { it.workoutType != null }.sortedByDescending { it.date }.groupBy { it.workoutType!! }.mapValues {
+        ).filter {
+            it.workoutType != null && it.date <= LocalDate.now().toString()
+        }.sortedByDescending { it.date }.groupBy { it.workoutType!! }.mapValues {
                 (_, workouts) ->
             workouts.take(3)
         }
     }
 
+    /**
+     * Retrieves all workouts a user has scheduled on a specific day by using
+     * the provided email address and specified date that defaults to LocalDate.now().
+     *
+     * The results will appear on the dashboard in the frontend.
+     *
+     * @param email The user's email address.
+     * @param today The date to check for workouts. Defaults to the current date.
+     * @return A list of workouts scheduled for the specified date.
+     */
     fun getTodaysWorkout(
         email: String,
         today: LocalDate = LocalDate.now(),
@@ -2031,7 +2780,7 @@ class DatabaseService {
                     workoutType = rs.getObject("workoutType") as String?,
                     notes = rs.getObject("notes") as String?,
                     routeID = rs.getObject("routeID") as Int?,
-                    isRoutine = rs.getBoolean("isRoutine")
+                    isRoutine = rs.getBoolean("isRoutine"),
                 ),
             )
         }
@@ -2041,6 +2790,15 @@ class DatabaseService {
         return results
     }
 
+    /**
+     * Retrieves all future-dated competitions for a user from the database for the specified email address.
+     *
+     * Each record in the table is mapped to a Competition object and returned in a list in ascending order.
+     * If no matching record is found, an empty list is returned.
+     *
+     * @param email The user's email address.
+     * @return The list of Competition objects in the database if successful, or an empty list.
+     */
     fun getUpcomingCompetitions(email: String): List<Competition> {
         val user = findUser(email) ?: return emptyList()
 
@@ -2076,6 +2834,16 @@ class DatabaseService {
         return results
     }
 
+    /**
+     * Retrieves the most recent 5 past-dated routes for a user from the
+     * database for the specified email address.
+     *
+     * Each record in the table is mapped to a Route object and returned in a list in descending order.
+     * If no matching record is found, an empty list is returned.
+     *
+     * @param email The user's email address.
+     * @return The list of Route objects in the database if successful, or an empty list if not.
+     */
     fun getRecentRoutes(email: String): List<Route> {
         val user = findUser(email) ?: return emptyList()
 
@@ -2083,13 +2851,14 @@ class DatabaseService {
 
         val query = """
             SELECT * FROM routes
-            WHERE userID = ?
+            WHERE userID = ? AND date <= ?
             ORDER BY date DESC
             LIMIT 5
         """
 
         val stmt = db.connection.prepareStatement(query)
         stmt.setInt(1, user.userID)
+        stmt.setString(2, LocalDate.now().toString())
 
         val rs = stmt.executeQuery()
 
@@ -2113,6 +2882,16 @@ class DatabaseService {
         return results
     }
 
+    /**
+     * Retrieves the most recent 5 past-dated competitions for a user from the
+     * database for the specified email address.
+     *
+     * Each record in the table is mapped to a Competition object and returned in a list in descending order.
+     * If no matching record is found, an empty list is returned.
+     *
+     * @param email The user's email address.
+     * @return The list of Competition objects in the database if successful, or an empty list if not.
+     */
     fun getRecentCompetitions(email: String): List<Competition> {
         val user = findUser(email) ?: return emptyList()
 
@@ -2120,13 +2899,14 @@ class DatabaseService {
 
         val query = """
             SELECT * FROM competitions
-            WHERE userID = ?
+            WHERE userID = ? AND date <= ?
             ORDER BY date DESC
             LIMIT 5
         """
 
         val stmt = db.connection.prepareStatement(query)
         stmt.setInt(1, user.userID)
+        stmt.setString(2, LocalDate.now().toString())
 
         val rs = stmt.executeQuery()
 
@@ -2148,7 +2928,22 @@ class DatabaseService {
         return results
     }
 
-    // Functions for the stats page
+    /**
+     * Retrieves a user's completed workouts grouped by workout type.
+     *
+     * The function first retrieves all workouts assigned to the supplied userID.
+     * It then excludes workouts with null workoutType and filters out any workouts with a date
+     * scheduled for today or in the future, so only completed typed workouts are included.
+     *
+     * The remaining workouts are sorted in ascending date order and grouped by workout type, such as weights,
+     *  running, swimming, or cycling.
+     *
+     * This is used to display progression statistics over time for different categories of training.
+     *
+     * @param userID The unique identifier of the user.
+     * @return A map where the key is the workout type and the value is a list of completed workouts of that type,
+     * ordered by date from oldest to newest.
+     */
     fun getWorkoutProgression(userID: Int): Map<String, List<Workout>> {
         val today = LocalDate.now().toString()
         return findAllWorkouts(
@@ -2156,28 +2951,77 @@ class DatabaseService {
         ).filter { it.workoutType != null && it.date < today }.sortedBy { it.date }.groupBy { it.workoutType!! }
     }
 
+    /**
+     * Retrieves the total number of workouts completed by the user.
+     *
+     * The function first retrieves all workouts assigned to the supplied userID.
+     * It then counts workouts the number of workouts completed by filtering out any workouts
+     * with a date set today or after.
+     *
+     * This is used to display summary statistics such as the total number of training sessions completed.
+     *
+     * @param userID The unique identifier of the user.
+     * @return The number of completed workouts.
+     */
     fun getTotalWorkoutsCompleted(userID: Int): Int {
         val today = LocalDate.now().toString()
         return findAllWorkouts(userID).count { it.date < today }
     }
 
-    // Hours trained
+    /**
+     * Retrieves the total number of hours the user has trained.
+     *
+     * The function first retrieves all workouts assigned to the supplied userID.
+     * It then filters out any workouts with future dates so only completed training sessions are included.
+     * It also filters out any workouts where no duration has been recorded as these workouts
+     * cannot affect the total hours trained.
+     *
+     * The duration values are summed in minutes and converted into hours.
+     *
+     * This is used to display cumulative training volume statistics such as
+     * total hours exercised over time.
+     *
+     * @param userID The unique identifier of the user.
+     * @return The total completed training time in hours.
+     */
     fun getHoursTrained(userID: Int): Double {
         return findAllWorkouts(
             userID,
-        ).filter { it.date < LocalDate.now().toString() && it.duration != null }.sumOf { it.duration ?: 0 }.div(60.0)
+        ).filter { it.date <= LocalDate.now().toString() && it.duration != null }.sumOf { it.duration ?: 0 }.div(60.0)
     }
 
-    // Workout Streak
+    /**
+     * Retrieves the user's current training streak in days.
+     *
+     * The function first retrieves all workouts assigned to the supplied userID
+     * and filters out any workouts with future dates so only completed workouts
+     * are included.
+     *
+     * The completed workout dates are converted into LocalDate values and sorted with
+     * duplicate values being removed. The list is then ordered from most revent the oldest.
+     *
+     * A streak begins from today. The function then checks whether the user completed a workout on each
+     * consecutive previous day.
+     *
+     * The streak increases by one for each uninterrupted day with at least one
+     * completed workout. If a day is missed, the loop ends and the current streak count is returned.
+     *
+     * Multiple workouts completed on the same day only count as one streak day.
+     *
+     * This is used to display consistency statistics and motivate regular training.
+     *
+     * @param userID The unique identifier of the user.
+     * @return The number of consecutive days the user has completed workouts.
+     */
     fun getCurrentStreak(userID: Int): Int {
         val today = LocalDate.now()
         val completed =
             findAllWorkouts(
                 userID,
-            ).filter { it.date < today.toString() }.map { LocalDate.parse(it.date) }.toSortedSet().reversed()
+            ).filter { it.date <= today.toString() }.map { LocalDate.parse(it.date) }.toSortedSet().reversed()
 
         var streak = 0
-        var current = today.minusDays(1)
+        var current = today
 
         for (date in completed) {
             if (date == current) {
@@ -2190,7 +3034,32 @@ class DatabaseService {
         return streak
     }
 
-    // Weekly training history
+    /**
+     * Retrieves a weekly summary of the user's completed training history.
+     *
+     * The function first retrieves all workouts assigned to the supplied userID.
+     * It then filters out any workouts not yet completed, or workouts where no duration
+     * has been recorded.
+     *
+     * The remaining workouts are grouped by calendar week, starting from monday
+     * and ending at sunday.
+     *
+     * For each week, the function calculates:
+     *  - the number of completed workouts
+     *  - the total training duration in hours
+     *
+     * The duration is calculated by summing the duration stored in minutes and converting
+     * the result into hours.
+     *
+     * The returned map is sorted by week start date in ascending order.
+     *
+     * This is used to display statistics such as weekly consistency and total training time
+     * for each week.
+     * @param userID The unique identifier for the user.
+     * @return A map where the key is the week's starting date, and the value is another map containing:
+     *  - "sessions": the number of workouts completed that week
+     *  - "totalDuration": the total hours trained during that week
+     */
     fun getWeeklyTrainingHistory(userID: Int): Map<String, Map<String, Any>> {
         val today = LocalDate.now()
         return findAllWorkouts(userID).filter { LocalDate.parse(it.date).isBefore(today) && it.duration != null }
@@ -2208,7 +3077,31 @@ class DatabaseService {
             .toSortedMap()
     }
 
-    // Exercise by category
+    /**
+     * Retrieves a breakdown of exercise categories completed by a user.
+     *
+     * The function first retrieves all workouts assigned to the supplied userID
+     * and filters out any workouts with future dates so only completed workouts
+     * are included.
+     *
+     * For each workout, the workout_exercises and exercises tables are joined
+     * to identify the category of each exercise. The number of occurrences of each
+     * category is then counted.
+     *
+     * After all categories have been counted, the function returns both the number
+     * of completed sessions for each category, and the percentage share of the total
+     * completed sessions each category has.
+     *
+     * This is used to display statistics such as how much of a user's training consists of weights,
+     * running, swimming, and other categories.
+     *
+     * If the user has no completed workouts, an empty map is returned.
+     *
+     * @param userID The unique identifier of the user.
+     * @return A map where the key is the exercise category and the value is another map containing:
+     *   - "sessions": the number of times that category appears
+     *   - "percentage": the percentage share of total exercises completed
+     */
     fun getExerciseBreakdown(userID: Int): Map<String, Map<String, Any>> {
         val workouts = findAllWorkouts(userID).filter { it.date < LocalDate.now().toString() }
         val workoutIDs: List<Int> = workouts.mapNotNull { it.workoutID }
@@ -2251,12 +3144,51 @@ class DatabaseService {
         }
     }
 
-    // For personal bests
+    /**
+     * Retrieves the highest score for each exercise completed by a user.
+     *
+     * The function first retrieves all exercises stored in the database.
+     * It then checks each exercise individually by calling getBestStat()
+     * and returns the highest recorded statistic for the supplied user
+     * where one exists.
+     *
+     * This is used to display personal bests such as the heaviest weight
+     * lifted, fastest time achieved, or highest score recorded, depending
+     * on the exercise.
+     *
+     * Exercises with no recorded statistics for the user are excluded using
+     * mapNotNull().
+     *
+     * @param userID The unique identifier of the user.
+     * @return A list of Statistic objects containing the user's best
+     * recorded result for each exercise.
+     */
     fun getPersonalBests(userID: Int): List<Statistic> {
         return findAllExercises().mapNotNull { exercise -> getBestStat(userID, exercise.exerciseID) }
     }
 
-    // Log workout for workout logs page
+    /**
+     * Adds a workout and its related exercises to the database.
+     *
+     * The autoCommit is set to false so all operations can be committed or rolled back as a single transaction.
+     *
+     * Calls createWorkout() store the given workout
+     * in the database, then iterates through every exercise in the given list of
+     * exercises and links them to the created workout by adding them to the join table in
+     * the database.
+     *
+     * If there is any error or failure during the function, the previous actions are undone
+     * using rollback() so there is no partial data stored and -1 is returned.
+     *
+     * If all operations succeed, commit() is called and the new workoutID
+     * is returned.
+     *
+     * Regardless of success or failure, autoCommit is set back to true so later database operations remain unaffected.
+     *
+     * @param workout An instance of the workout data class.
+     * @param exercises A list of the WorkoutExercise objects.
+     * @return The created workoutID if successful, -1 if the transaction fails.
+     */
     fun logWorkout(
         workout: Workout,
         exercises: List<WorkoutExercise>,
@@ -2298,9 +3230,10 @@ class DatabaseService {
     }
 
     fun deleteAllExercisesInWorkout(workoutID: Int): Boolean {
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            "DELETE FROM workout_exercises WHERE workoutID = ?"
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "DELETE FROM workout_exercises WHERE workoutID = ?",
+            )
 
         stmt.setInt(1, workoutID)
 
@@ -2310,7 +3243,31 @@ class DatabaseService {
         return rowsDeleted > 0
     }
 
-    // Update a logged workout (in case of a changed exercise or another detail)
+    /**
+     * Updates an existing workout and replaces its linked exercises.
+     *
+     * The autoCommit is set to false so all operations can be committed or rolled
+     *  back as a single transaction.
+     *
+     * The function first updates the workout record in the workouts table.
+     * It then removes any existing exercise links for that workout from the
+     * workout_exercises join table before inserting the new list of exercises.
+     *
+     * Replacing all linked exercises ensures outdated exercise records are
+     * removed and the workout accurately reflects the user's latest changes.
+     *
+     * If any part of the update fails, rollback() is called so no partial
+     * changes are saved, and false is returned.
+     *
+     * If all operations succeed, commit() is called and true is returned.
+     *
+     * Regardless of success or failure, autoCommit is set back to true so
+     * later database operations remain unaffected.
+     *
+     * @param workout The updated workout data to store.
+     * @param exercises The revised list of WorkoutExercise objects to link to the workout.
+     * @return True if the workout was updated successfully, false otherwise.
+     */
     fun updateLoggedWorkout(
         workout: Workout,
         exercises: List<WorkoutExercise>,
@@ -2319,7 +3276,15 @@ class DatabaseService {
         db.connection.autoCommit = false
         try {
             val updated =
-                updateWorkout(workout.workoutID, workout.date, workout.duration, workout.workoutType, workout.notes, workout.routeID, workout.isRoutine)
+                updateWorkout(
+                    workout.workoutID,
+                    workout.date,
+                    workout.duration,
+                    workout.workoutType,
+                    workout.notes,
+                    workout.routeID,
+                    workout.isRoutine,
+                )
             // Update workout failed so undo everything
             if (!updated) {
                 db.connection.rollback()

@@ -164,12 +164,71 @@ fun Route.socialRoutes() {
         get("/groups/{userID}") {
             try {
                 val userID: Int = call.parameters["userID"]!!.toInt()
-                val trainingGroups: List<TrainingGroup> = db.findAllGroups(userID)
+                val trainingGroups: List<TrainingGroup> = db.findAllUserGroups(userID)
 
                 if (!trainingGroups.isNullOrEmpty()) {
                     call.respond(HttpStatusCode.OK, mapOf("Training Groups" to trainingGroups))
                 } else if (trainingGroups.isNullOrEmpty()) {
-                    call.respond(HttpStatusCode.NotFound, mapOf("message" to "No training groups found for user"))
+                    call.respond(HttpStatusCode.NotFound, mapOf("message" to "No training groups found"))
+                }
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
+            }
+        }
+
+        /*
+        The GET '/groups' endpoint is responsible for handling HTTP requests for finding any and all training
+        groups which are stored in the database, created by and available to anyone (i.e. groups are not filtered).
+        It is therefore also responsible for calling the neccessary backend service's functions to fulfil this
+        request from the databse, for return to the requesting client.
+
+        The endpoint does not expect any parameters in the request, and only requires a valid GET HTTP request
+        to be made to the correct address.
+
+        The endpoint returns:
+            - OK (200) and a list of all groups in the database, if there were training groups stored in the db retrieved by the backend
+            - InternalServerError (500) and a relevant message, if no groups were found in the database (likely indicating a database request error)
+            - BadRequest (400) and a relevant message, if a malformed HTTP request was recieved by the endpoint
+         */
+        get("/groups") {
+            try {
+                val allGroups: List<TrainingGroup> = db.findAllGroups()
+
+                if (!allGroups.isNullOrEmpty()) {
+                    call.respond(HttpStatusCode.OK, mapOf("Groups" to allGroups))
+                } else if (allGroups.isNullOrEmpty()) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("message" to "No groups found"))
+                }
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
+            }
+        }
+
+        /*
+        The GET '/groups/no-user/{userID}' endpoint is responsible for handling HTTP requests made to
+        retrieve all groups which the specified user is not a member of (and can therefore join). The
+        endpoint is therefore also responsible for calling the correct, required backend service's
+        functions which are needed to fulfil this request from the database, for return to the requesting
+        client.
+
+        The endpoint epxects the target user's ID (userID) to be passed as a integer-serialisable
+        parameter at the end of the endpoint's route, providing the service function a value to
+        search by.
+
+        The endpoint returns:
+            - OK (200) and a list of all groups the user isnt a member of, if there were groups found not containing the user
+            - NotFound (404) and a relevant message, if there were no groups found without the specified user in (i.e. none to join)
+            - BadRequest (400) and a relevant message, if the endpoint was provided with a malformed HTTP request
+         */
+        get("/groups/no-user/{userID}") {
+            try {
+                val userID: Int = call.parameters["userID"]!!.toInt()
+                val nonUserGroups: List<TrainingGroup> = db.findAllNonUserGroups(userID)
+
+                if (!nonUserGroups.isNullOrEmpty()) {
+                    call.respond(HttpStatusCode.OK, mapOf("Available Groups" to nonUserGroups))
+                } else if (nonUserGroups.isNullOrEmpty()) {
+                    call.respond(HttpStatusCode.NotFound, mapOf("message" to "No available groups"))
                 }
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))

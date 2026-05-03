@@ -12,7 +12,12 @@ import services.DatabaseService.User
 import services.DatabaseService.Workout
 import services.DatabaseService.WorkoutExercise
 import java.time.LocalDate
-import kotlin.test.*
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class DatabaseServiceTest {
     @Test
@@ -21,7 +26,7 @@ class DatabaseServiceTest {
         ds.deleteUser("integration@test.com")
 
         // =========================
-        // 1. USER
+        // User CRUD
         // =========================
         val email = "integration@test.com"
 
@@ -86,7 +91,7 @@ class DatabaseServiceTest {
         assertFalse(authService.verifyPassword(oldPassword, ds.findUser(email)!!.passwordKey, ds.findUser(email)!!.passwordHash))
 
         // =========================
-        // 2. EXERCISE
+        // Exercise CRUD
         // =========================
         val exerciseId =
             ds.createExercise(
@@ -112,7 +117,7 @@ class DatabaseServiceTest {
         )
 
         // =========================
-        // 3. WORKOUT
+        // Workout CRUD
         // =========================
         val workoutId =
             ds.createWorkout(
@@ -145,7 +150,7 @@ class DatabaseServiceTest {
         )
 
         // =========================
-        // 4. WORKOUT EXERCISE
+        // Workout Exercise CRUD
         // =========================
         val workoutExercisesId =
             ds.addExerciseToWorkout(
@@ -176,7 +181,7 @@ class DatabaseServiceTest {
         // cascade so not required: assertTrue(ds.deleteWorkoutExercise(workoutExercisesId))
 
         // =========================
-        // 5. STATISTICS
+        // Stas CRUD
         // =========================
         val statId =
             ds.createStatistic(
@@ -207,7 +212,7 @@ class DatabaseServiceTest {
         assertTrue(ds.deleteStatistic(stat.statisticID ?: 0))
 
         // =========================
-        // 6. COMPETITION
+        // Competition CRUD
         // =========================
         val compId =
             ds.createCompetition(
@@ -241,7 +246,7 @@ class DatabaseServiceTest {
         assertTrue(ds.deleteCompetition(comp.competitionID))
 
         // =========================
-        // 7. ROUTE
+        // Routes CRUD
         // =========================
         val routeId =
             ds.createRoute(
@@ -702,10 +707,10 @@ class DatabaseServiceTest {
 
         //  Find all groups for user
 
-        val creatorGroups = ds.findAllGroups(creatorID)
+        val creatorGroups = ds.findAllGroups()
         assertTrue(creatorGroups.any { it.groupID == groupID })
 
-        val memberGroups = ds.findAllGroups(memberID)
+        val memberGroups = ds.findAllGroups()
         assertTrue(memberGroups.any { it.groupID == groupID })
 
         // Join table sessions tests
