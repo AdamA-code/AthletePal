@@ -986,6 +986,45 @@ class DatabaseService {
     }
 
     /**
+     * Retrieves a specific workout from the database using its workoutID.
+     * 
+     * @param workoutID The unique identifier of the workout.
+     * @return A Workout object in the database if found, or null if no record is found.
+     */
+    fun findWorkout(workoutID: Int): Workout? {
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "SELECT * FROM workouts WHERE workoutID = ?",
+            )
+
+        stmt.setInt(1, workoutID)
+
+        val rs: ResultSet = stmt.executeQuery()
+
+        if (rs.next()) {
+            val workout =
+                Workout(
+                    workoutID = rs.getInt("workoutID"),
+                    createdBy = rs.getInt("createdBy"),
+                    assignedTo = rs.getInt("assignedTo"),
+                    date = rs.getString("date"),
+                    duration = rs.getObject("duration") as Int?,
+                    workoutType = rs.getObject("workoutType") as String?,
+                    notes = rs.getObject("notes") as String?,
+                    routeID = rs.getObject("routeID") as Int?,
+                    isRoutine = rs.getBoolean("isRoutine"),
+                )
+            rs.close()
+            stmt.close()
+            return workout
+        }
+
+        rs.close()
+        stmt.close()
+        return null
+    }
+
+    /**
      * Updates a workout in the database.
      *
      * The function validates the provided workoutID, ensuring it's greater than 0 before executing the
@@ -1160,6 +1199,41 @@ class DatabaseService {
     }
 
     /**
+     * Retrieves a specific workout-exercise join record from the database using its workoutExerciseID.
+     * 
+     * @param workoutExerciseID The unique identifier of the join record.
+     * @return A WorkoutExercise object in the database if found, or null if no record is found.
+     */
+    fun findWorkoutExercise(workoutExercisesID: Int): WorkoutExercise? {
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "SELECT * FROM workout_exercises WHERE workoutExercisesID = ?",
+            )
+
+        stmt.setInt(1, workoutExercisesID)
+
+        val rs: ResultSet = stmt.executeQuery()
+        if (rs.next()) {
+            val we =
+                WorkoutExercise(
+                    workoutExercisesID = rs.getInt("workoutExercisesID"),
+                    workoutID = rs.getInt("workoutID"),
+                    exerciseID = rs.getInt("exerciseID"),
+                    sets = rs.getObject("sets") as Int?,
+                    reps = rs.getObject("reps") as Int?,
+                    weight = rs.getObject("weight") as Double?,
+                )
+            rs.close()
+            stmt.close()
+            return we
+        }
+
+        rs.close()
+        stmt.close()
+        return null
+    }
+
+    /**
      * Updates a workout and exercise join record in the database.
      *
      * The function validates the provided workoutExercisesID, ensuring it's greater than 0 before executing the
@@ -1321,6 +1395,41 @@ class DatabaseService {
         rs.close()
         stmt.close()
         return stats
+    }
+
+    /**
+     * Retrieves a specific statistic from the database using its statisticID.
+     * 
+     * @param statisticID The unique identifier of the statistic.
+     * @return A Statistic object in the database if found, or null if no record is found.
+     */
+    fun findStatistic(statisticID: Int): Statistic? {
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "SELECT * FROM statistics WHERE statisticID = ?",
+            )
+
+        stmt.setInt(1, statisticID)
+
+        val rs: ResultSet = stmt.executeQuery()
+
+        if (rs.next()) {
+            val stat =
+                Statistic(
+                    statisticID = rs.getInt("statisticID"),
+                    userID = rs.getInt("userID"),
+                    exerciseID = rs.getInt("exerciseID"),
+                    scoreValue = rs.getDouble("scoreValue"),
+                    date = rs.getString("date"),
+                )
+            rs.close()
+            stmt.close()
+            return stat
+        }
+
+        rs.close()
+        stmt.close()
+        return null
     }
 
     /**
@@ -1527,6 +1636,41 @@ class DatabaseService {
     }
 
     /**
+     * Retrieves a specific competition from the database using its competitionID.
+     * 
+     * @param competitionID The unique identifier of the competition.
+     * @return A Competition object in the database if found, or null if no record is found.
+     */
+    fun findCompetition(competitionID: Int): Competition? {
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "SELECT * FROM competitions WHERE competitionID = ?",
+            )
+
+        stmt.setInt(1, competitionID)
+
+        val rs: ResultSet = stmt.executeQuery()
+        if (rs.next()) {
+            val comp =
+                Competition(
+                    competitionID = rs.getInt("competitionID"),
+                    userID = rs.getInt("userID"),
+                    name = rs.getString("name"),
+                    date = rs.getString("date"),
+                    rank = rs.getObject("rank") as Int?,
+                    result = rs.getObject("result") as Int?,
+                )
+            rs.close()
+            stmt.close()
+            return comp
+        }
+
+        rs.close()
+        stmt.close()
+        return null
+    }
+
+    /**
      * Updates a competition record in the database.
      *
      * The function validates the provided competitionID, ensuring it's greater than 0 before executing the
@@ -1683,6 +1827,39 @@ class DatabaseService {
         rs.close()
         stmt.close()
         return compExs
+    }
+
+    /**
+     * Retrieves a specific competition-exercise join record from the database.
+     * 
+     * @param competitionExerciseID The unique identifier of the join record.
+     * @return A CompetitionExercise object in the database if found, or null if no record is found.
+     */
+    fun findCompetitionExercise(competitionExerciseID: Int): CompetitionExercise? {
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "SELECT * FROM competition_exercises WHERE competitionExerciseID = ?",
+            )
+
+        stmt.setInt(1, competitionExerciseID)
+
+        val rs: ResultSet = stmt.executeQuery()
+        if (rs.next()) {
+            val compEx =
+                CompetitionExercise(
+                    competitionExerciseID = rs.getInt("competitionExerciseID"),
+                    competitionID = rs.getInt("competitionID"),
+                    exerciseID = rs.getInt("exerciseID"),
+                    performance = rs.getObject("performance") as Double?,
+                )
+            rs.close()
+            stmt.close()
+            return compEx
+        }
+
+        rs.close()
+        stmt.close()
+        return null
     }
 
     /**
@@ -1846,6 +2023,44 @@ class DatabaseService {
     }
 
     /**
+     * Retrieves a specific route from the database using its routeID.
+     * 
+     * @param routeID The unique identifier of the route.
+     * @return A Route object in the database, or null if no record is found.
+     */
+    fun findRoute(routeID: Int): Route? {
+        val stmt =
+            db.connection.prepareStatement(
+                "SELECT * FROM routes WHERE routeID = ?",
+            )
+
+        stmt.setInt(1, routeID)
+
+        val rs = stmt.executeQuery()
+
+        val route =
+            if (rs.next()) {
+                Route(
+                    routeID = rs.getInt("routeID"),
+                    userID = rs.getInt("userID"),
+                    name = rs.getString("name"),
+                    distance = rs.getDouble("distance"),
+                    estimatedTime = rs.getObject("estimatedTime") as Double?,
+                    date = rs.getString("date"),
+                    isPublic = rs.getBoolean("isPublic"),
+                    routeData = rs.getString("routeData"),
+                )
+            } else {
+                null
+            }
+
+        rs.close()
+        stmt.close()
+
+        return route
+    }
+
+    /**
      * Updates a route record in the database.
      *
      * First, the function checks that the name is not blank and that the distance is above 0.0.
@@ -1929,223 +2144,6 @@ class DatabaseService {
         stmt.close()
 
         return rowsDeleted > 0
-    }
-
-    // Individual find functions
-
-    /**
-     * Retrieves a specific route from the database using its routeID.
-     * 
-     * @param routeID The unique identifier of the route.
-     * @return A Route object in the database, or null if no record is found.
-     */
-    fun findRoute(routeID: Int): Route? {
-        val stmt =
-            db.connection.prepareStatement(
-                "SELECT * FROM routes WHERE routeID = ?",
-            )
-
-        stmt.setInt(1, routeID)
-
-        val rs = stmt.executeQuery()
-
-        val route =
-            if (rs.next()) {
-                Route(
-                    routeID = rs.getInt("routeID"),
-                    userID = rs.getInt("userID"),
-                    name = rs.getString("name"),
-                    distance = rs.getDouble("distance"),
-                    estimatedTime = rs.getObject("estimatedTime") as Double?,
-                    date = rs.getString("date"),
-                    isPublic = rs.getBoolean("isPublic"),
-                    routeData = rs.getString("routeData"),
-                )
-            } else {
-                null
-            }
-
-        rs.close()
-        stmt.close()
-
-        return route
-    }
-
-    /**
-     * Retrieves a specific workout from the database using its workoutID.
-     * 
-     * @param workoutID The unique identifier of the workout.
-     * @return A Workout object in the database if found, or null if no record is found.
-     */
-    fun findWorkout(workoutID: Int): Workout? {
-        val stmt: PreparedStatement =
-            db.connection.prepareStatement(
-                "SELECT * FROM workouts WHERE workoutID = ?",
-            )
-
-        stmt.setInt(1, workoutID)
-
-        val rs: ResultSet = stmt.executeQuery()
-
-        if (rs.next()) {
-            val workout =
-                Workout(
-                    workoutID = rs.getInt("workoutID"),
-                    createdBy = rs.getInt("createdBy"),
-                    assignedTo = rs.getInt("assignedTo"),
-                    date = rs.getString("date"),
-                    duration = rs.getObject("duration") as Int?,
-                    workoutType = rs.getObject("workoutType") as String?,
-                    notes = rs.getObject("notes") as String?,
-                    routeID = rs.getObject("routeID") as Int?,
-                    isRoutine = rs.getBoolean("isRoutine"),
-                )
-            rs.close()
-            stmt.close()
-            return workout
-        }
-
-        rs.close()
-        stmt.close()
-        return null
-    }
-
-    /**
-     * Retrieves a specific workout-exercise join record from the database using its workoutExerciseID.
-     * 
-     * @param workoutExerciseID The unique identifier of the join record.
-     * @return A WorkoutExercise object in the database if found, or null if no record is found.
-     */
-    fun findWorkoutExercise(workoutExercisesID: Int): WorkoutExercise? {
-        val stmt: PreparedStatement =
-            db.connection.prepareStatement(
-                "SELECT * FROM workout_exercises WHERE workoutExercisesID = ?",
-            )
-
-        stmt.setInt(1, workoutExercisesID)
-
-        val rs: ResultSet = stmt.executeQuery()
-        if (rs.next()) {
-            val we =
-                WorkoutExercise(
-                    workoutExercisesID = rs.getInt("workoutExercisesID"),
-                    workoutID = rs.getInt("workoutID"),
-                    exerciseID = rs.getInt("exerciseID"),
-                    sets = rs.getObject("sets") as Int?,
-                    reps = rs.getObject("reps") as Int?,
-                    weight = rs.getObject("weight") as Double?,
-                )
-            rs.close()
-            stmt.close()
-            return we
-        }
-
-        rs.close()
-        stmt.close()
-        return null
-    }
-
-    /**
-     * Retrieves a specific statistic from the database using its statisticID.
-     * 
-     * @param statisticID The unique identifier of the statistic.
-     * @return A Statistic object in the database if found, or null if no record is found.
-     */
-    fun findStatistic(statisticID: Int): Statistic? {
-        val stmt: PreparedStatement =
-            db.connection.prepareStatement(
-                "SELECT * FROM statistics WHERE statisticID = ?",
-            )
-
-        stmt.setInt(1, statisticID)
-
-        val rs: ResultSet = stmt.executeQuery()
-
-        if (rs.next()) {
-            val stat =
-                Statistic(
-                    statisticID = rs.getInt("statisticID"),
-                    userID = rs.getInt("userID"),
-                    exerciseID = rs.getInt("exerciseID"),
-                    scoreValue = rs.getDouble("scoreValue"),
-                    date = rs.getString("date"),
-                )
-            rs.close()
-            stmt.close()
-            return stat
-        }
-
-        rs.close()
-        stmt.close()
-        return null
-    }
-
-    /**
-     * Retrieves a specific competition from the database using its competitionID.
-     * 
-     * @param competitionID The unique identifier of the competition.
-     * @return A Competition object in the database if found, or null if no record is found.
-     */
-    fun findCompetition(competitionID: Int): Competition? {
-        val stmt: PreparedStatement =
-            db.connection.prepareStatement(
-                "SELECT * FROM competitions WHERE competitionID = ?",
-            )
-
-        stmt.setInt(1, competitionID)
-
-        val rs: ResultSet = stmt.executeQuery()
-        if (rs.next()) {
-            val comp =
-                Competition(
-                    competitionID = rs.getInt("competitionID"),
-                    userID = rs.getInt("userID"),
-                    name = rs.getString("name"),
-                    date = rs.getString("date"),
-                    rank = rs.getObject("rank") as Int?,
-                    result = rs.getObject("result") as Int?,
-                )
-            rs.close()
-            stmt.close()
-            return comp
-        }
-
-        rs.close()
-        stmt.close()
-        return null
-    }
-
-    /**
-     * Retrieves a specific competition-exercise join record from the database.
-     * 
-     * @param competitionExerciseID The unique identifier of the join record.
-     * @return A CompetitionExercise object in the database if found, or null if no record is found.
-     */
-    fun findCompetitionExercise(competitionExerciseID: Int): CompetitionExercise? {
-        val stmt: PreparedStatement =
-            db.connection.prepareStatement(
-                "SELECT * FROM competition_exercises WHERE competitionExerciseID = ?",
-            )
-
-        stmt.setInt(1, competitionExerciseID)
-
-        val rs: ResultSet = stmt.executeQuery()
-        if (rs.next()) {
-            val compEx =
-                CompetitionExercise(
-                    competitionExerciseID = rs.getInt("competitionExerciseID"),
-                    competitionID = rs.getInt("competitionID"),
-                    exerciseID = rs.getInt("exerciseID"),
-                    performance = rs.getObject("performance") as Double?,
-                )
-            rs.close()
-            stmt.close()
-            return compEx
-        }
-
-        rs.close()
-        stmt.close()
-        return null
     }
 
     /**
