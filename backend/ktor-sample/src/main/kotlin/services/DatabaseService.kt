@@ -23,12 +23,11 @@ import okhttp3.RequestBody.Companion.toRequestBody
  * This class acts as the main service layer between the backend logic
  * and the SQL database, handling CRUD operations, authentication,
  * and relational queries.
- * 
+ *
  * It is responsible for maintaining data integrity, managing transactions,
  * and ensuring consistent communication between the application and database.
  */
 class DatabaseService {
-
     // Data classes used to store inputs and outputs for database operations
 
     /**
@@ -118,7 +117,7 @@ class DatabaseService {
         val exerciseID: Int,
         val sets: Int? = 1,
         val reps: Int? = 1,
-        val weight: Double? = 1.0
+        val weight: Double? = 1.0,
     )
 
     /**
@@ -214,7 +213,7 @@ class DatabaseService {
         val createdBy: Int,
         val name: String,
         val description: String? = null,
-        val goal: String? = null
+        val goal: String? = null,
     )
 
     /**
@@ -252,7 +251,7 @@ class DatabaseService {
      *
      * This class creates a JDBC connection to the users.db database file located in the project's resources directory.
      *
-     * When an instance is created, foreign key constraints are enabled using PRAGMA foreign_keys = ON 
+     * When an instance is created, foreign key constraints are enabled using PRAGMA foreign_keys = ON
      * so relational integrity rules such as cascading deletes are enabled.
      *
      * The connection can be reused by database service functions until close() is called.
@@ -396,7 +395,6 @@ class DatabaseService {
         height: Double?,
         weight: Double?,
     ): Boolean {
-
         //  Validation checks
         if (email.isBlank() || !email.contains("@") || !email.contains(".")) return false
         if (age != null && (age < 0 || age > 120)) return false
@@ -482,7 +480,7 @@ class DatabaseService {
      * Generates a password reset token for a user account.
      *
      * The function validates the email and ensures the user exists in the database.
-     * If valid, a unique token is generated and stored in the password_reset_tokens table. 
+     * If valid, a unique token is generated and stored in the password_reset_tokens table.
      * An expiry time is set to 1 hour from creation to add security.
      *
      * The token is returned so it can be sent to the user's email for password recovery.
@@ -530,7 +528,7 @@ class DatabaseService {
      * The function checks the token has not passed expiry or has already been used. If it has,
      * the function returns false. If valid, the user's password is updated using a newly generated salt
      * and hash based off the given input.
-     * 
+     *
      *
      * The reset is performed inside a transaction using a try-catch block to ensure atomicity.
      * Both the password update and token invalidation must succeed or all changes are undone using rollback().
@@ -650,7 +648,7 @@ class DatabaseService {
     The function returns:
         - true, if we generate the token and a successful API request containing the email is made to Postmark (and we recieve confirmation)
         - false, if we cannot generate the token OR Postmark does not send confirmation of email recieved OR we hit a logical exception
-    */
+     */
     fun sendResetEmail(email: String): Boolean {
         try {
             val token: String? = generatePasswordResetToken(email)
@@ -662,39 +660,41 @@ class DatabaseService {
             val client = OkHttpClient() // create HTTP client instance
             val postmarkAPIToken = "28ac09e0-0c09-462f-9438-ccabc99a56e2"
 
-            val json = """
+            val json =
+                """
                 {
                     "From": "dwbt7640@leeds.ac.uk",
-                    "To": "${email}",
+                    "To": "$email",
                     "Subject": "Password Reset Code",
-                    "TextBody": "Your password reset code is: ${token}",
+                    "TextBody": "Your password reset code is: $token",
                     "MessageStream": "outbound"
                 }
-            """.trimIndent() // Defines body of API email request
+                """.trimIndent() // Defines body of API email request
 
-            val request = Request.Builder() // Begin building HTTP request for API
-                .url("https://api.postmarkapp.com/email") // Send to API (Postmark)
-                .post(json.toRequestBody("application/json".toMediaType())) // Attach JSON body defined above as POST request
-                .header("Accept", "application/json")
-                .header("Content-Type", "application/json")
-                .header("X-Postmark-Server-Token", postmarkAPIToken) // Add Postmark Server API token for authentication
-                .build()
+            val request =
+                Request.Builder() // Begin building HTTP request for API
+                    .url("https://api.postmarkapp.com/email") // Send to API (Postmark)
+                    .post(json.toRequestBody("application/json".toMediaType())) // Attach JSON body defined above as POST request
+                    .header("Accept", "application/json")
+                    .header("Content-Type", "application/json")
+                    .header("X-Postmark-Server-Token", postmarkAPIToken) // Add Postmark Server API token for authentication
+                    .build()
 
             client.newCall(request).execute().use { response ->
                 return response.isSuccessful // Returns true if confirmation recieved from API that email was accepted for sending
             }
-        }
-        catch(e: Exception) { // If an exception is hit at any point, return false
+        } catch (e: Exception) {
+            // If an exception is hit at any point, return false
             return false
         }
     }
 
     /**
      * Deletes a user account from the database using their email address.
-     * 
+     *
      * The function executes a DELETE operation on the users table if a user is found linking
      * to the given email address and true is returned. Otherwise, false is returned.
-     * 
+     *
      * @param email The email address of the user to delete.
      * @return True if the user was deleted, false if not.
      */
@@ -717,22 +717,21 @@ class DatabaseService {
 
     /**
      * Creates a new exercise and stores it in the database.
-     * 
+     *
      * The function checks the exercise name isn't blank and ensures the category is one of the
      * predefined types: ("weights", "running", "cycling", "swimming", "walking").
-     * 
+     *
      * If validation is passed, the exercise is inserted into the database and the exerciseID is returned.
-     * 
+     *
      * @param exercise The exercise object containing name, category, and description.
      * @return The generated exerciseID if successful, -1  if not.
      */
     fun createExercise(exercise: Exercise): Int {
-        
         // Validation Checks
         if (exercise.name.isBlank()) return -1
         val validCategories = listOf("weights", "running", "cycling", "swimming", "walking")
         if (exercise.category !in validCategories) return -1
-    
+
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
                 """
@@ -764,10 +763,10 @@ class DatabaseService {
 
     /**
      * Retrieves an exercise from the database using its unique ID.
-     * 
+     *
      * If an exercise with the given ID exists, it is returned in an Exercise object.
      * If no matching record is found, null is returned instead.
-     * 
+     *
      * @param exerciseID The unique identifier of the exercise.
      * @return The corresponding Exercise object, or null if no record is found.
      */
@@ -801,10 +800,10 @@ class DatabaseService {
 
     /**
      * Retrieves all exercises from the database.
-     * 
+     *
      * Each record in the table is mapped to an Exercise object and returned in a list.
      * If the table is empty, an empty list is returned.
-     * 
+     *
      * @return The list of Exercise objects in the database.
      */
     fun findAllExercises(): List<Exercise> {
@@ -842,7 +841,7 @@ class DatabaseService {
      *
      * If the update is successful, the database is modified and the function returns true. If no matching exercise
      * is found or validation fails, false is returned.
-     * 
+     *
      *
      * @param name The name of the exercise used to identify the record.
      * @param category The new category value of the exercise.
@@ -879,10 +878,10 @@ class DatabaseService {
 
     /**
      * Deletes an exercise from the database using the provided exerciseID.
-     * 
+     *
      * The function executes a DELETE operation on the exercises table if an exercise is found linking
      * to the given exerciseID and true is returned. Otherwise, false is returned.
-     * 
+     *
      * @param exerciseID The exerciseID of the row to delete.
      * @return True if the exercise was deleted, false if not.
      */
@@ -908,7 +907,7 @@ class DatabaseService {
      * workoutType of the workout is in the valid types list, if it iss not null.
      *
      * The function then inserts the workout into the database.
-     * 
+     *
      * If successful, the generated workoutID is returned. If unsuccessful, -1 is returned.
      *
      * Prepared statements are used to safely insert values.
@@ -959,10 +958,10 @@ class DatabaseService {
 
     /**
      * Retrieves all workouts for a specific user from the database.
-     * 
+     *
      * Each record in the table is mapped to a Workout object and returned in a list.
      * If no matching record is found, an empty list is returned.
-     * 
+     *
      * @param userID The unique identifier of the user who's workouts are being returned.
      * @return The list of Workout objects in the database.
      */
@@ -1000,7 +999,7 @@ class DatabaseService {
 
     /**
      * Retrieves a specific workout from the database using its workoutID.
-     * 
+     *
      * @param workoutID The unique identifier of the workout.
      * @return A Workout object in the database if found, or null if no record is found.
      */
@@ -1049,7 +1048,7 @@ class DatabaseService {
      *
      * If the update is successful, the database is modified and the function returns true. If no matching workout
      * is found or validation fails, false is returned.
-     * 
+     *
      *
      * @param workoutID The unique identifier of the workout to update.
      * @param date The new date value of the workout.
@@ -1099,10 +1098,10 @@ class DatabaseService {
 
     /**
      * Deletes a workout from the database using the provided workoutID.
-     * 
+     *
      * The function executes a DELETE operation on the workouts table if a workout is found linking
      * to the given workoutID and true is returned. Otherwise, false is returned.
-     * 
+     *
      * @param workoutID The workoutID of the row to delete.
      * @return True if the workout was deleted, false if not.
      */
@@ -1120,7 +1119,6 @@ class DatabaseService {
         return rowsDeleted > 0
     }
 
-    
     /**
      * Stores a new many-to-many record in the database between workouts and exercises.
      *
@@ -1129,7 +1127,7 @@ class DatabaseService {
      * above 0.
      *
      * The function then inserts the join record into the database.
-     * 
+     *
      * If successful, the generated workoutExercisesID is returned. If unsuccessful, -1 is returned.
      *
      * Prepared statements are used to safely insert values.
@@ -1177,10 +1175,10 @@ class DatabaseService {
 
     /**
      * Retrieves all workout and exercises join records from the database.
-     * 
+     *
      * Each record in the table is mapped to a WorkoutExercise object and returned in a list.
      * If no matching record is found, an empty list is returned.
-     * 
+     *
      * @return The list of WorkoutExercise objects in the database.
      */
     fun findAllWorkoutExercises(workoutID: Int): List<WorkoutExercise> {
@@ -1213,7 +1211,7 @@ class DatabaseService {
 
     /**
      * Retrieves a specific workout-exercise join record from the database using its workoutExerciseID.
-     * 
+     *
      * @param workoutExerciseID The unique identifier of the join record.
      * @return A WorkoutExercise object in the database if found, or null if no record is found.
      */
@@ -1256,7 +1254,7 @@ class DatabaseService {
      *
      * If the update is successful, the database is modified and the function returns true. If no matching workout
      * is found or validation fails, false is returned.
-     * 
+     *
      *
      * @param workoutExercisesID The unique identifier of the join record to update.
      * @param sets Optional sets of an exercise in the workout to update.
@@ -1298,10 +1296,10 @@ class DatabaseService {
 
     /**
      * Deletes a workout and exercise join record from the database using the provided workoutExercisesID.
-     * 
+     *
      * The function executes a DELETE operation on the workout_exercises table if a workout_exercise is found linking
      * to the given workoutExercisesID and true is returned. Otherwise, false is returned.
-     * 
+     *
      * @param workoutExercisesID The workoutExercisesID of the row to delete.
      * @return True if the join record was deleted, false if not.
      */
@@ -1327,7 +1325,7 @@ class DatabaseService {
      * date is in the correct format (YYYY-MM-DD)
      *
      * The function then inserts the statistic into the database.
-     * 
+     *
      * If successful, the generated statisticID is returned. If unsuccessful, -1 is returned.
      *
      * Prepared statements are used to safely insert values.
@@ -1373,10 +1371,10 @@ class DatabaseService {
 
     /**
      * Retrieves all of a user's statistics for a given exercise from the database.
-     * 
+     *
      * Each record in the table is mapped to a Statistic object and returned in a list.
      * If no matching record is found, an empty list is returned.
-     * 
+     *
      * @return The list of Statistic objects in the database.
      */
     fun findAllStatistics(
@@ -1412,7 +1410,7 @@ class DatabaseService {
 
     /**
      * Retrieves a specific statistic from the database using its statisticID.
-     * 
+     *
      * @param statisticID The unique identifier of the statistic.
      * @return A Statistic object in the database if found, or null if no record is found.
      */
@@ -1447,7 +1445,7 @@ class DatabaseService {
 
     /**
      * Retrieves the user's best statistic for a given exercise from the database.
-     * 
+     *
      * @return A Statistic object with the highest scoreValue for the given userID and exerciseID,
      * or null if no such value is found.
      */
@@ -1500,7 +1498,7 @@ class DatabaseService {
      *
      * If the update is successful, the database is modified and the function returns true. If no matching statistic
      * is found or validation fails, false is returned.
-     * 
+     *
      *
      * @param statisticID The unique identifier of the statistic to update.
      * @param scoreValue The value of the statistic.
@@ -1537,10 +1535,10 @@ class DatabaseService {
 
     /**
      * Deletes a statistic record from the database using the provided statisticID.
-     * 
+     *
      * The function executes a DELETE operation on the statistics table if a statistic is found linking
      * to the given statisticID and true is returned. Otherwise, false is returned.
-     * 
+     *
      * @param statisticID The statisticID of the row to delete.
      * @return True if the record was deleted, false if not.
      */
@@ -1566,7 +1564,7 @@ class DatabaseService {
      * if there is a rank and/or result given that they are over 0.
      *
      * The function then inserts the competition into the database.
-     * 
+     *
      * If successful, the generated competitionID is returned. If unsuccessful, -1 is returned.
      *
      * Prepared statements are used to safely insert values.
@@ -1614,10 +1612,10 @@ class DatabaseService {
 
     /**
      * Retrieves all of a user's competitions for a given exercise from the database.
-     * 
+     *
      * Each record in the table is mapped to a Competition object and returned in a list.
      * If no matching record is found, an empty list is returned.
-     * 
+     *
      * @return The list of Competition objects in the database.
      */
     fun findAllCompetitions(userID: Int): List<Competition> {
@@ -1650,7 +1648,7 @@ class DatabaseService {
 
     /**
      * Retrieves a specific competition from the database using its competitionID.
-     * 
+     *
      * @param competitionID The unique identifier of the competition.
      * @return A Competition object in the database if found, or null if no record is found.
      */
@@ -1695,7 +1693,7 @@ class DatabaseService {
      *
      * If the update is successful, the database is modified and the function returns true. If no matching competition
      * is found or validation fails, false is returned.
-     * 
+     *
      *
      * @param competitionID The unique identifier of the competition to update.
      * @param name The value of the competition.
@@ -1740,10 +1738,10 @@ class DatabaseService {
 
     /**
      * Deletes a competition record from the database using the provided competitionID.
-     * 
+     *
      * The function executes a DELETE operation on the competition table if a competition is found linking
      * to the given competitionID and true is returned. Otherwise, false is returned.
-     * 
+     *
      * @param competitionID The competitionID of the row to delete.
      * @return True if the record was deleted, false if not.
      */
@@ -1766,7 +1764,7 @@ class DatabaseService {
      *
      * The function first checks that the competitonID and exerciseID are greater than 0. Next the function
      * checks that if there is a given performance, that it is greater than 0.0.
-     * 
+     *
      * If successful, the generated competitionExerciseID is returned. If unsuccessful, -1 is returned.
      *
      * Prepared statements are used to safely insert values.
@@ -1810,10 +1808,10 @@ class DatabaseService {
 
     /**
      * Retrieves all competition and exercises join records from the database.
-     * 
+     *
      * Each record in the table is mapped to a CompetitionExercise object and returned in a list.
      * If no matching record is found, an empty list is returned.
-     * 
+     *
      * @return The list of CompetitionExercise objects in the database.
      */
     fun findAllCompetitionExercises(competitionID: Int): List<CompetitionExercise> {
@@ -1844,7 +1842,7 @@ class DatabaseService {
 
     /**
      * Retrieves a specific competition-exercise join record from the database.
-     * 
+     *
      * @param competitionExerciseID The unique identifier of the join record.
      * @return A CompetitionExercise object in the database if found, or null if no record is found.
      */
@@ -1880,13 +1878,13 @@ class DatabaseService {
      *
      * * The function first checks that the competitonID and exerciseID are greater than 0. Next the function
      * checks that if there is a given performance, that it is greater than 0.0. If either fail, false is returned.
-     * 
+     *
      * The function only updates the performance associated with the exercise in the competition,
      * identified by the competitionExerciseID.
      *
      * If the update is successful, the database is modified and the function returns true. If no matching
      * competition_exercises is found, false is returned.
-     * 
+     *
      *
      * @param competitionExercisesID The unique identifier of the join record to update.
      * @param performance The value the user achieved in exercise.
@@ -1920,10 +1918,10 @@ class DatabaseService {
 
     /**
      * Deletes a many-to-many join record from the database using the provided competitionExerciseID.
-     * 
+     *
      * The function executes a DELETE operation on the competition_exercises table if a competition is found linking
      * to the given competitionExerciseID and true is returned. Otherwise, false is returned.
-     * 
+     *
      * @param competitionExerciseID The competitionExerciseID of the row to delete.
      * @return True if the record was deleted, false if not.
      */
@@ -1949,7 +1947,7 @@ class DatabaseService {
      * in the correct format (YYYY-MM-DD) and that if there is a estimatedTime given that it is are over 0.0.
      *
      * The function then inserts the route into the database.
-     * 
+     *
      * If successful, the generated routeID is returned. If unsuccessful, -1 is returned.
      *
      * Prepared statements are used to safely insert values.
@@ -1999,10 +1997,10 @@ class DatabaseService {
 
     /**
      * Retrieves all of a user's routes from the database, along with all public routes too.
-     * 
+     *
      * Each record in the table is mapped to a Route object and returned in a list.
      * If no matching record is found, an empty list is returned.
-     * 
+     *
      * @return The list of Route objects in the database.
      */
     fun findAllRoutes(userID: Int): List<Route> {
@@ -2037,7 +2035,7 @@ class DatabaseService {
 
     /**
      * Retrieves a specific route from the database using its routeID.
-     * 
+     *
      * @param routeID The unique identifier of the route.
      * @return A Route object in the database, or null if no record is found.
      */
@@ -2086,7 +2084,7 @@ class DatabaseService {
      *
      * If the update is successful, the database is modified and the function returns true. If no matching route
      * is found or validation fails, false is returned.
-     * 
+     *
      *
      * @param routeID The unique identifier of the route to update.
      * @param name The name of the route
@@ -2138,10 +2136,10 @@ class DatabaseService {
 
     /**
      * Deletes a route record from the database using the provided routeID.
-     * 
+     *
      * The function executes a DELETE operation on the routes table if a route is found linking
      * to the given routeID and true is returned. Otherwise, false is returned.
-     * 
+     *
      * @param routeID The routeID of the row to delete.
      * @return True if the record was deleted, false if not.
      */
@@ -2168,7 +2166,7 @@ class DatabaseService {
      * The function then inserts the group into the database and the creator is automatically added
      * as a member. Both actions are performed with a transaction so either both succeed or neither is
      * saved.
-     * 
+     *
      * If successful, the generated groupID is returned. If unsuccessful, -1 is returned.
      *
      * Prepared statements are used to safely insert values.
@@ -2240,10 +2238,10 @@ class DatabaseService {
 
     /**
      * Deletes a training group record from the database using the provided groupID.
-     * 
+     *
      * The function executes a DELETE operation on the training_groups table. If a group with
      * the given groupID exists, true is returned. Otherwise, false is returned.
-     * 
+     *
      * @param groupID The groupID of the row to delete.
      * @return True if the record was deleted, false if not.
      */
@@ -2262,7 +2260,7 @@ class DatabaseService {
 
     /**
      * Retrieves a specific training group from the database using its groupID.
-     * 
+     *
      * @param groupID The unique identifier of the training group.
      * @return A TrainingGroup object in the database if found, or null if no record is found.
      */
@@ -2296,10 +2294,10 @@ class DatabaseService {
 
     /**
      * Retrieves all training groups from the database.
-     * 
+     *
      * Each record in the table is mapped to a TrainingGroup object and returned in a list.
      * If no matching record is found, an empty list is returned.
-     * 
+     *
      * @return The list of TrainingGroup objects in the database.
      */
     fun findAllGroups(): List<TrainingGroup> {
@@ -2332,7 +2330,7 @@ class DatabaseService {
 
     /**
      * Returns all groups a user is in.
-     * 
+     *
      * @param userID The unique identifier for a user.
      * @return A list of TrainingGroup objects the user is in.
      */
@@ -2344,7 +2342,7 @@ class DatabaseService {
 
     /**
      * Returns all groups a user is not in.
-     * 
+     *
      * @param userID The unique identifier for a user.
      * @return A list of TrainingGroup objects the user is not in.
      */
@@ -2365,7 +2363,7 @@ class DatabaseService {
      *
      * If the update is successful, the database is modified and the function returns true. If no matching training group
      * is found or validation fails, false is returned.
-     * 
+     *
      *
      * @param groupID The unique identifier of the group to update.
      * @param name The name of the group.
@@ -2407,9 +2405,9 @@ class DatabaseService {
      *
      * The function first checks that the userID and groupID are greater than 0. Next the function
      * checks if the user is already in the training group. If either fail, false is returned.
-     * 
+     *
      * The provided IDs are then inserted into the group_members join table.
-     * 
+     *
      * If the user is successfully added to the group, true is returned.
      * If validation fails, the user is already a member, or the insert fails, false is returned.
      *
@@ -2444,15 +2442,15 @@ class DatabaseService {
 
     /**
      * Deletes a user-group join record from group_members based on the provided groupID and userID.
-     * 
+     *
      * The function executes a DELETE operation on the group_members table.
      * If a matching membership record exists, it is removed and true is returned.
      * Otherwise, false is returned.
-     * 
+     *
      * @param userID The unique identifier of the user.
      * @param groupID The unique identifier of the training group.
      * @return True if the record was deleted, false if not.
-     */    
+     */
     fun leaveGroup(
         groupID: Int,
         userID: Int,
@@ -2472,10 +2470,10 @@ class DatabaseService {
 
     /**
      * Retrieves all users in a group from the database using the provided groupID.
-     * 
+     *
      * Each record in the table is mapped to an User object and returned in a list.
      * If no matching members are found, an empty list is returned.
-     * 
+     *
      * @param groupID The unique identifier of the training group.
      * @return The list of User objects in the database.
      */
@@ -2521,9 +2519,9 @@ class DatabaseService {
      *
      * The function first checks that the workoutID and groupID are greater than 0. Next the function
      * checks that the scheduledDate is in the format YYYY-MM-DD. If either fail, -1 is returned.
-     * 
+     *
      * The provided IDs and scheduledDate are then inserted into the group_sessions join table.
-     * 
+     *
      * Prepared statements are used to safely insert values.
      *
      * @param session The session data to be stored.
@@ -2569,10 +2567,10 @@ class DatabaseService {
 
     /**
      * Retrieves all future-dated sessions for a training group from the database for the specified groupID.
-     * 
+     *
      * Each record in the table is mapped to a GroupSession object and returned in a list in ascending order.
      * If no matching record is found, an empty list is returned.
-     * 
+     *
      * @param groupID The unique identifier of the training group.
      * @return The list of GroupSession objects in the database.
      */
@@ -2611,10 +2609,10 @@ class DatabaseService {
 
     /**
      * Retrieves all past-dated sessions for a training group from the database for the specified groupID.
-     * 
+     *
      * Each record in the table is mapped to a GroupSession object and returned in a list in descending order.
      * If no matching record is found, an empty list is returned.
-     * 
+     *
      * @param groupID The unique identifier of the training group.
      * @return The list of GroupSession objects in the database.
      */
@@ -2652,10 +2650,10 @@ class DatabaseService {
 
     /**
      * Deletes a group session record from the database using the provided sessionID.
-     * 
+     *
      * The function executes a DELETE operation on the group_sessions table. If a session with
      * the given sessionID exists, true is returned. Otherwise, false is returned.
-     * 
+     *
      * @param sessionID The sessionID of the row to delete.
      * @return True if the record was deleted, false if not.
      */
@@ -2676,12 +2674,12 @@ class DatabaseService {
 
     /**
      * Retrieves all past-dated workouts for a user from the database for the specified email.
-     * 
+     *
      * Each record in the table is mapped to a Workout object and returned in a list in descending order.
      * If no matching record is found, an empty list is returned.
-     * 
+     *
      * To be used on the dashboard in the frontend.
-     * 
+     *
      * @param email The user's email address.
      * @return The list of Workout objects in the database.
      */
@@ -2725,20 +2723,22 @@ class DatabaseService {
 
     /**
      * Retrieves all past-dated workouts for a user from the database for the specified userID.
-     * 
+     *
      * The function calls findAllWorkouts() and then filters out workouts with a null type. Next,
      * workouts are sorted in descending order, grouped by workoutType and mapped to their workoutType
      * and filtered to only 3 per workoutType.
-     * 
+     *
      *  be used on the dashboard in the frontend.
-     * 
+     *
      * @param userID The unique identifier of the user.
      * @return A map where the key is the workoutType and the value is a list of 3 Workouts of that type.
      */
     fun getRecentWorkoutsByType(userID: Int): Map<String, List<Workout>> {
         return findAllWorkouts(
             userID,
-        ).filter { it.workoutType != null && it.date <= LocalDate.now().toString() }.sortedByDescending { it.date }.groupBy { it.workoutType!! }.mapValues {
+        ).filter {
+            it.workoutType != null && it.date <= LocalDate.now().toString()
+        }.sortedByDescending { it.date }.groupBy { it.workoutType!! }.mapValues {
                 (_, workouts) ->
             workouts.take(3)
         }
@@ -2747,9 +2747,9 @@ class DatabaseService {
     /**
      * Retrieves all workouts a user has scheduled on a specific day by using
      * the provided email address and specified date that defaults to LocalDate.now().
-     * 
+     *
      * The results will appear on the dashboard in the frontend.
-     * 
+     *
      * @param email The user's email address.
      * @param today The date to check for workouts. Defaults to the current date.
      * @return A list of workouts scheduled for the specified date.
@@ -2783,7 +2783,7 @@ class DatabaseService {
                     workoutType = rs.getObject("workoutType") as String?,
                     notes = rs.getObject("notes") as String?,
                     routeID = rs.getObject("routeID") as Int?,
-                    isRoutine = rs.getBoolean("isRoutine")
+                    isRoutine = rs.getBoolean("isRoutine"),
                 ),
             )
         }
@@ -2795,10 +2795,10 @@ class DatabaseService {
 
     /**
      * Retrieves all future-dated competitions for a user from the database for the specified email address.
-     * 
+     *
      * Each record in the table is mapped to a Competition object and returned in a list in ascending order.
      * If no matching record is found, an empty list is returned.
-     * 
+     *
      * @param email The user's email address.
      * @return The list of Competition objects in the database if successful, or an empty list.
      */
@@ -2840,10 +2840,10 @@ class DatabaseService {
     /**
      * Retrieves the most recent 5 past-dated routes for a user from the
      * database for the specified email address.
-     * 
+     *
      * Each record in the table is mapped to a Route object and returned in a list in descending order.
      * If no matching record is found, an empty list is returned.
-     * 
+     *
      * @param email The user's email address.
      * @return The list of Route objects in the database if successful, or an empty list if not.
      */
@@ -2888,10 +2888,10 @@ class DatabaseService {
     /**
      * Retrieves the most recent 5 past-dated competitions for a user from the
      * database for the specified email address.
-     * 
+     *
      * Each record in the table is mapped to a Competition object and returned in a list in descending order.
      * If no matching record is found, an empty list is returned.
-     * 
+     *
      * @param email The user's email address.
      * @return The list of Competition objects in the database if successful, or an empty list if not.
      */
@@ -3040,23 +3040,23 @@ class DatabaseService {
 
     /**
      * Retrieves a weekly summary of the user's completed training history.
-     * 
+     *
      * The function first retrieves all workouts assigned to the supplied userID.
      * It then filters out any workouts not yet completed, or workouts where no duration
      * has been recorded.
-     * 
+     *
      * The remaining workouts are grouped by calendar week, starting from monday
      * and ending at sunday.
-     * 
+     *
      * For each week, the function calculates:
      *  - the number of completed workouts
      *  - the total training duration in hours
-     * 
+     *
      * The duration is calculated by summing the duration stored in minutes and converting
      * the result into hours.
-     * 
+     *
      * The returned map is sorted by week start date in ascending order.
-     * 
+     *
      * This is used to display statistics such as weekly consistency and total training time
      * for each week.
      * @param userID The unique identifier for the user.
@@ -3083,24 +3083,24 @@ class DatabaseService {
 
     /**
      * Retrieves a breakdown of exercise categories completed by a user.
-     * 
+     *
      * The function first retrieves all workouts assigned to the supplied userID
      * and filters out any workouts with future dates so only completed workouts
      * are included.
-     * 
+     *
      * For each workout, the workout_exercises and exercises tables are joined
      * to identify the category of each exercise. The number of occurrences of each
      * category is then counted.
-     * 
+     *
      * After all categories have been counted, the function returns both the number
      * of completed sessions for each category, and the percentage share of the total
      * completed sessions each category has.
-     * 
+     *
      * This is used to display statistics such as how much of a user's training consists of weights,
      * running, swimming, and other categories.
-     * 
+     *
      * If the user has no completed workouts, an empty map is returned.
-     * 
+     *
      * @param userID The unique identifier of the user.
      * @return A map where the key is the exercise category and the value is another map containing:
      *   - "sessions": the number of times that category appears
@@ -3150,19 +3150,19 @@ class DatabaseService {
 
     /**
      * Retrieves the highest score for each exercise completed by a user.
-     * 
+     *
      * The function first retrieves all exercises stored in the database.
      * It then checks each exercise individually by calling getBestStat()
      * and returns the highest recorded statistic for the supplied user
      * where one exists.
-     * 
+     *
      * This is used to display personal bests such as the heaviest weight
      * lifted, fastest time achieved, or highest score recorded, depending
      * on the exercise.
-     * 
+     *
      * Exercises with no recorded statistics for the user are excluded using
      * mapNotNull().
-     * 
+     *
      * @param userID The unique identifier of the user.
      * @return A list of Statistic objects containing the user's best
      * recorded result for each exercise.
@@ -3175,18 +3175,18 @@ class DatabaseService {
      * Adds a workout and its related exercises to the database.
      *
      * The autoCommit is set to false so all operations can be committed or rolled back as a single transaction.
-     * 
+     *
      * Calls createWorkout() store the given workout
      * in the database, then iterates through every exercise in the given list of
      * exercises and links them to the created workout by adding them to the join table in
      * the database.
-     * 
+     *
      * If there is any error or failure during the function, the previous actions are undone
      * using rollback() so there is no partial data stored and -1 is returned.
-     * 
+     *
      * If all operations succeed, commit() is called and the new workoutID
      * is returned.
-     * 
+     *
      * Regardless of success or failure, autoCommit is set back to true so later database operations remain unaffected.
      *
      * @param workout An instance of the workout data class.
@@ -3234,9 +3234,10 @@ class DatabaseService {
     }
 
     fun deleteAllExercisesInWorkout(workoutID: Int): Boolean {
-        val stmt: PreparedStatement = db.connection.prepareStatement(
-            "DELETE FROM workout_exercises WHERE workoutID = ?"
-        )
+        val stmt: PreparedStatement =
+            db.connection.prepareStatement(
+                "DELETE FROM workout_exercises WHERE workoutID = ?",
+            )
 
         stmt.setInt(1, workoutID)
 
@@ -3279,7 +3280,15 @@ class DatabaseService {
         db.connection.autoCommit = false
         try {
             val updated =
-                updateWorkout(workout.workoutID, workout.date, workout.duration, workout.workoutType, workout.notes, workout.routeID, workout.isRoutine)
+                updateWorkout(
+                    workout.workoutID,
+                    workout.date,
+                    workout.duration,
+                    workout.workoutType,
+                    workout.notes,
+                    workout.routeID,
+                    workout.isRoutine,
+                )
             // Update workout failed so undo everything
             if (!updated) {
                 db.connection.rollback()
