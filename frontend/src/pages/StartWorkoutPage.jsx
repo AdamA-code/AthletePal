@@ -51,6 +51,12 @@ function StartWorkoutPage() {
                         })
                         setSelectedExercises(preloaded)
                     }
+
+                    const workoutRes = await fetch(`${API_BASE_URL}/api/workout/${routineWorkoutID}`)
+                    const workoutData = await workoutRes.json()
+                    if (workoutData && workoutData.Workout && workoutData.Workout.notes) {
+                        setNotes(workoutData.Workout.notes)
+                    }
                 }
 
                 if (fromScheduled && scheduledWorkoutID) {
@@ -105,6 +111,10 @@ function StartWorkoutPage() {
         }
         if (selectedExercises.length === 0) {
             setError("Please add at least one exercise.")
+            return
+        }
+        if (!isScheduled && !duration) {
+            setError("Please enter a duration.")
             return
         }
 
@@ -183,7 +193,9 @@ function StartWorkoutPage() {
                     )}
                     {!isScheduled && (
                         <div className="flex flex-col">
-                            <label htmlFor="workout-duration" className="text-sm text-gray-700 mb-1">Duration (mins)</label>
+                            <label htmlFor="workout-duration" className="text-sm text-gray-700 mb-1">
+                                Duration (mins) <span className="text-red-600 text-xs">*required</span>
+                            </label>
                             <input
                                 id="workout-duration"
                                 type="number"
