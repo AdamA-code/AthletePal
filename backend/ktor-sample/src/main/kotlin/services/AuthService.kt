@@ -72,7 +72,7 @@ class AuthService {
     }
 
     /**
-     * Takes the given plain text password and the stored salt for that user, 
+     * Takes the given plain text password and the stored salt for that user,
      * hashes the password, and checks if the generated hash matches the stored
      * hash in the database.
      *
@@ -101,11 +101,11 @@ class AuthService {
      * creating the account. Validation ensure the name is not blank, the email
      * address countains both '@' and '.', and the password is at least 8
      * characters long.
-     * 
+     *
      * If validation passes, a random salt is generated using generateSalt()
      * and the password is hashed using hashPassword(). A User data class is then
      * created and passed to createUser() in DatabaseService.kt for storage.
-     * 
+     *
      * Fields such as gender, age, height, and weight are initally stored as null as
      * they are optional values that may be updated later.
      *

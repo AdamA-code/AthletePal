@@ -618,7 +618,7 @@ fun Route.activityRoutes() {
             - OK (200) and a list of all exercises, if the database was successfully access and exercises were found in the db table
             - InternalServerError (500) and a relevant message, if there was an internal error in backend services preventing db access
             - BadRequest (400) and a relevant message, if a malformed HTTP request is made to the endpoint
-        */
+         */
         get("/exercises") {
             try {
                 val exercises: List<Exercise> = db.findAllExercises()

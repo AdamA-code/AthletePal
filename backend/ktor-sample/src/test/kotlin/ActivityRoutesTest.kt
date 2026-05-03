@@ -7,9 +7,9 @@ import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
-import io.ktor.http.ContentType
 import io.ktor.server.application.Application
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
@@ -58,7 +58,6 @@ class ActivityRoutesTest {
                     notes = "Test Workout",
                 )
             workoutID = DatabaseService().createWorkout(workout)
-
 
             // Create Test COMPETITION
             val competition =
@@ -815,17 +814,18 @@ class ActivityRoutesTest {
 
             val response = client.delete("/api/workout/exercises/abc")
 
-        assertEquals(HttpStatusCode.BadRequest, response.status)
-    }
+            assertEquals(HttpStatusCode.BadRequest, response.status)
+        }
 
     @Test
-    fun getAllExercises_valid() = testApplication {
-        application { module() }
+    fun getAllExercises_valid() =
+        testApplication {
+            application { module() }
 
-        val response = client.get("/api/exercises")
+            val response = client.get("/api/exercises")
 
-        assertEquals(HttpStatusCode.OK, response.status)
-    }
+            assertEquals(HttpStatusCode.OK, response.status)
+        }
 
     // ===========================
     // COMPETITION ROUTES TESTING
