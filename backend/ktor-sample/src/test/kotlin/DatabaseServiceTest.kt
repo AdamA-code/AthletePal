@@ -14,6 +14,9 @@ import services.DatabaseService.WorkoutExercise
 import java.time.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class DatabaseServiceTest {
@@ -704,10 +707,10 @@ class DatabaseServiceTest {
 
         //  Find all groups for user
 
-        val creatorGroups = ds.findAllGroups(creatorID)
+        val creatorGroups = ds.findAllGroups()
         assertTrue(creatorGroups.any { it.groupID == groupID })
 
-        val memberGroups = ds.findAllGroups(memberID)
+        val memberGroups = ds.findAllGroups()
         assertTrue(memberGroups.any { it.groupID == groupID })
 
         // Join table sessions tests

@@ -1,4 +1,15 @@
 package test
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
+import java.time.LocalDate
+import java.time.DayOfWeek
+import services.DatabaseService
+import services.DatabaseService.Exercise
+import services.DatabaseService.User
+import services.DatabaseService.Workout
+import services.DatabaseService.WorkoutExercise
 
 class StatsTest {
     @Test
@@ -8,20 +19,21 @@ class StatsTest {
 
         ds.deleteUser(email)
 
-        val userId = ds.createUser(
-            User(
-                userID = 0,
-                name = "Stats User",
-                email = email,
-                passwordHash = "hash",
-                passwordKey = "key",
-                gender = "Male",
-                age = 25,
-                height = 180.0,
-                weight = 75.0,
-                accountType = false,
+        val userId =
+            ds.createUser(
+                User(
+                    userID = 0,
+                    name = "Stats User",
+                    email = email,
+                    passwordHash = "hash",
+                    passwordKey = "key",
+                    gender = "Male",
+                    age = 25,
+                    height = 180.0,
+                    weight = 75.0,
+                    accountType = false,
+                ),
             )
-        )
         assertTrue(userId > 0)
 
         val today = LocalDate.of(2026, 4, 29)

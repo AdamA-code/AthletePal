@@ -1,4 +1,9 @@
 package services
+import kotlinx.serialization.Serializable
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.PreparedStatement
@@ -8,11 +13,6 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
-import kotlinx.serialization.Serializable
 
 /**
  * Provides all database operations for the application.
