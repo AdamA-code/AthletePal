@@ -2485,7 +2485,19 @@ class DatabaseService {
         return members
     }
 
-
+    /**
+     * Creates a scheduled session for a training group using an existing workout.
+     *
+     * The function first checks that the workoutID and groupID are greater than 0. Next the function
+     * checks that the scheduledDate is in the format YYYY-MM-DD. If either fail, -1 is returned.
+     * 
+     * The provided IDs and scheduledDate are then inserted into the group_sessions join table.
+     * 
+     * Prepared statements are used to safely insert values.
+     *
+     * @param session The session data to be stored.
+     * @return sessionID if the insertion was successful, otherwise -1.
+     */
     fun addGroupSession(session: GroupSession): Int {
         // Validation Checks
         if (session.groupID <= 0 || session.workoutID <= 0) return -1
@@ -2524,6 +2536,15 @@ class DatabaseService {
         return id
     }
 
+    /**
+     * Retrieves all future-dated sessions for a training group from the database by using the groupID.
+     * 
+     * Each record in the table is mapped to a GroupSession object and returned in a list in ascending order.
+     * If no matching record is found, an empty list is returned.
+     * 
+     * @param groupID The unique identifier of the training group.
+     * @return The list of GroupSession objects in the database.
+     */
     fun getUpcomingGroupSessions(groupID: Int): List<GroupSession> {
         val today = LocalDate.now().toString()
         val stmt =
@@ -2557,6 +2578,15 @@ class DatabaseService {
         return sessions
     }
 
+    /**
+     * Retrieves all past-dated sessions for a training group from the database for the specified groupID.
+     * 
+     * Each record in the table is mapped to a GroupSession object and returned in a list in descending order.
+     * If no matching record is found, an empty list is returned.
+     * 
+     * @param groupID The unique identifier of the training group.
+     * @return The list of GroupSession objects in the database.
+     */
     fun getPastGroupSessions(groupID: Int): List<GroupSession> {
         val today = LocalDate.now().toString()
         val stmt =
@@ -2589,6 +2619,15 @@ class DatabaseService {
         return sessions
     }
 
+    /**
+     * Deletes a group session record from the database using the provided sessionID.
+     * 
+     * The function executes a DELETE operation on the group_sessions table. If a session with
+     * the given sessionID exists, true is returned. Otherwise, false is returned.
+     * 
+     * @param sessionID The sessionID of the row to delete.
+     * @return True if the record was deleted, false if not.
+     */
     fun deleteGroupSession(sessionID: Int): Boolean {
         val stmt =
             db.connection.prepareStatement(
