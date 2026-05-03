@@ -1,8 +1,6 @@
 package test
 
-// Import classes
 
-/*
 class StatsTest {
     @Test
     fun testStatsFunction() {
@@ -27,7 +25,7 @@ class StatsTest {
         )
         assertTrue(userId > 0)
 
-        val today = LocalDate.now()
+        val today = LocalDate.of(2026, 4, 29)
         val yesterday = today.minusDays(1).toString()
         val twoDaysAgo = today.minusDays(2).toString()
         val two2DaysAgo = today.minusDays(2).toString()
@@ -92,6 +90,3 @@ class StatsTest {
         assertTrue(ds.deleteExercise(cycle))
     }
 }
-
-Everything here works - commented out as based on day of the week so may feel depending on day, but works as intended
-*/
