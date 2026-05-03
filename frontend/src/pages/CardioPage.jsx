@@ -84,7 +84,6 @@ function CardioPage() {
             return
         }
 
-        // Validate route if user has drawn one
         if (routeMode === "draw") {
             if (!drawnRouteData) {
                 setError("Please draw your route on the map.")
@@ -99,12 +98,10 @@ function CardioPage() {
         setError("")
         let savedRouteID = null
 
-        // If user selected an existing route just use its ID
         if (routeMode === "select" && selectedRoute) {
             savedRouteID = selectedRoute.routeID
         }
 
-        // If user drew their own route save it first
         if (routeMode === "draw" && drawnRouteData && routeName) {
             try {
                 const routeBody = {
@@ -208,7 +205,9 @@ function CardioPage() {
 
                 {/* Date */}
                 <div className="mb-6">
-                    <label htmlFor="cardio-date" className="block font-semibold mb-2">Date</label>
+                    <label htmlFor="cardio-date" className="block font-semibold mb-2">
+                        Date <span className="text-red-600 text-sm font-normal">*required</span>
+                    </label>
                     <input
                         id="cardio-date"
                         type="date"
@@ -221,7 +220,7 @@ function CardioPage() {
                 {/* Duration */}
                 <div className="mb-6">
                     <label htmlFor="cardio-duration" className="block font-semibold mb-2">
-                        Duration (minutes)
+                        Duration (minutes) <span className="text-red-600 text-sm font-normal">*required</span>
                     </label>
                     <input
                         id="cardio-duration"
@@ -234,7 +233,9 @@ function CardioPage() {
 
                 {/* Notes */}
                 <div className="mb-6">
-                    <label htmlFor="cardio-notes" className="block font-semibold mb-2">Notes</label>
+                    <label htmlFor="cardio-notes" className="block font-semibold mb-2">
+                        Notes <span className="text-gray-400 text-sm font-normal">(optional)</span>
+                    </label>
                     <textarea
                         id="cardio-notes"
                         value={notes}
@@ -246,7 +247,7 @@ function CardioPage() {
                 {/* Route section */}
                 <div className="mb-6 bg-white p-4 rounded shadow">
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="font-semibold text-lg">Route (optional)</h3>
+                        <h3 className="font-semibold text-lg">Route <span className="text-gray-400 text-sm font-normal">(optional)</span></h3>
                         {routeMode && (
                             <button
                                 onClick={handleClearRoute}
@@ -257,7 +258,6 @@ function CardioPage() {
                         )}
                     </div>
 
-                    {/* No route selected yet — show draw option */}
                     {routeMode === null && (
                         <div>
                             <p className="text-gray-600 text-sm mb-4">
@@ -265,7 +265,7 @@ function CardioPage() {
                             </p>
                             <div className="mb-4">
                                 <label htmlFor="route-name" className="block font-semibold mb-2">
-                                    Route Name
+                                    Route Name <span className="text-gray-400 text-sm font-normal">(optional)</span>
                                 </label>
                                 <input
                                     id="route-name"
@@ -312,7 +312,6 @@ function CardioPage() {
                         </div>
                     )}
 
-                    {/* Draw mode — route drawn */}
                     {routeMode === "draw" && (
                         <div>
                             <p className="text-green-700 text-sm mb-2">
@@ -320,7 +319,7 @@ function CardioPage() {
                             </p>
                             <div className="mb-4">
                                 <label htmlFor="route-name-draw" className="block font-semibold mb-2">
-                                    Route Name
+                                    Route Name <span className="text-gray-400 text-sm font-normal">(optional)</span>
                                 </label>
                                 <input
                                     id="route-name-draw"
@@ -357,7 +356,6 @@ function CardioPage() {
                         </div>
                     )}
 
-                    {/* Select mode — existing route selected */}
                     {routeMode === "select" && selectedRoute && (
                         <div>
                             <p className="text-green-700 text-sm mb-2">
