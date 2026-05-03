@@ -39,7 +39,8 @@ function WorkoutLogPage() {
         try {
             const res = await fetch(`${API_BASE_URL}/api/workouts/today/${email}`)
             const data = await res.json()
-            setTodaysWorkouts(Array.isArray(data.Workouts) ? data.Workouts : [])
+            const workouts = Array.isArray(data.Workouts) ? data.Workouts : []
+            setTodaysWorkouts(workouts.filter(w => w.duration === null && w.isRoutine === false))
         } catch (err) {
             console.error("Error fetching today's workouts:", err)
         }
