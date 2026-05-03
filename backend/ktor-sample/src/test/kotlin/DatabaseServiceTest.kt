@@ -12,7 +12,9 @@ import services.DatabaseService.User
 import services.DatabaseService.Workout
 import services.DatabaseService.WorkoutExercise
 import java.time.LocalDate
-import kotlin.test.*
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class DatabaseServiceTest {
     @Test

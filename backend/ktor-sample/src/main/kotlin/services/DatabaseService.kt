@@ -1,21 +1,18 @@
-// Formatting assisted by ktlint
 package services
-import kotlinx.serialization.Serializable // Helps routes
-import java.sql.Connection // Interface for database connection
-import java.sql.DriverManager // To connect to the DB
-import java.sql.PreparedStatement // Precompiled SQL statement
-import java.sql.ResultSet // Represents results of SQL queries
-import java.sql.Statement
-import java.time.DayOfWeek
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.util.UUID // Univversal unique identifier for reset tokens
-
-// Imports for sending reset emails to API for sending to user(s)
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import kotlinx.serialization.Serializable
+import java.sql.Connection
+import java.sql.DriverManager
+import java.sql.PreparedStatement
+import java.sql.ResultSet
+import java.sql.Statement
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.util.UUID
 
 /**
  * Provides all database operations for the application.
