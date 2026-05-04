@@ -189,7 +189,7 @@ function CompetitionPage() {
                 </div>
             </div>
 
-            {/* Inline edit form */}
+            {/*Inline edit form*/}
             {showEdit && editingID === comp.competitionID && (
                 <div className="mt-4 border-t pt-4">
                     <p className="text-sm font-semibold text-gray-700 mb-3">Edit Result</p>
@@ -265,7 +265,7 @@ function CompetitionPage() {
                 {error && <p className="text-red-700 mb-4" role="alert">{error}</p>}
                 {success && <p className="text-green-700 mb-4" role="status">{success}</p>}
 
-                {/* Add competition form — name and date only */}
+                {/*Add competition form — name and date only*/}
                 <div className="bg-white p-6 rounded-lg shadow mb-8">
                     <h3 className="text-xl font-semibold mb-4">Add Competition</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -303,7 +303,7 @@ function CompetitionPage() {
                     </button>
                 </div>
 
-                {/* Today's competitions */}
+                {/*Today's competitions*/}
                 {todayComps.length > 0 && (
                     <div className="mb-8">
                         <h3 className="text-xl font-semibold mb-4">
@@ -313,7 +313,7 @@ function CompetitionPage() {
                     </div>
                 )}
 
-                {/* Upcoming competitions */}
+                {/*Upcoming competitions*/}
                 <div className="mb-8">
                     <h3 className="text-xl font-semibold mb-4">Upcoming Competitions</h3>
                     {upcoming.length === 0 ? (
@@ -323,7 +323,7 @@ function CompetitionPage() {
                     )}
                 </div>
 
-                {/* Completed competitions */}
+                {/*Completed competitions*/}
                 <div className="mb-8">
                     <h3 className="text-xl font-semibold mb-4">Completed Competitions</h3>
                     {completed.length === 0 ? (
