@@ -191,7 +191,7 @@ class DatabaseServiceTest {
             ),
         )
 
-        // cascade so not required: assertTrue(ds.deleteWorkoutExercise(workoutExercisesId))
+        assertTrue(ds.deleteWorkoutExercise(workoutExercisesId))
 
         // =========================
         // Stas CRUD
