@@ -33,10 +33,10 @@ function ProfilePage() {
                 const data = await res.json()
                 if (res.ok) {
                     setUser(data.User)
-                    setGender(data.gender || "")
-                    setAge(data.age || "")
-                    setHeight(data.height || "")
-                    setWeight(data.weight || "")
+                    setGender(data.User.gender || "")
+                    setAge(data.User.age || "")
+                    setHeight(data.User.height || "")
+                    setWeight(data.User.weight || "")
                 } else {
                     setError("Could not load profile.")
                 }
