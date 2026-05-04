@@ -349,7 +349,8 @@ fun Route.socialRoutes() {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("message" to "Group session couldn't be created"))
                 }
             } catch (e: Exception) {
-                call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
+                e.printStackTrace()
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.message))
             }
         }
 

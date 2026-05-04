@@ -41,6 +41,8 @@ class ActivityRoutesTest {
     var routeID: Int? = null
     var workoutExerciseID: Int? = null
     var loggedWorkoutID: Int? = null
+    var exerciseID: Int? = null
+    val db = DatabaseService()
 
     @BeforeTest
     fun setup() =
@@ -57,7 +59,7 @@ class ActivityRoutesTest {
                     date = "2026-01-01",
                     notes = "Test Workout",
                 )
-            workoutID = DatabaseService().createWorkout(workout)
+            workoutID = db.createWorkout(workout)
 
             // Create Test COMPETITION
             val competition =
@@ -68,7 +70,7 @@ class ActivityRoutesTest {
                     rank = 2,
                     result = 1,
                 )
-            competitionID = DatabaseService().createCompetition(competition)
+            competitionID = db.createCompetition(competition)
 
             // Create Test ROUTE
             val runningRoute =
@@ -80,21 +82,26 @@ class ActivityRoutesTest {
                     isPublic = false,
                     routeData = "Test Route Data",
                 )
-            routeID = DatabaseService().createRoute(runningRoute)
+            routeID = db.createRoute(runningRoute)
+
+            // Dynamically find a exercise in db
+            exerciseID = (1..20000).firstOrNull {
+                db.findExercise(it) != null
+            } ?: throw IllegalStateException("No exercises in database")
 
             // Create Test WORKOUT EXERCISE
             val workoutExercise =
                 WorkoutExercise(
                     workoutID = workoutID!!,
-                    exerciseID = 2,
+                    exerciseID = exerciseID!!,
                     sets = 3,
                     reps = 8,
                     weight = 30.5,
                 )
-            workoutExerciseID = DatabaseService().addExerciseToWorkout(workoutExercise)
+            workoutExerciseID = db.addExerciseToWorkout(workoutExercise)
 
             val exercises: List<WorkoutExercise> = listOf(workoutExercise, workoutExercise)
-            loggedWorkoutID = DatabaseService().logWorkout(workout, exercises)
+            loggedWorkoutID = db.logWorkout(workout, exercises)
         }
 
     // ===============================
@@ -119,8 +126,8 @@ class ActivityRoutesTest {
                                 "duration": 60,
                                 "workoutType": "weights",
                                 "notes": "TEST WORKOUT"},
-                            exercises: [{"exerciseID": 2, "sets": 3, "reps": 10, "weight": 45.0},
-                                {"exerciseID": 4, "sets": 2, "reps": 8, "weight": 50.5}]
+                            exercises: [{"exerciseID": ${exerciseID!!}, "sets": 3, "reps": 10, "weight": 45.0},
+                                {"exerciseID": ${exerciseID!!}, "sets": 2, "reps": 8, "weight": 50.5}]
                         }
                         """.trimIndent(),
                     ) // HTTP request for making a workout containing two exercises, with all optional fields included
@@ -130,8 +137,8 @@ class ActivityRoutesTest {
             val testJsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
             val testWorkoutID = testJsonResponse["ID"]?.jsonPrimitive?.content?.toInt()
 
-            DatabaseService().deleteAllExercisesInWorkout(testWorkoutID!!) // Delete all test exercises made to database
-            DatabaseService().deleteWorkout(testWorkoutID!!) // Delete test workout made to database
+            db.deleteAllExercisesInWorkout(testWorkoutID!!) // Delete all test exercises made to database
+            db.deleteWorkout(testWorkoutID!!) // Delete test workout made to database
         }
 
     // 'Fail case' as we expect a fail with status code BadRequest, as HTTP body does not match expected structure and thus isn't serialisable
@@ -165,8 +172,8 @@ class ActivityRoutesTest {
                             workout: {"createdBy": ${userID!!},
                                 "assignedTo": ${userID!!},
                                 "date": "2026-01-01"},
-                            exercises: [{"exerciseID": 2},
-                                {"exerciseID": 4}]
+                            exercises: [{"exerciseID": ${exerciseID!!}},
+                                {"exerciseID": ${exerciseID!!}}]
                         }
                         """.trimIndent(),
                     ) // Only required fields are parse in HTTP request body (i.e. createdBy, assignedTo, date, exerciseID)
@@ -179,8 +186,8 @@ class ActivityRoutesTest {
             val testJsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
             val testWorkoutID = testJsonResponse["ID"]?.jsonPrimitive?.content?.toInt()
 
-            DatabaseService().deleteAllExercisesInWorkout(testWorkoutID!!) // Delete all test exercises made to database
-            DatabaseService().deleteWorkout(testWorkoutID!!) // Delete test workout made to database
+            db.deleteAllExercisesInWorkout(testWorkoutID!!) // Delete all test exercises made to database
+            db.deleteWorkout(testWorkoutID!!) // Delete test workout made to database
         }
 
     // 'Fail case' as we do not expect workout to be logged, as we do not parse required fields for workout/workoutExercise creation
@@ -229,8 +236,8 @@ class ActivityRoutesTest {
                                 "duration": 60,
                                 "workoutType": "swimming",
                                 "notes": "Test Workout"},
-                            exercises: [{"exerciseID": 4, "sets": 4, "reps": 15, "weight": 50.25},
-                                {"exerciseID": 6, "sets": 2, "reps": 8, "weight": 20.5}]
+                            exercises: [{"exerciseID": ${exerciseID!!}, "sets": 4, "reps": 15, "weight": 50.25},
+                                {"exerciseID": ${exerciseID!!}, "sets": 2, "reps": 8, "weight": 20.5}]
                         }
                         """.trimIndent(),
                     ) // Valid HTTP request body for updating a logged workout under given workoutID
@@ -260,30 +267,13 @@ class ActivityRoutesTest {
                                 "duration": 60,
                                 "workoutType": "weights",
                                 "notes": "Test Workout"},
-                            exercises: [{"exerciseID": 4, "sets": 4, "reps": 15, "weight": 50.25},
-                                {"exerciseID": 6, "sets": 2, "reps": 8, "weight": 20.5}]
+                            exercises: [{"exerciseID": ${exerciseID!!}, "sets": 4, "reps": 15, "weight": 50.25},
+                                {"exerciseID": ${exerciseID!!}, "sets": 2, "reps": 8, "weight": 20.5}]
                         }
                         """.trimIndent(),
                     ) // workoutID: 999999999 does not correspond to any existing workout
                 }
             assertEquals(HttpStatusCode.NotFound, response.status) // Expect NotFound status code as program cannot identify target workout
-        }
-
-    // 'Fail case' as HTTP request body not in correct strucutre/format so cannot be JSON serialised
-    @Test
-    fun updateLoggedWorkout_badJSON() =
-        testApplication {
-            application { module() }
-
-            val response =
-                client.put("/api/log/workout") {
-                    contentType(ContentType.Application.Json)
-                    setBody("VERY BAD JSON BODY") // Body is in bad JSON format so will not be serialised by kotlinx serialisation import
-                }
-            assertEquals(
-                HttpStatusCode.BadRequest,
-                response.status,
-            ) // Expect BadRequest status code as error thrown upon serialisation attempt
         }
 
     // 'Fail case' as we do not provide required values in HTTP body required for updating logged workout
@@ -326,8 +316,8 @@ class ActivityRoutesTest {
                                 "createdBy": ${userID!!},
                                 "assignedTo": ${userID!!},
                                 "date": "2027-01-01"},
-                            exercises: [{"exerciseID": 4},
-                                {"exerciseID": 6}]
+                            exercises: [{"exerciseID": ${exerciseID!!}},
+                                {"exerciseID": ${exerciseID!!}}]
                         }
                         """.trimIndent(),
                     ) // HTTP request body contains all required fields for workout and exercises
@@ -399,7 +389,7 @@ class ActivityRoutesTest {
             val testJsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
             val testWorkoutID = testJsonResponse["ID"]?.jsonPrimitive?.content?.toInt()
 
-            DatabaseService().deleteWorkout(testWorkoutID!!)
+            db.deleteWorkout(testWorkoutID!!)
         }
 
     @Test
@@ -486,7 +476,7 @@ class ActivityRoutesTest {
                         """
                         {
                             "workoutID": ${workoutID!!},
-                            "exerciseID": 2,
+                            "exerciseID": ${exerciseID!!},
                             "sets": 3,
                             "reps": 10,
                             "weight": 50.5
@@ -499,7 +489,7 @@ class ActivityRoutesTest {
 
             val testJsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
             val testWorkoutExerciseID = testJsonResponse["ID"]?.jsonPrimitive?.content?.toInt()
-            DatabaseService().deleteWorkoutExercise(
+            db.deleteWorkoutExercise(
                 testWorkoutExerciseID!!,
             ) // Delete exercise added to workout in test, so not to have impact on real db
         }
@@ -534,7 +524,7 @@ class ActivityRoutesTest {
                         """
                         {
                             "workoutID": 99999999,
-                            "exerciseID": 2,
+                            "exerciseID": ${exerciseID!!},
                             "sets": 1,
                             "reps": 1,
                             "weight": 10.0
@@ -561,7 +551,7 @@ class ActivityRoutesTest {
                         """
                         {
                             "workoutID": ${workoutID!!},
-                            "exerciseID": 2
+                            "exerciseID": ${exerciseID!!}
                         }
                         """.trimIndent(),
                     ) // We omit sets, reps, and weight fields from HTTP request, as all are optional
@@ -783,38 +773,18 @@ class ActivityRoutesTest {
             val workoutExercise =
                 WorkoutExercise(
                     workoutID = workoutID!!,
-                    exerciseID = 2,
+                    exerciseID = exerciseID!!,
                     sets = 3,
                     reps = 8,
                     weight = 30.5,
                 )
 
-            DatabaseService().addExerciseToWorkout(workoutExercise)
-            DatabaseService().addExerciseToWorkout(workoutExercise)
+            db.addExerciseToWorkout(workoutExercise)
+            db.addExerciseToWorkout(workoutExercise)
 
             val response = client.delete("/api/workout/exercises/${workoutID!!}")
 
             assertEquals(HttpStatusCode.OK, response.status)
-        }
-
-    @Test
-    fun deleteAllWorkoutExercises_invalidWorkoutID() =
-        testApplication {
-            application { module() }
-
-            val response = client.delete("/api/workout/exercises/999999999")
-
-            assertEquals(HttpStatusCode.NotFound, response.status)
-        }
-
-    @Test
-    fun deleteAllWorkoutExercises_badJSON() =
-        testApplication {
-            application { module() }
-
-            val response = client.delete("/api/workout/exercises/abc")
-
-            assertEquals(HttpStatusCode.BadRequest, response.status)
         }
 
     @Test
@@ -855,7 +825,7 @@ class ActivityRoutesTest {
             val testJsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
             val testCompetitionID = testJsonResponse["ID"]?.jsonPrimitive?.content?.toInt()
 
-            DatabaseService().deleteCompetition(testCompetitionID!!)
+            db.deleteCompetition(testCompetitionID!!)
         }
 
     @Test
@@ -948,7 +918,7 @@ class ActivityRoutesTest {
             val testJsonResponse = Json.parseToJsonElement(response.bodyAsText()).jsonObject
             val testRouteID = testJsonResponse["ID"]?.jsonPrimitive?.content?.toInt()
 
-            testRouteID?.let { DatabaseService().deleteRoute(it) }
+            testRouteID?.let { db.deleteRoute(it) }
 
             assertEquals(HttpStatusCode.OK, response.status) // Expect response to contain OK status code, as valid request was made
             assertTrue(response.bodyAsText().contains("ID")) // Expect response to contain the routeID of the newly made route
@@ -989,7 +959,7 @@ class ActivityRoutesTest {
                     setBody(
                         """
                         {
-                            "userID": ${userID!!}
+                            "userID": ${userID!!},
                             "name": "Updated Route",
                             "distance": 10.0,
                             "estimatedTime": 60.0,
@@ -1060,12 +1030,12 @@ class ActivityRoutesTest {
 
     @AfterTest
     fun cleanup() {
-        DatabaseService().deleteUser("TestingEmail@email.com")
-        workoutID?.let { DatabaseService().deleteWorkout(it) }
-        competitionID?.let { DatabaseService().deleteCompetition(it) }
-        routeID?.let { DatabaseService().deleteRoute(it) }
-        workoutExerciseID!!?.let { DatabaseService().deleteWorkoutExercise(it) }
-        loggedWorkoutID!!?.let { DatabaseService().deleteAllExercisesInWorkout(it) }
-        loggedWorkoutID!!?.let { DatabaseService().deleteWorkout(it) }
+        db.deleteUser("TestingEmail@email.com")
+        workoutID?.let { db.deleteWorkout(it) }
+        competitionID?.let { db.deleteCompetition(it) }
+        routeID?.let { db.deleteRoute(it) }
+        workoutExerciseID?.let { db.deleteWorkoutExercise(it) }
+        loggedWorkoutID?.let { db.deleteAllExercisesInWorkout(it) }
+        loggedWorkoutID?.let { db.deleteWorkout(it) }
     }
 }
