@@ -5,7 +5,6 @@ import { EditControl } from "react-leaflet-draw"
 import "leaflet/dist/leaflet.css"
 import "leaflet-draw/dist/leaflet.draw.css"
 
-// Haversine formula — calculates distance in km between two lat/lng points
 const haversineDistance = (coord1, coord2) => {
     const R = 6371 // Earth radius in km
     const dLat = (coord2[1] - coord1[1]) * Math.PI / 180
@@ -27,7 +26,7 @@ const calculateRouteDistance = (geoJSON) => {
         for (let i = 0; i < coords.length - 1; i++) {
             total += haversineDistance(coords[i], coords[i + 1])
         }
-        return Math.round(total * 100) / 100 // round to 2 decimal places
+        return Math.round(total * 100) / 100
     } catch (e) {
         console.error("Could not calculate distance:", e)
         return 0
