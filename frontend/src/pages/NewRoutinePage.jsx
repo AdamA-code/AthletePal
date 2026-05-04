@@ -15,6 +15,7 @@ function NewRoutinePage() {
     const [showDropdown, setShowDropdown] = useState(false)
     const [error, setError] = useState("")
 
+    // Fetches all available preset exercises from the backend on page load
     useEffect(() => {
         const fetchExercises = async () => {
             try {
@@ -29,10 +30,13 @@ function NewRoutinePage() {
         fetchExercises()
     }, [])
 
+    // Filters the full exercise list based on what the user has typed in the search box
     const filteredExercises = availableExercises.filter(ex =>
         ex.name.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
+    // Adds an exercise to the selected list with a default of 3 sets
+    // Prevents duplicates by checking if the exercise is already in the list
     const addExercise = (exercise) => {
         if (selectedExercises.find(ex => ex.exerciseID === exercise.exerciseID)) return
         setSelectedExercises([...selectedExercises, {
@@ -44,16 +48,20 @@ function NewRoutinePage() {
         setShowDropdown(false)
     }
 
+    // Removes an exercise from the selected list by filtering out the matching exerciseID
     const removeExercise = (exerciseID) => {
         setSelectedExercises(selectedExercises.filter(ex => ex.exerciseID !== exerciseID))
     }
 
+    // Updates the sets value for a specific exercise in the selected list
     const updateSets = (exerciseID, value) => {
         setSelectedExercises(selectedExercises.map(ex =>
             ex.exerciseID === exerciseID ? { ...ex, sets: value } : ex
         ))
     }
 
+    // Validates inputs then saves the routine to the backend as a workout with isRoutine: true
+    // Reps and weight are null at this stage as they are filled in when the routine is started
     const saveRoutine = async () => {
         const userID = parseInt(localStorage.getItem("userID"))
         if (!userID) {

@@ -9,6 +9,7 @@ function StartWorkoutPage() {
     const navigate = useNavigate()
     const location = useLocation()
 
+    // Read state passed from WorkoutLogPage when navigating to this page
     const routineWorkoutID = location.state?.workoutID || null
     const isScheduled = location.state?.scheduled || false
     const fromScheduled = location.state?.fromScheduled || false
@@ -26,6 +27,9 @@ function StartWorkoutPage() {
     const [error, setError] = useState("")
     const [success, setSuccess] = useState("")
 
+    // Fetches the full exercise list on page load
+    // If started from a routine preloads its exercises and workout name
+    // If started from a scheduled workout prefills the workout name
     useEffect(() => {
         const fetchExercises = async () => {
             try {
@@ -52,6 +56,7 @@ function StartWorkoutPage() {
                         setSelectedExercises(preloaded)
                     }
 
+                    // Fetch the routine workout to get the name stored in the notes field
                     const workoutRes = await fetch(`${API_BASE_URL}/api/workout/${routineWorkoutID}`)
                     const workoutData = await workoutRes.json()
                     if (workoutData && workoutData.Workout && workoutData.Workout.notes) {
@@ -59,6 +64,7 @@ function StartWorkoutPage() {
                     }
                 }
 
+                // If started from a scheduled workout fetch its name to prefill the workout name field
                 if (fromScheduled && scheduledWorkoutID) {
                     const workoutRes = await fetch(`${API_BASE_URL}/api/workout/${scheduledWorkoutID}`)
                     const workoutData = await workoutRes.json()
@@ -76,10 +82,13 @@ function StartWorkoutPage() {
         fetchExercises()
     }, [])
 
+    // Filters the full exercise list based on the current search term
     const filteredExercises = availableExercises.filter(ex =>
         ex.name.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
+    // Adds an exercise to the selected list with default sets of 3, reps and weight start empty
+    // Prevents adding the same exercise twice
     const addExercise = (exercise) => {
         if (selectedExercises.find(ex => ex.exerciseID === exercise.exerciseID)) return
         setSelectedExercises([...selectedExercises, {
@@ -93,16 +102,21 @@ function StartWorkoutPage() {
         setShowDropdown(false)
     }
 
+    // Removes an exercise from the selected list by filtering out the matching exerciseID
     const removeExercise = (exerciseID) => {
         setSelectedExercises(selectedExercises.filter(ex => ex.exerciseID !== exerciseID))
     }
 
+    // Updates a specific field (sets, reps or weight) for a specific exercise in the selected list
     const updateExercise = (exerciseID, field, value) => {
         setSelectedExercises(selectedExercises.map(ex =>
             ex.exerciseID === exerciseID ? { ...ex, [field]: value } : ex
         ))
     }
 
+    // Validates inputs then saves the workout to the backend with isRoutine: false
+    // If started from a scheduled workout deletes the scheduled record after saving
+    // Duration is required for non-scheduled workouts to distinguish them from scheduled ones
     const saveWorkout = async () => {
         const userID = parseInt(localStorage.getItem("userID"))
         if (!userID) {
@@ -149,6 +163,7 @@ function StartWorkoutPage() {
             const data = await res.json()
 
             if (res.ok) {
+                // Delete the original scheduled record so it no longer appears in Scheduled for Today
                 if (fromScheduled && scheduledWorkoutID) {
                     await fetch(`${API_BASE_URL}/api/workout/${scheduledWorkoutID}`, {
                         method: "DELETE"
