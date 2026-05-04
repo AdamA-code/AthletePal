@@ -20,6 +20,8 @@ function ProfilePage() {
     const [newPassword, setNewPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
 
+    // Fetches the logged in users profile data on page load using email from localStorage
+    // Pre-fills the edit form state with existing values so they appear when Edit Profile is clicked
     useEffect(() => {
         const email = localStorage.getItem("email")
         if (!email) {
@@ -33,10 +35,10 @@ function ProfilePage() {
                 const data = await res.json()
                 if (res.ok) {
                     setUser(data.User)
-                    setGender(data.gender || "")
-                    setAge(data.age || "")
-                    setHeight(data.height || "")
-                    setWeight(data.weight || "")
+                    setGender(data.User.gender || "")
+                    setAge(data.User.age || "")
+                    setHeight(data.User.height || "")
+                    setWeight(data.User.weight || "")
                 } else {
                     setError("Could not load profile.")
                 }
@@ -49,6 +51,8 @@ function ProfilePage() {
         fetchUser()
     }, [])
 
+    // Sends a PUT request to update the users profile details
+    // Updates the displayed user state immediately without needing to refetch from the backend
     const saveProfile = async () => {
         const email = localStorage.getItem("email")
         setError("")
@@ -81,6 +85,8 @@ function ProfilePage() {
         }
     }
 
+    // Validates that new passwords match and meet minimum length before sending a PUT request
+    // confirmPassword is only used for frontend validation and is not sent to the backend
     const savePassword = async () => {
         const email = localStorage.getItem("email")
         setError("")

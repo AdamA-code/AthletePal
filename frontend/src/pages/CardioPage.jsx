@@ -21,6 +21,7 @@ function CardioPage() {
     const [error, setError] = useState("")
     const [success, setSuccess] = useState("")
 
+    // Converts the display exercise type to the lowercase workoutType value expected by the backend
     const getWorkoutType = (type) => {
         const map = {
             "Running": "running",
@@ -30,6 +31,7 @@ function CardioPage() {
         return map[type] || "cardio"
     }
 
+    // Fetches the users own routes and public routes from other users on page load
     useEffect(() => {
         const userID = localStorage.getItem("userID")
         if (!userID) return
@@ -47,6 +49,7 @@ function CardioPage() {
         fetchRoutes()
     }, [])
 
+    // Sets the selected route and switches routeMode to select, clears any drawn route
     const handleSelectRoute = (route) => {
         setSelectedRoute(route)
         setRouteMode("select")
@@ -55,6 +58,7 @@ function CardioPage() {
         setRouteName("")
     }
 
+    // Resets the route section back to its default state with no route selected or drawn
     const handleClearRoute = () => {
         setRouteMode(null)
         setSelectedRoute(null)
@@ -63,12 +67,16 @@ function CardioPage() {
         setRouteName("")
     }
 
+    // Callback received from RouteMap when the user finishes drawing a route on the map
+    // Stores the GeoJSON route data and calculated distance, switches routeMode to draw
     const handleRouteDrawn = (data, distance) => {
         setDrawnRouteData(data)
         setDrawnRouteDistance(distance || 0)
         if (data) setRouteMode("draw")
     }
 
+    // Validates inputs, saves the drawn route to the backend first if they can
+    // then saves the cardio workout linked to the route ID
     const saveCardioSession = async () => {
         const userID = parseInt(localStorage.getItem("userID"))
         if (!userID) {
@@ -98,10 +106,12 @@ function CardioPage() {
         setError("")
         let savedRouteID = null
 
+        // If user selected an existing route just use its ID directly
         if (routeMode === "select" && selectedRoute) {
             savedRouteID = selectedRoute.routeID
         }
 
+        // If user drew their own route save it to the backend first and get back the new routeID
         if (routeMode === "draw" && drawnRouteData && routeName) {
             try {
                 const routeBody = {
@@ -136,6 +146,7 @@ function CardioPage() {
             }
         }
 
+        // Save the cardio workout with the route ID attached if one was saved or selected
         try {
             const workoutBody = {
                 workout: {
@@ -186,7 +197,7 @@ function CardioPage() {
                 {error && <p className="text-red-700 text-sm mb-4" role="alert">{error}</p>}
                 {success && <p className="text-green-700 text-sm mb-4" role="status">{success}</p>}
 
-                {/* Exercise Type */}
+                {/*Exercise Type*/}
                 <div className="mb-6">
                     <label htmlFor="exercise-type" className="block font-semibold mb-2">
                         Exercise Type
@@ -203,7 +214,7 @@ function CardioPage() {
                     </select>
                 </div>
 
-                {/* Date */}
+                {/*Date*/}
                 <div className="mb-6">
                     <label htmlFor="cardio-date" className="block font-semibold mb-2">
                         Date <span className="text-red-600 text-sm font-normal">*required</span>
@@ -217,7 +228,7 @@ function CardioPage() {
                     />
                 </div>
 
-                {/* Duration */}
+                {/*Duration*/}
                 <div className="mb-6">
                     <label htmlFor="cardio-duration" className="block font-semibold mb-2">
                         Duration (minutes) <span className="text-red-600 text-sm font-normal">*required</span>
@@ -231,7 +242,7 @@ function CardioPage() {
                     />
                 </div>
 
-                {/* Notes */}
+                {/*Notes*/}
                 <div className="mb-6">
                     <label htmlFor="cardio-notes" className="block font-semibold mb-2">
                         Notes <span className="text-gray-400 text-sm font-normal">(optional)</span>
@@ -244,7 +255,7 @@ function CardioPage() {
                     />
                 </div>
 
-                {/* Route section */}
+                {/*Route section*/}
                 <div className="mb-6 bg-white p-4 rounded shadow">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="font-semibold text-lg">Route <span className="text-gray-400 text-sm font-normal">(optional)</span></h3>
@@ -368,7 +379,7 @@ function CardioPage() {
                     )}
                 </div>
 
-                {/* Save button */}
+                {/*Save button*/}
                 <button
                     onClick={saveCardioSession}
                     className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 mb-12"
@@ -376,7 +387,7 @@ function CardioPage() {
                     Save Session
                 </button>
 
-                {/* Available routes */}
+                {/*Available routes*/}
                 <div>
                     <h3 className="text-xl font-semibold mb-4">Available Routes</h3>
                     <p className="text-sm text-gray-600 mb-4">

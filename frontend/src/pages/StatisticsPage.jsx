@@ -1,3 +1,4 @@
+// page structure, layout, and frontend -> backend request connections aided with chatgpt chat.openai.com
 import Sidebar from "../components/Sidebar"
 import { useEffect, useState } from "react"
 import API_BASE_URL from "../config"
@@ -8,6 +9,12 @@ function StatisticsPage() {
     const [personalBests, setPersonalBests] = useState([])
     const [error, setError] = useState("")
     const [competitionStats, setCompetitionStats] = useState([])
+    const [availableExercises, setAvailableExercises] = useState([])
+    const [exerciseSearch, setExerciseSearch] = useState("")
+    const [selectedExercise, setSelectedExercise] = useState(null)
+    const [scoreValue, setScoreValue] = useState("")
+    const [pbSuccess, setPbSuccess] = useState("")
+    const [showExerciseDropdown, setShowExerciseDropdown] = useState(false)
 
     useEffect(() => {
         const userID = localStorage.getItem("userID")
@@ -19,12 +26,14 @@ function StatisticsPage() {
         
         const fetchStatistics = async () => {
             try {
-                const [workoutRes, hoursRes, streakRes, historyRes, pbRes] = await Promise.all([
+                const [workoutRes, hoursRes, streakRes, historyRes, pbRes, exercisesRes, competitionsRes] = await Promise.all([
                     fetch(`${API_BASE_URL}/api/statistic/user/workouts-completed/${userID}`),
                     fetch(`${API_BASE_URL}/api/statistic/user/hours-trained/${userID}`),
                     fetch(`${API_BASE_URL}/api/statistic/user/workout-streak/${userID}`),
                     fetch(`${API_BASE_URL}/api/statistic/user/training-history/${userID}`),
-                    fetch(`${API_BASE_URL}/api/statistics/user/personal-bests/${userID}`)
+                    fetch(`${API_BASE_URL}/api/statistics/user/personal-bests/${userID}`),
+                    fetch(`${API_BASE_URL}/api/exercises`),
+                    fetch(`${API_BASE_URL}/api/competitions/${userID}`)
                 ])
 
             const workoutData = await workoutRes.json()
@@ -32,12 +41,16 @@ function StatisticsPage() {
             const streakData = await streakRes.json()
             const historyData = await historyRes.json()
             const pbsData = await pbRes.json()
-
+            const exercisesData = await exercisesRes.json()
+            const competitionsData = await competitionsRes.json()
+            
+            {/* Console Logs for testing purposes 
             console.log("Workout data:", workoutData)
             console.log("Hours data:", hoursData)
             console.log("Streak data:", streakData)
             console.log("History data:", historyData)
             console.log("Personal bests data:", pbsData)
+            */}
 
             setSummaryStats([
                 { label: "Total Workouts", value: workoutData["Completed Workouts"] || 0 },
@@ -51,7 +64,8 @@ function StatisticsPage() {
 
                 setProgressionData(historyData["Training History"] || [])
                 setPersonalBests(pbsData["Personal Bests"] || [])
-                setCompetitionStats([])
+                setAvailableExercises(Array.isArray(exercisesData.Exercises) ? exercisesData.Exercises : [])
+                setCompetitionStats(Array.isArray(competitionsData.Competitions) ? competitionsData.Competitions : [])
             } catch (err) {
                 console.error("Error fetching statistics:", err)
                 setError("Failed to fetch statistics.")
@@ -61,12 +75,83 @@ function StatisticsPage() {
         fetchStatistics()
     }, [])
 
+    // Adds a personal best for the selected exercise.
+    const handleAddPersonalBest = async (event) => {
+        event.preventDefault()
+
+        const userID = localStorage.getItem("userID")
+
+        if (!userID) {
+            setError("No user found. Please log in again.")
+            return
+        }
+
+        if (!selectedExercise || !scoreValue) {
+            setError("Please select an exercise and enter a personal best value.")
+            return
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/statistics`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    statisticID: 0,
+                    userID: Number(userID),
+                    exerciseID: selectedExercise.exerciseID,
+                    scoreValue: Number(scoreValue),
+                    date: new Date().toISOString().split("T")[0]
+                })
+            })
+
+            const data = await response.json()
+
+            if (response.ok) {
+                setPersonalBests([
+                    ...personalBests,
+                    {
+                        exerciseID: selectedExercise.exerciseID,
+                        activity: selectedExercise.name,
+                        scoreValue: Number(scoreValue)
+                    }
+                ])
+
+                setExerciseSearch("")
+                setSelectedExercise(null)
+                setScoreValue("")
+                setError("")
+                setPbSuccess("Personal best added successfully.")
+            } else {
+                setPbSuccess("")
+                setError(data.message || "Failed to add personal best.")
+            }
+        } catch (err) {
+            console.error("Add PB error:", err)
+            setPbSuccess("")
+            setError("Could not connect to server.")
+        }
+    }
+    const filteredExercises = availableExercises.filter((exercise) =>
+        exercise.name.toLowerCase().includes(exerciseSearch.toLowerCase())
+    )
+
+    const maxWorkouts = Math.max(...progressionData.map(w => w.workouts || 0), 1)
+    const maxHours = Math.max(...progressionData.map(w => w.workouts || 0), 1)
+    const formatCompetitionResult = (seconds) => {
+        if (!seconds) return "No result recorded"
+        
+        const mins = Math.floor(seconds / 60)
+        const secs = seconds % 60
+        return `${mins}:${secs.toString().padStart(2, "0")}`
+    }
     return (
         <div className="min-h-screen bg-gray-100 flex">
             <Sidebar />
 
             <main className="flex-1 p-8">
-                <h1 className="text-3x1 font-bold text-blue-800 mb-6">
+                <h1 className="text-3l1 font-bold text-blue-800 mb-6">
                     Statistics / Visualisation
                 </h1>
                 {error && (
@@ -76,82 +161,86 @@ function StatisticsPage() {
                 )}
 
                 {/* Summary */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 x1:grid-cols-4 gap-6 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
                     {summaryStats.map((stat, index) => (
-                        <div key={index} className="bg-white rounded-x1 shadow-md p-6">
+                        <div key={index} className="bg-white rounded-xl shadow-md p-6">
                             <p className="text-sm text-gray-500 mb-2">{stat.label}</p>
-                            <p className="text-2x1 font-bold text-gray-800">{stat.value}</p>
+                            <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
                         </div>
                     ))}
                 </div>
 
                 {/* Main graphs and progression area */}
-                <div className="grid grid-cols-1 x1:grid-cols-2 gap-8 mb-8">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
                     {/* Exercise breakdown */}
-                    <div className="bg-white rounded-x1 shadow-md p-6">
-                        <h2 className="text-2x1 font-semibold text-gray-800 mb-4">
+                    <div className="bg-white rounded-xl shadow-md p-6">
+                        <h2 className="text-2xl font-semibold text-gray-800 mb-4">
                             Workout Progression Over Time
                         </h2>
 
                         <div className="space-y-4">
-                            {progressionData.map((week, index) => (
+                            {progressionData.length === 0? (
+                                <p className="text-gray-500 text-sm">
+                                    No training data yet.
+                                </p>
+                            ) : (
+                                progressionData.map((week, index) => (
                                 <div key={index} className="border border-gray-200 rounded-lg p-4">
-                                    <div className="flex justify-between mb-2">
-                                        <span className="font-semibold text-gray-800">{week.week}</span>
-                                        <span className="text-gray-500">
+                                    <div className="flex justify-between mb-1">
+                                        <span className="font-medium text-gray-800">{week.week}</span>
+                                        <span className="text-sm text-gray-500">
                                             {week.workouts} workouts
                                         </span>
                                     </div>
 
                                     <div className="w-full bg-gray-200 rounded-full h-3">
                                         <div
-                                            className="bg-blue-600 h-3 rounded-full"
-                                            style={{ width: `${week.workouts * 15}%` }}
-                                        ></div>
+                                            className="bg-blue-600 h-3 rounded-full transition-all"
+                                            style={{ width: `${(week.workouts / maxWorkouts) * 100}%` }}
+                                        />
                                     </div>
                                 </div>
-                            ))}
+                            )))}
                         </div>
                     </div>
 
                     {/* History */}
-                    <div className="bg-white rounded-x1 shadow-md p-6">
-                        <h2 className="text-2x1 font-semibold text-gray-800 mb-4">
+                    <div className="bg-white rounded-xl shadow-md p-6">
+                        <h2 className="text-2xl font-semibold text-gray-800 mb-4">
                             Hours Trained Over Time
                         </h2>
 
                         <div className="space-y-4">
-                            {progressionData.map((week, index) => (
+                            {progressionData.length === 0? (
+                                <p className="text-gray-500 text-sm">
+                                    No training data yet.
+                                </p>
+                            ) : (
+                                progressionData.map((week, index) => (
                                 <div key={index} className="border border-gray-200 rounded-lg p-4">
-                                    <div className="flex justify-between mb-2">
-                                        <span className="font-semibold text-gray-800">
-                                            {week.week}
-                                        </span>
+                                    <div className="flex justify-between mb-1">
+                                        <span className="font-medium text-gray-800">{week.week}</span>
                                         <span className="text-sm text-gray-500">
                                             {week.hours} hrs
                                         </span>
                                     </div>
 
-                                    <p className="text-gray-700 mb-2">
-                                        {week.workouts} Workouts Completed
-                                    </p>
-
                                     <div className="w-full bg-gray-200 rounded-full h-3">
                                         <div
-                                            className="bg-green-500 h-3 rounded-full"
-                                            style={{ width: `${week.hours * 10}%` }}
-                                        ></div>
+                                            className="bg-green-500 h-3 rounded-full transition-all"
+                                            style={{ width: `${(week.hours / maxHours) * 100}%` }}
+                                        />
                                     </div>
                                 </div>
-                            ))}
+                            )))}
                         </div>
                     </div>
                 </div>
 
                 {/* Competition and PBs */}
-                <div className="grid grid-cols-1 x1:grid-cols-2 gap-8">
-                    <div className="bg-white rounded-x1 shadow-md p-6">
-                        <h2 className="text-2x1 font-semibold text-gray-800 mb-4">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                    <div className="bg-white rounded-xl shadow-md p-6">
+                        <h2 className="text-2xl font-semibold text-gray-800 mb-4">
                             Competition Tracking
                         </h2>
 
@@ -162,16 +251,16 @@ function StatisticsPage() {
                                     className="border border-gray-200 rounded-lg p-4 flex justify-between items-center"
                                 >
                                     <div>
-                                        <p className="font-semibold text-gray-800">{competition.event}</p>
+                                        <p className="font-semibold text-gray-800">{competition.name}</p>
                                         <p className="text-sm text-gray-500">{competition.date}</p>
                                     </div>
 
                                     <div className="text-right">
                                         <p className="text-sm text-gray-500">
-                                            {competition.status}
+                                            {competition.rank ? `Rank: ${competition.rank}` : "No rank recorded"}
                                         </p>
                                         <p className="font-medium text-gray-800">
-                                            {competition.result}
+                                            {competition.result ? `Result: ${formatCompetitionResult(competition.result)}` : "No result recorded"}
                                         </p>
                                     </div>
                                 </div>                      
@@ -179,10 +268,72 @@ function StatisticsPage() {
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-x1 shadow-md p-6">
-                        <h2 className="text-2x1 font-semibold text-gray-800 mb-4">
+                    <div className="bg-white rounded-xl shadow-md p-6">
+                        <h2 className="text-2xl font-semibold text-gray-800 mb-4">
                             Personal Bests
                         </h2>
+
+                        <form onSubmit={handleAddPersonalBest} className="mb-6 space-y-3">
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="Search exercise e.g. Bench Press"
+                                    value={exerciseSearch}
+                                    onChange={(e) => {
+                                        setExerciseSearch(e.target.value)
+                                        setSelectedExercise(null)
+                                        setShowExerciseDropdown(true)
+                                    }}
+                                    onFocus={() => setShowExerciseDropdown(true)}
+                                    className="border rounded p-2 w-full"
+                                />
+
+                                {showExerciseDropdown && exerciseSearch && (
+                                    <div className="absolute z-10 bg-white border rounded shadow w-full max-h-40 overflow-y-auto">
+                                        {filteredExercises.length > 0 ? (
+                                            filteredExercises.map((exercise) => (
+                                                <button
+                                                    key={exercise.exerciseID}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setSelectedExercise(exercise)
+                                                        setExerciseSearch(exercise.name)
+                                                        setShowExerciseDropdown(false)
+                                                    }}
+                                                    className="block w-full text-left px-3 py-2 hover:bg-blue-50"
+                                                >
+                                                    <span className="font-medium">{exercise.name}</span>
+                                                    <span className="text-gray-500 text-sm ml-2">
+                                                        {exercise.category}
+                                                    </span>
+                                                </button>
+                                            ))
+                                        ) : (
+                                            <p className="px-3 py-2 text-gray-500">No exercises found.</p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            <input
+                                type="number"
+                                placeholder="PB value e.g. 100"
+                                value={scoreValue}
+                                onChange={(e) => setScoreValue(e.target.value)}
+                                className="border rounded p-2 w-full"
+                            />
+
+                            {pbSuccess && (
+                                <p className="text-green-700 text-sm">{pbSuccess}</p>
+                            )}
+
+                            <button
+                                type="submit"
+                                className="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-800"
+                            >
+                                Add Personal Best
+                            </button>
+                        </form>
 
                         <div className="space-y-4">
                             {personalBests.map((pb, index) => (
@@ -191,10 +342,16 @@ function StatisticsPage() {
                                     className="border border-gray-200 rounded-lg p-4 flex justify-between"
                                 >
                                     <span className="font-medium text-gray-700">
-                                        {pb.activity || `Exercise ${pb.exerciseID}`}
+                                        {
+                                            pb.activity ||
+                                            pb.name ||
+                                            availableExercises.find((exercise) => exercise.exerciseID === pb.exerciseID)?.name ||
+                                            `Exercise ${pb.exerciseID}`
+                                        }
+
                                     </span>
                                     <span className="font-bold text-gray-800">
-                                        {pb.best || pb.storeValue}
+                                        {pb.best || pb.scoreValue}
                                     </span>
                                 </div>
                             ))}

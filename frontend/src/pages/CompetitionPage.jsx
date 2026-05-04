@@ -17,10 +17,12 @@ function CompetitionPage() {
 
     const today = new Date().toISOString().split("T")[0]
 
+    // Splits competitions into three lists based on date comparison with today
     const upcoming = competitions.filter(c => c.date > today)
     const todayComps = competitions.filter(c => c.date === today)
     const completed = competitions.filter(c => c.date < today)
 
+    // Converts a result stored in total seconds to a mm:ss display string
     const formatResult = (seconds) => {
         if (!seconds) return null
         const mins = Math.floor(seconds / 60)
@@ -28,6 +30,7 @@ function CompetitionPage() {
         return `${mins}:${secs.toString().padStart(2, "0")}`
     }
 
+    // Fetches all competitions for the logged in user on page load
     useEffect(() => {
         const userID = localStorage.getItem("userID")
         if (!userID) {
@@ -37,6 +40,7 @@ function CompetitionPage() {
         fetchCompetitions(userID)
     }, [])
 
+    // Fetches all competitions for a given userID and updates the competitions state
     const fetchCompetitions = async (userID) => {
         try {
             const res = await fetch(`${API_BASE_URL}/api/competitions/${userID}`)
@@ -48,6 +52,7 @@ function CompetitionPage() {
         }
     }
 
+    // Validates inputs and sends a POST request to create a new competition with name and date only
     const handleAddCompetition = async () => {
         const userID = parseInt(localStorage.getItem("userID"))
         if (!userID) {
@@ -91,6 +96,7 @@ function CompetitionPage() {
         }
     }
 
+    // Sends a DELETE request to remove a competition and refreshes the list
     const handleDelete = async (competitionID) => {
         try {
             const res = await fetch(`${API_BASE_URL}/api/competition/${competitionID}`, {
@@ -108,6 +114,7 @@ function CompetitionPage() {
         }
     }
 
+    // Opens the inline edit form for a competition and pre-fills existing rank and result values
     const startEditing = (comp) => {
         setEditingID(comp.competitionID)
         setEditRank(comp.rank || "")
@@ -120,6 +127,7 @@ function CompetitionPage() {
         }
     }
 
+    // Closes the inline edit form and clears the edit state
     const cancelEditing = () => {
         setEditingID(null)
         setEditRank("")
@@ -127,6 +135,8 @@ function CompetitionPage() {
         setEditSecs("")
     }
 
+    // Sends a PUT request to update the rank and result of an existing competition
+    // Converts mins and secs inputs into total seconds before sending to the backend
     const handleSaveEdit = async (comp) => {
         try {
             const res = await fetch(`${API_BASE_URL}/api/competition/${comp.competitionID}`, {
@@ -156,6 +166,8 @@ function CompetitionPage() {
         }
     }
 
+    // Renders a single competition card with optional inline edit form
+    // showEdit controls whether the Add/Edit Result button and form are shown
     const renderCompCard = (comp, showEdit) => (
         <div key={comp.competitionID} className="bg-white p-4 rounded shadow mb-4">
             <div className="flex justify-between items-start">
@@ -189,7 +201,7 @@ function CompetitionPage() {
                 </div>
             </div>
 
-            {/* Inline edit form */}
+            {/*Inline edit form*/}
             {showEdit && editingID === comp.competitionID && (
                 <div className="mt-4 border-t pt-4">
                     <p className="text-sm font-semibold text-gray-700 mb-3">Edit Result</p>
@@ -265,7 +277,7 @@ function CompetitionPage() {
                 {error && <p className="text-red-700 mb-4" role="alert">{error}</p>}
                 {success && <p className="text-green-700 mb-4" role="status">{success}</p>}
 
-                {/* Add competition form — name and date only */}
+                {/*Add competition form — name and date only*/}
                 <div className="bg-white p-6 rounded-lg shadow mb-8">
                     <h3 className="text-xl font-semibold mb-4">Add Competition</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -303,7 +315,7 @@ function CompetitionPage() {
                     </button>
                 </div>
 
-                {/* Today's competitions */}
+                {/*Today's competitions*/}
                 {todayComps.length > 0 && (
                     <div className="mb-8">
                         <h3 className="text-xl font-semibold mb-4">
@@ -313,7 +325,7 @@ function CompetitionPage() {
                     </div>
                 )}
 
-                {/* Upcoming competitions */}
+                {/*Upcoming competitions*/}
                 <div className="mb-8">
                     <h3 className="text-xl font-semibold mb-4">Upcoming Competitions</h3>
                     {upcoming.length === 0 ? (
@@ -323,7 +335,7 @@ function CompetitionPage() {
                     )}
                 </div>
 
-                {/* Completed competitions */}
+                {/*Completed competitions*/}
                 <div className="mb-8">
                     <h3 className="text-xl font-semibold mb-4">Completed Competitions</h3>
                     {completed.length === 0 ? (

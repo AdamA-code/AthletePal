@@ -12,6 +12,7 @@ function WorkoutLogPage() {
     const [error, setError] = useState("")
     const [success, setSuccess] = useState("")
 
+    // Fetches routines and todays scheduled workouts on page load
     useEffect(() => {
         const userID = localStorage.getItem("userID")
         const email = localStorage.getItem("email")
@@ -23,6 +24,7 @@ function WorkoutLogPage() {
         fetchTodaysWorkouts(email)
     }, [])
 
+    // Fetches all workouts for the user and filters to only show routine templates
     const fetchRoutines = async (userID) => {
         try {
             const res = await fetch(`${API_BASE_URL}/api/workouts/${userID}`)
@@ -35,6 +37,8 @@ function WorkoutLogPage() {
         }
     }
 
+    // Fetches workouts scheduled for today and filters to only show ones with no duration
+    // Duration null means the workout has been scheduled but not yet completed
     const fetchTodaysWorkouts = async (email) => {
         try {
             const res = await fetch(`${API_BASE_URL}/api/workouts/today/${email}`)
@@ -46,6 +50,8 @@ function WorkoutLogPage() {
         }
     }
 
+    // Prompts the user to confirm then sends a DELETE request to remove a routine or scheduled workout
+    // Refreshes both the routines list and todays workouts after deletion
     const handleDelete = async (workoutID, routineName) => {
         if (!window.confirm(`Are you sure you want to delete "${routineName}"?`)) return
 
