@@ -108,7 +108,9 @@ fun Route.activityRoutes() {
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "Workout Not Found"))
                 }
             } catch (e: Exception) {
+                e.printStackTrace()
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
+                return@put
             }
         }
 
@@ -570,6 +572,7 @@ fun Route.activityRoutes() {
             } catch (e: Exception) {
                 e.printStackTrace()
                 call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid Request"))
+                return@delete
             }
         }
 

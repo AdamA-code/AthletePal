@@ -35,3 +35,7 @@ dependencies {
 application {
     mainClass.set("com.example.ApplicationKt")
 }
+
+tasks.test {
+    maxParallelForks = 1
+}

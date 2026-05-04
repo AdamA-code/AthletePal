@@ -23,6 +23,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import services.DatabaseService.Statistic as Statistic
 
 class StatisticsRoutesTest {
     private fun ApplicationTestBuilder.setup() {
@@ -32,6 +33,8 @@ class StatisticsRoutesTest {
     private var userID: Int? = null
     private var statGetID: Int? = null
     private var statID: Int? = null
+    var exerciseID: Int? = null
+    val db = DatabaseService()
 
     @BeforeTest
     fun setup() =
@@ -39,23 +42,21 @@ class StatisticsRoutesTest {
             application { module() }
             userID = AuthService().registerUser("StatisticsTestAccount", "StatsTestEmail@email.com", "wordpass", false)
 
-            val resp =
-                client.post("/api/statistics") {
-                    contentType(ContentType.Application.Json)
-                    setBody(
-                        """
-                        {
-                            "userID": ${userID!!},
-                            "exerciseID": 2,
-                            "scoreValue": 35.0,
-                            "date": "2026-01-01"
-                        }
-                        """.trimIndent(),
-                    )
-                }
+            // Dynamically find a exercise in db
+            exerciseID =
+                (1..20000).firstOrNull {
+                    db.findExercise(it) != null
+                } ?: throw IllegalStateException("No exercises in database")
 
-            val jsonResp = Json.parseToJsonElement(resp.bodyAsText()).jsonObject
-            statGetID = jsonResp["ID"]?.jsonPrimitive?.content?.toInt()
+            val stat =
+                Statistic(
+                    userID = userID!!,
+                    exerciseID = exerciseID!!,
+                    scoreValue = 35.0,
+                    date = "2026-01-01",
+                )
+
+            statGetID = db.createStatistic(stat)
             statID = statGetID
         }
 
@@ -75,7 +76,7 @@ class StatisticsRoutesTest {
                         """
                         {
                             "userID": ${userID!!},
-                            "exerciseID": 1,
+                            "exerciseID": ${exerciseID!!},
                             "scoreValue": 20.0,
                             "date": "2026-04-20"
                         }
@@ -235,7 +236,7 @@ class StatisticsRoutesTest {
         testApplication {
             application { module() }
 
-            val response = client.get("/api/statistic/exercise/${userID!!}/2")
+            val response = client.get("/api/statistic/exercise/${userID!!}/${exerciseID!!}")
 
             assertEquals(HttpStatusCode.OK, response.status)
         }
@@ -495,7 +496,7 @@ class StatisticsRoutesTest {
         testApplication {
             application { module() }
 
-            val response = client.get("/api/statistics/exercise/${userID!!}/2")
+            val response = client.get("/api/statistics/exercise/${userID!!}/${exerciseID!!}")
 
             assertEquals(HttpStatusCode.OK, response.status)
         }
@@ -536,15 +537,15 @@ class StatisticsRoutesTest {
 
     @AfterTest
     fun cleanup() {
-        DatabaseService().deleteUser("StatsTestEmail@email.com")
+        db.deleteUser("StatsTestEmail@email.com")
 
         statGetID?.let {
-            DatabaseService().deleteStatistic(it)
+            db.deleteStatistic(it)
         }
 
         try {
             statID?.let {
-                DatabaseService().deleteStatistic(it)
+                db.deleteStatistic(it)
             }
         } catch (e: Exception) {
             println("Test-made stat already deleted!")

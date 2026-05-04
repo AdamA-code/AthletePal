@@ -40,6 +40,7 @@ class SocialRoutesTest {
     var groupID: Int? = null
     var upcomingGroupSessionID: Int? = null
     var pastGroupSessionID: Int? = null
+    val db = DatabaseService()
 
     @BeforeTest
     fun setup() =
@@ -49,6 +50,12 @@ class SocialRoutesTest {
             // Create two test users for use in tests
             userID = AuthService().registerUser("TEST1", "TEST1@TEST.COM", "wordpass", false)
             addToGroupUserID = AuthService().registerUser("TEST2", "TEST2@TEST.COM", "wordpass", false)
+
+            // Dynamically find a exercise in db
+            val exerciseID =
+                (1..20000).firstOrNull {
+                    db.findExercise(it) != null
+                } ?: throw IllegalStateException("No exercises in database")
 
             // Create a test workout, containing two workoutExercises, for use in tests
             val workout =
@@ -60,13 +67,13 @@ class SocialRoutesTest {
                 )
             val workoutExercise =
                 WorkoutExercise(
-                    exerciseID = 2,
+                    exerciseID = exerciseID,
                     sets = 3,
                     reps = 15,
                     weight = 15.5,
                 )
             val exercises: List<WorkoutExercise> = listOf(workoutExercise, workoutExercise)
-            loggedWorkoutID = DatabaseService().logWorkout(workout, exercises)
+            loggedWorkoutID = db.logWorkout(workout, exercises)
 
             // Create a test group for use in tests
             val trainingGroup =
@@ -76,7 +83,7 @@ class SocialRoutesTest {
                     description = "Test Description",
                     goal = "Test Goal",
                 )
-            groupID = DatabaseService().createGroup(trainingGroup)
+            groupID = db.createGroup(trainingGroup)
 
             // Create a upcoming test group training session
             val upcominigGroupSession =
@@ -85,7 +92,7 @@ class SocialRoutesTest {
                     workoutID = loggedWorkoutID!!,
                     scheduledDate = "2099-01-01",
                 ) // Date in future from expected test script execution
-            upcomingGroupSessionID = DatabaseService().addGroupSession(upcominigGroupSession)
+            upcomingGroupSessionID = db.addGroupSession(upcominigGroupSession)
 
             // Create a past test group training session
             val pastGroupSession =
@@ -94,7 +101,7 @@ class SocialRoutesTest {
                     workoutID = loggedWorkoutID!!,
                     scheduledDate = "2026-01-01",
                 ) // Date in past from expected test script execution
-            pastGroupSessionID = DatabaseService().addGroupSession(pastGroupSession)
+            pastGroupSessionID = db.addGroupSession(pastGroupSession)
         }
 
     // ==================== TRAINING GROUP CRUD TESTS =====================
@@ -132,7 +139,7 @@ class SocialRoutesTest {
             val testGroupID = jsonResponse["ID"]?.jsonPrimitive?.content?.toInt()
 
             // Delete group created in test, so as to not have impact on real db
-            DatabaseService().deleteGroup(testGroupID!!)
+            db.deleteGroup(testGroupID!!)
         }
 
     @Test
@@ -185,7 +192,7 @@ class SocialRoutesTest {
             val testGroupID = jsonResponse["ID"]?.jsonPrimitive?.content?.toInt()
 
             // Delete group created in test, so as to not have an impact on real db
-            DatabaseService().deleteGroup(testGroupID!!)
+            db.deleteGroup(testGroupID!!)
         }
 
     @Test
@@ -310,8 +317,8 @@ class SocialRoutesTest {
             application { module() }
 
             // Create temporary group, and remove creator (the only default member) for test
-            val testGroupID = DatabaseService().createGroup(TrainingGroup(createdBy = userID!!, name = "NO MEMBERS TEST"))
-            DatabaseService().leaveGroup(testGroupID!!, userID!!)
+            val testGroupID = db.createGroup(TrainingGroup(createdBy = userID!!, name = "NO MEMBERS TEST"))
+            db.leaveGroup(testGroupID!!, userID!!)
 
             // Valid HTTP request as groupID given as parameter is valid, but no members are in corresponding group
             val response = client.get("/social/group/members/${testGroupID!!}")
@@ -320,7 +327,7 @@ class SocialRoutesTest {
             assertEquals(HttpStatusCode.NotFound, response.status)
 
             // Delete the temporary group made earlier in test
-            DatabaseService().deleteGroup(testGroupID!!)
+            db.deleteGroup(testGroupID!!)
         }
 
     @Test
@@ -472,7 +479,7 @@ class SocialRoutesTest {
             assertEquals(HttpStatusCode.OK, response.status)
 
             // Remove temporary user 'addToGroupUserID' from group 'groupID' for other tests
-            DatabaseService().leaveGroup(groupID!!, addToGroupUserID!!)
+            db.leaveGroup(groupID!!, addToGroupUserID!!)
         }
 
     @Test
@@ -515,7 +522,7 @@ class SocialRoutesTest {
             assertEquals(HttpStatusCode.OK, response.status)
 
             // Add user back to group, for use in any remaining tests
-            DatabaseService().joinGroup(groupID!!, userID!!)
+            db.joinGroup(groupID!!, userID!!)
         }
 
     @Test
@@ -582,7 +589,7 @@ class SocialRoutesTest {
 
             // Recreate deleted training group for use in other tests
             groupID =
-                DatabaseService().createGroup(
+                db.createGroup(
                     TrainingGroup(
                         createdBy = userID!!,
                         name = "Test Group",
@@ -627,6 +634,8 @@ class SocialRoutesTest {
         testApplication {
             application { module() }
 
+            println("Logged WorkoutID: $loggedWorkoutID")
+
             // Valid HTTP request as all required and optional fields are given in body, in correct format and data type
             val response =
                 client.post("/social/session") {
@@ -650,7 +659,7 @@ class SocialRoutesTest {
             val testGroupSessionID = jsonResponse["ID"]?.jsonPrimitive?.content?.toInt()
 
             // Delete newly made test group session, so as to now have lasting effect on real db
-            DatabaseService().deleteGroupSession(testGroupSessionID!!)
+            db.deleteGroupSession(testGroupSessionID!!)
         }
 
     @Test
@@ -751,7 +760,7 @@ class SocialRoutesTest {
             application { module() }
 
             // Create temporary new test group which has no upcoming sesssions
-            val tempTestGroupID = DatabaseService().createGroup(TrainingGroup(createdBy = userID!!, name = "Test Group"))
+            val tempTestGroupID = db.createGroup(TrainingGroup(createdBy = userID!!, name = "Test Group"))
 
             // Technically valid HTTP request as groupID parameter is in correct format so can be serialised to integer
             val response = client.get("/social/sessions/upcoming/${tempTestGroupID!!}")
@@ -760,7 +769,7 @@ class SocialRoutesTest {
             assertEquals(HttpStatusCode.NotFound, response.status)
 
             // Delete temporary test group, so as to not have impact or change the real db
-            DatabaseService().deleteGroup(tempTestGroupID!!)
+            db.deleteGroup(tempTestGroupID!!)
         }
 
     @Test
@@ -805,7 +814,7 @@ class SocialRoutesTest {
             application { module() }
 
             // Create a new temporary group which has no associated past sessions, for test
-            val tempTestGroupID = DatabaseService().createGroup(TrainingGroup(createdBy = userID!!, name = "Test Group"))
+            val tempTestGroupID = db.createGroup(TrainingGroup(createdBy = userID!!, name = "Test Group"))
 
             // Valid HTTP request as we give groupID as a parameter in the correct format, allowing serialisation
             val response = client.get("/social/sessions/past/${tempTestGroupID!!}")
@@ -814,7 +823,7 @@ class SocialRoutesTest {
             assertEquals(HttpStatusCode.NotFound, response.status)
 
             // Delete temporary group, so as to not have lasting affect on real db
-            DatabaseService().deleteGroup(tempTestGroupID!!)
+            db.deleteGroup(tempTestGroupID!!)
         }
 
     @Test
@@ -840,7 +849,7 @@ class SocialRoutesTest {
 
             // Create temporary test group session for use in test
             val tempTestSessionID =
-                DatabaseService().addGroupSession(
+                db.addGroupSession(
                     GroupSession(groupID = groupID!!, workoutID = loggedWorkoutID!!, scheduledDate = "2027-01-01"),
                 )
 
@@ -852,7 +861,7 @@ class SocialRoutesTest {
 
             // Incase test fails, try deleting temporary test group session so no impact on real db
             try {
-                DatabaseService().deleteGroupSession(tempTestSessionID!!)
+                db.deleteGroupSession(tempTestSessionID!!)
             } catch (e: Exception) {
             }
         }
@@ -886,18 +895,18 @@ class SocialRoutesTest {
     @AfterTest
     fun cleanup() {
         // Delete test users after their use in tests
-        DatabaseService().deleteUser("TEST1@TEST.COM")
-        DatabaseService().deleteUser("TEST2@TEST.COM")
+        db.deleteUser("TEST1@TEST.COM")
+        db.deleteUser("TEST2@TEST.COM")
 
         // Delete test workout and both of its associated exercises
-        DatabaseService().deleteAllExercisesInWorkout(loggedWorkoutID!!)
-        DatabaseService().deleteWorkout(loggedWorkoutID!!)
+        db.deleteAllExercisesInWorkout(loggedWorkoutID!!)
+        db.deleteWorkout(loggedWorkoutID!!)
 
         // Delete test training group
-        DatabaseService().deleteGroup(groupID!!)
+        db.deleteGroup(groupID!!)
 
         // Delete both upcoming and past group sessions
-        DatabaseService().deleteGroupSession(upcomingGroupSessionID!!)
-        DatabaseService().deleteGroupSession(pastGroupSessionID!!)
+        db.deleteGroupSession(upcomingGroupSessionID!!)
+        db.deleteGroupSession(pastGroupSessionID!!)
     }
 }
