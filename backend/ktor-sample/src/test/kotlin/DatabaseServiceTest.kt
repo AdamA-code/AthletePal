@@ -97,7 +97,7 @@ class DatabaseServiceTest {
             ds.createExercise(
                 Exercise(
                     exerciseID = 0,
-                    name = "Bench Press",
+                    name = "Test exercise",
                     category = "weights",
                     description = "Integration test exercise",
                 ),
@@ -106,13 +106,20 @@ class DatabaseServiceTest {
         assertTrue(exerciseId > 0)
 
         val exercises = ds.findAllExercises()
-        assertTrue(exercises.any { it.name == "Bench Press" })
+        assertTrue(exercises.any { it.name == "Test exercise" })
 
         assertTrue(
             ds.updateExercise(
-                name = "Bench Press",
+
+                name = "Test exercise",
                 category = "weights",
                 description = "Updated",
+            ),
+        )
+
+        assertTrue(
+            ds.deleteExercise(
+                exerciseId
             ),
         )
 
@@ -549,9 +556,9 @@ class DatabaseServiceTest {
         assertTrue(userId > 0)
 
         // Create exercises
-        val benchPressID = ds.createExercise(Exercise(0, "Bench Press", "weights", null))
-        val squatID = ds.createExercise(Exercise(0, "Squat", "weights", null))
-        val runID = ds.createExercise(Exercise(0, "Run", "running", null))
+        val benchPressID = ds.createExercise(Exercise(0, "Test exercise", "weights", null))
+        val squatID = ds.createExercise(Exercise(0, "Test exercise 2", "weights", null))
+        val runID = ds.createExercise(Exercise(0, "Test exercise 3", "running", null))
 
         assertTrue(benchPressID > 0)
         assertTrue(squatID > 0)
@@ -597,6 +604,9 @@ class DatabaseServiceTest {
         assertTrue(updatedExercises.none { it.exerciseID == squatID })
 
         assertTrue(ds.deleteUser(email))
+        assertTrue(ds.deleteExercise(benchPressID))
+        assertTrue(ds.deleteExercise(runID))
+        assertTrue(ds.deleteExercise(squatID))
     }
 
     @Test
@@ -624,8 +634,8 @@ class DatabaseServiceTest {
             )
         assertTrue(userId > 0)
 
-        val squatID = ds.createExercise(Exercise(0, "Squat", "weights", null))
-        val benchPressID = ds.createExercise(Exercise(0, "Bench Press", "weights", null))
+        val squatID = ds.createExercise(Exercise(0, "Test Squat", "weights", null))
+        val benchPressID = ds.createExercise(Exercise(0, "Test bench press", "weights", null))
 
         // Add a statistic for bench press
         ds.createStatistic(Statistic(0, userId, benchPressID, 100.0, today))
@@ -647,6 +657,8 @@ class DatabaseServiceTest {
 
         // Cleanup
         assertTrue(ds.deleteUser(email))
+        assertTrue(ds.deleteExercise(benchPressID))
+        assertTrue(ds.deleteExercise(squatID))
     }
 
     @Test
