@@ -93,7 +93,7 @@ class DatabaseServiceTest {
         // =========================
         // Exercise CRUD
         // =========================
-        val exerciseId =
+        var exerciseId =
             ds.createExercise(
                 Exercise(
                     exerciseID = 0,
@@ -110,7 +110,6 @@ class DatabaseServiceTest {
 
         assertTrue(
             ds.updateExercise(
-
                 name = "Test exercise",
                 category = "weights",
                 description = "Updated",
@@ -119,7 +118,7 @@ class DatabaseServiceTest {
 
         assertTrue(
             ds.deleteExercise(
-                exerciseId
+                exerciseId,
             ),
         )
 
@@ -159,6 +158,13 @@ class DatabaseServiceTest {
         // =========================
         // Workout Exercise CRUD
         // =========================
+        println("ExerciseID: $exerciseId")
+        println("WorkoutID: $workoutId")
+
+        exerciseId = (1..20000).firstOrNull {
+            ds.findExercise(it) != null
+        } ?: throw IllegalStateException("No exercises in database")
+
         val workoutExercisesId =
             ds.addExerciseToWorkout(
                 WorkoutExercise(
