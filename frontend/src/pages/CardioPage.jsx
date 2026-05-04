@@ -186,7 +186,7 @@ function CardioPage() {
                 {error && <p className="text-red-700 text-sm mb-4" role="alert">{error}</p>}
                 {success && <p className="text-green-700 text-sm mb-4" role="status">{success}</p>}
 
-                {/* Exercise Type */}
+                {/*Exercise Type*/}
                 <div className="mb-6">
                     <label htmlFor="exercise-type" className="block font-semibold mb-2">
                         Exercise Type
@@ -203,7 +203,7 @@ function CardioPage() {
                     </select>
                 </div>
 
-                {/* Date */}
+                {/*Date*/}
                 <div className="mb-6">
                     <label htmlFor="cardio-date" className="block font-semibold mb-2">
                         Date <span className="text-red-600 text-sm font-normal">*required</span>
@@ -217,7 +217,7 @@ function CardioPage() {
                     />
                 </div>
 
-                {/* Duration */}
+                {/*Duration*/}
                 <div className="mb-6">
                     <label htmlFor="cardio-duration" className="block font-semibold mb-2">
                         Duration (minutes) <span className="text-red-600 text-sm font-normal">*required</span>
@@ -231,7 +231,7 @@ function CardioPage() {
                     />
                 </div>
 
-                {/* Notes */}
+                {/*Notes*/}
                 <div className="mb-6">
                     <label htmlFor="cardio-notes" className="block font-semibold mb-2">
                         Notes <span className="text-gray-400 text-sm font-normal">(optional)</span>
@@ -244,7 +244,7 @@ function CardioPage() {
                     />
                 </div>
 
-                {/* Route section */}
+                {/*Route section*/}
                 <div className="mb-6 bg-white p-4 rounded shadow">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="font-semibold text-lg">Route <span className="text-gray-400 text-sm font-normal">(optional)</span></h3>
@@ -368,7 +368,7 @@ function CardioPage() {
                     )}
                 </div>
 
-                {/* Save button */}
+                {/*Save button*/}
                 <button
                     onClick={saveCardioSession}
                     className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 mb-12"
@@ -376,7 +376,7 @@ function CardioPage() {
                     Save Session
                 </button>
 
-                {/* Available routes */}
+                {/*Available routes*/}
                 <div>
                     <h3 className="text-xl font-semibold mb-4">Available Routes</h3>
                     <p className="text-sm text-gray-600 mb-4">
