@@ -14,6 +14,7 @@ function CompetitionPage() {
     const [editRank, setEditRank] = useState("")
     const [editMins, setEditMins] = useState("")
     const [editSecs, setEditSecs] = useState("")
+    const [resultType, setResultType] = useState("time") // "time" or "score"
 
     const today = new Date().toISOString().split("T")[0]
 
@@ -118,6 +119,7 @@ function CompetitionPage() {
     const startEditing = (comp) => {
         setEditingID(comp.competitionID)
         setEditRank(comp.rank || "")
+        setResultType(comp.result ? "time" : "score") // Assume if there's a result it's a time, otherwise score. Adjust as needed based on your data structure.
         if (comp.result) {
             setEditMins(Math.floor(comp.result / 60).toString())
             setEditSecs((comp.result % 60).toString())
@@ -221,8 +223,21 @@ function CompetitionPage() {
                         </div>
                         <div>
                             <label className="block text-sm text-gray-700 mb-1">
-                                Result (optional)
+                                Result type
                             </label>
+                            
+                            <select
+                                value={resultType}
+                                onChange={(e) => setResultType(e.target.value)}
+                                className="border rounded p-2 w-full mb-3"
+                            >
+                                <option value="time">Time</option>
+                                <option value="score">Score / Weight </option>
+                            </select>
+                            <p className="text-xs text-gray-500 mb-2">
+                                For timed events, enter minutes and seconds. For strength events, enter the score or weight in the minutes box and leave seconds blank.
+                            </p>
+                            
                             <div className="flex gap-2">
                                 <div className="flex-1">
                                     <label htmlFor={`edit-mins-${comp.competitionID}`} className="sr-only">Minutes</label>

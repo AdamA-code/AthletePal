@@ -22,8 +22,12 @@ function ActivityHistoryPage() {
         // Fetchs the logged in users activity history from the backend and sets the cardio and weight training states based on the workout type. Also handles errors and loading state.
         const fetchActivityHistory = async () => {
             try {
-                const response = await fetch(`${API_BASE_URL}/api/activity/${userID}`)
+                const response = await fetch(`${API_BASE_URL}/api/workouts/${userID}`)
                 const data = await response.json()
+
+                console.log("Activity history data:", data) // Debug log to check the structure of the response
+                //console.log("User email:", email) // Debug log to check the email being sent
+                console.log("User ID", userID) // Debug log to check the userID being sent
 
                 const workouts = data.Workouts || []
 
