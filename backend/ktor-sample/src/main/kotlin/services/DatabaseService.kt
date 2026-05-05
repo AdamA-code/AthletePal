@@ -148,6 +148,7 @@ class DatabaseService {
     @Serializable
     data class Competition(
         val competitionID: Int = 0,
+        val competitionType: String? = null,
         val userID: Int,
         val name: String,
         val date: String,

@@ -7,6 +7,7 @@ import kotlinx.serialization.Serializable // Import kotlinx serialisation
 data class UpdateCompetitionRequest(
     val name: String,
     val date: String,
+    val competitionType: String? = null,
     val rank: Int? = null,
     val result: Int? = null,
 )
