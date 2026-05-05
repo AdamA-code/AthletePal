@@ -245,13 +245,15 @@ function CardioPage() {
                 {/*Notes*/}
                 <div className="mb-6">
                     <label htmlFor="cardio-notes" className="block font-semibold mb-2">
-                        Notes <span className="text-gray-400 text-sm font-normal">(optional)</span>
+                        Session Name <span className="text-gray-400 text-sm font-normal">(optional)</span>
                     </label>
-                    <textarea
+                    <input
                         id="cardio-notes"
+                        type="text"
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
-                        className="border rounded p-2 w-full h-24"
+                        placeholder="e.g. Morning 5K, Evening swim"
+                        className="border rounded p-2 w-full"
                     />
                 </div>
 
@@ -425,13 +427,12 @@ function CardioPage() {
                                         <button
                                             onClick={() => handleSelectRoute(route)}
                                             disabled={routeMode === "draw"}
-                                            className={`text-sm px-3 py-1 rounded ${
-                                                routeMode === "draw"
-                                                    ? "border border-gray-300 text-gray-400 cursor-not-allowed"
-                                                    : routeMode === "select" && selectedRoute?.routeID === route.routeID
+                                            className={`text-sm px-3 py-1 rounded ${routeMode === "draw"
+                                                ? "border border-gray-300 text-gray-400 cursor-not-allowed"
+                                                : routeMode === "select" && selectedRoute?.routeID === route.routeID
                                                     ? "bg-green-600 text-white"
                                                     : "bg-blue-600 text-white hover:bg-blue-700"
-                                            }`}
+                                                }`}
                                             aria-label={`Use route ${route.name}`}
                                         >
                                             {routeMode === "select" && selectedRoute?.routeID === route.routeID
