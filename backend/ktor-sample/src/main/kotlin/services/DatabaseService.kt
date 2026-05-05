@@ -144,6 +144,7 @@ class DatabaseService {
      * @property date The date the competition is scheduled for.
      * @property rank Optional placement of the user in the competition (e.g. first, third, etc).
      * @property result Optional score the user achieved in the competition.
+     * @property competitionType Optional type of the competition (e.g. cardio or weights)
      */
     @Serializable
     data class Competition(
@@ -153,6 +154,7 @@ class DatabaseService {
         val date: String,
         val rank: Int? = null,
         val result: Int? = null,
+        val competitionType: String? = null
     )
 
     /**
@@ -1558,7 +1560,8 @@ class DatabaseService {
      *
      * The function first checks that the competition name is not empty.
      * The function then checks that the given date is in the correct format (YYYY-MM-DD) and that
-     * if there is a rank and/or result given that they are over 0.
+     * if there is a rank and/or result given that they are over 0. The competitionType must be either
+     * cardio or weights.
      *
      * The function then inserts the competition into the database.
      *
@@ -1575,12 +1578,14 @@ class DatabaseService {
         if (comp.date.isBlank() || !comp.date.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) return -1
         if (comp.rank != null && comp.rank <= 0) return -1
         if (comp.result != null && comp.result <= 0) return -1
+        val validTypes = listOf("cardio", "weights")
+        if (comp.competitionType != null && comp.competitionType !in validTypes) return -1
 
         val stmt =
             db.connection.prepareStatement(
                 """
-                INSERT INTO competitions(userID, name, date, rank, result)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO competitions(userID, name, date, rank, result, competitionType)
+                VALUES (?, ?, ?, ?, ?, ?)
                 """.trimIndent(),
                 Statement.RETURN_GENERATED_KEYS,
             )
@@ -1590,6 +1595,7 @@ class DatabaseService {
         stmt.setString(3, comp.date)
         stmt.setObject(4, comp.rank)
         stmt.setObject(5, comp.result)
+        stmt.setObject(6, comp.competitionType)
 
         val rowsInserted = stmt.executeUpdate()
 
@@ -1634,6 +1640,7 @@ class DatabaseService {
                     date = rs.getString("date"),
                     rank = rs.getObject("rank") as Int?,
                     result = rs.getObject("result") as Int?,
+                    competitionType = rs.getObject("competitionType") as String?,
                 )
             comps.add(comp)
         }
@@ -1667,6 +1674,7 @@ class DatabaseService {
                     date = rs.getString("date"),
                     rank = rs.getObject("rank") as Int?,
                     result = rs.getObject("result") as Int?,
+                    competitionType = rs.getObject("competitionType") as String?,
                 )
             rs.close()
             stmt.close()
@@ -1695,8 +1703,9 @@ class DatabaseService {
      * @param competitionID The unique identifier of the competition to update.
      * @param name The value of the competition.
      * @param date The date the competition was recorded.
-     * @param rank Where the user placed in the competition.
-     * @param result The score the user achieved in the competition.
+     * @param rank Optional place of the user in the competition.
+     * @param result Optional score the user achieved in the competition.
+     * @param competitionType Optional type of competition.
      * @return True if the update was successful, false if not.
      */
     fun updateCompetition(
@@ -1705,6 +1714,7 @@ class DatabaseService {
         date: String,
         rank: Int? = null,
         result: Int? = null,
+        competitionType: String? = null,
     ): Boolean {
         // Validation Checks
         if (competitionID <= 0) return false
@@ -1712,6 +1722,9 @@ class DatabaseService {
         if (date.isBlank() || !date.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) return false
         if (rank != null && rank <= 0) return false
         if (result != null && result <= 0) return false
+        val validTypes = listOf("time", "score")
+        if (competitionType != null && competitionType !in validTypes) return false
+
         val stmt: PreparedStatement =
             db.connection.prepareStatement(
                 """

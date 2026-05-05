@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS competitions (
     date TEXT NOT NULL,
     rank INTEGER,
     result INTEGER,
+    competitionType TEXT,
     FOREIGN KEY(userID) REFERENCES users(userID) ON DELETE CASCADE
 );
 
