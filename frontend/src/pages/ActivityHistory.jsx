@@ -25,11 +25,12 @@ function ActivityHistoryPage() {
                 const response = await fetch(`${API_BASE_URL}/api/workouts/${userID}`)
                 const data = await response.json()
 
-                console.log("Activity history data:", data) // Debug log to check the structure of the response
-                //console.log("User email:", email) // Debug log to check the email being sent
-                console.log("User ID", userID) // Debug log to check the userID being sent
+                if (!response.ok) {
+                    setError(data.message || "Failed to load activity history")
+                    return
+                }
 
-                const workouts = data.Workouts || []
+                const workouts = Array.isArray(data.Workouts) ? data.Workouts : []
 
                 setCardioWorkouts(
                     workouts.filter((workout) => 

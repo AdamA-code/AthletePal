@@ -191,7 +191,7 @@ class DatabaseServiceTest {
             ),
         )
 
-        // cascade so not required: assertTrue(ds.deleteWorkoutExercise(workoutExercisesId))
+        assertTrue(ds.deleteWorkoutExercise(workoutExercisesId))
 
         // =========================
         // Stas CRUD
@@ -341,12 +341,12 @@ class DatabaseServiceTest {
 
         // Future
         ds.createCompetition(
-            Competition(0, userId, "Future Comp", future, null, null),
+            Competition(0, "Weights", userId, "Future Comp", future, null, null),
         )
 
         // Competition (past)
         ds.createCompetition(
-            Competition(0, userId, "Past Comp", past, 1, 500),
+            Competition(0, "Weights", userId, "Past Comp", past, 1, 500),
         )
 
         // Routes
