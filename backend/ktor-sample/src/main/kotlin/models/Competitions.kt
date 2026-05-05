@@ -11,4 +11,5 @@ data class Competitions(
     val date: String,
     val rank: Int?,
     val result: Int?,
+    val competitionType: String?,
 )
