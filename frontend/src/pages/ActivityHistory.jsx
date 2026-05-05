@@ -1,6 +1,5 @@
 // page structure, layout, and frontend -> backend request connections aided with chatgpt chat.openai.com
 import { useEffect, useState } from "react"
-import { data } from "react-router-dom"
 import Sidebar from "../components/Sidebar"
 import API_BASE_URL from "../config"
 
@@ -20,6 +19,7 @@ function ActivityHistoryPage() {
             return
         }
 
+        // Fetchs the logged in users activity history from the backend and sets the cardio and weight training states based on the workout type. Also handles errors and loading state.
         const fetchActivityHistory = async () => {
             try {
                 const response = await fetch(`${API_BASE_URL}/api/activity/${userID}`)
@@ -29,8 +29,11 @@ function ActivityHistoryPage() {
 
                 setCardioWorkouts(
                     workouts.filter((workout) => 
-                        workout.workoutType?.toLowerCase() === "cardio"
-                )
+                    ["cardio", "running", "cycling", "swimming"].includes(
+                        workout.workoutType?.toLowerCase()
+                    
+                    )
+                    )
                 )
 
                 setWeightTraining(
@@ -45,12 +48,6 @@ function ActivityHistoryPage() {
                 setLoading(false)
             }
         }
-
-        {/* Commented out code
-        const workouts = data.Workouts || []
-        console.log("Fetched workouts:", workouts)
-        console.log("Activity history data:", data)
-        */}
 
         fetchActivityHistory()
     }, [])
@@ -71,11 +68,13 @@ function ActivityHistoryPage() {
         <div className="min-h-screen bg-gray-100 flex">
             <Sidebar />
             <div className="flex-1 p-8">
-                <h1 className="text-3x1 font-bold text-blue-800 mb-6">
+                <h1 className="text-3xl font-bold text-blue-800 mb-6">
                     Activity History
                 </h1>
 
-                {error && <p className="text-red-600 mb-4">{error}</p>}
+                {error && <p className="text-red-700 mb-4" role="alert">
+                    {error}
+                </p>}
                 {loading && <p className="text-gray-600 mb-4">Loading activity history...</p>}
 
                 <div className="mb-6">
@@ -90,8 +89,8 @@ function ActivityHistoryPage() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Cardio Card */}
-                    <div className="bg-white rounded-x1 shadow-md p-6">
-                        <h2 className="text-2x1 font-semibold mb-4 text-gray-800">
+                    <div className="bg-white rounded-xl shadow-md p-6">
+                        <h2 className="text-2xl font-semibold mb-4 text-gray-800">
                             Cardio History
                         </h2>
 
@@ -110,7 +109,7 @@ function ActivityHistoryPage() {
                                         Duration: {workout.duration} minutes 
                                     </p>
                                     <p className="text-gray-600 mt-2">
-                                        {workout.notes || "User Notes added"}
+                                        {workout.notes || "No notes added."}
                                     </p>
                                 </div>
                             ))
