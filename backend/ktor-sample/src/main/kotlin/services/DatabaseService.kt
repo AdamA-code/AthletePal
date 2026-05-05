@@ -1561,7 +1561,7 @@ class DatabaseService {
      * The function first checks that the competition name is not empty.
      * The function then checks that the given date is in the correct format (YYYY-MM-DD) and that
      * if there is a rank and/or result given that they are over 0. The competitionType must be either
-     * cardio or weights.
+     * time or score.
      *
      * The function then inserts the competition into the database.
      *
@@ -1578,7 +1578,7 @@ class DatabaseService {
         if (comp.date.isBlank() || !comp.date.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) return -1
         if (comp.rank != null && comp.rank <= 0) return -1
         if (comp.result != null && comp.result <= 0) return -1
-        val validTypes = listOf("cardio", "weights")
+        val validTypes = listOf("time", "score")
         if (comp.competitionType != null && comp.competitionType !in validTypes) return -1
 
         val stmt =
@@ -1692,9 +1692,9 @@ class DatabaseService {
      * The function validates the provided competitionID, ensuring it's greater than 0 before executing the
      * statement. Furthermore, rank and result are also validated to ensure that if a value is given, that it is greater than 0.
      * The date is also validated to ensure it's in the correct format (YYYY-MM-DD), with name being checked to ensure that it is
-     * not blank.
+     * not blank. The competitionType must be either time or score.
      *
-     * The function only updates the name, rank, result and date of the record identified by the competitionID.
+     * The function only updates the name, rank, result, competitionType and date of the record identified by the competitionID.
      *
      * If the update is successful, the database is modified and the function returns true. If no matching competition
      * is found or validation fails, false is returned.
