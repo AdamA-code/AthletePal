@@ -26,14 +26,15 @@ function StatisticsPage() {
         
         const fetchStatistics = async () => {
             try {
-                const [workoutRes, hoursRes, streakRes, historyRes, pbRes, exercisesRes, competitionsRes] = await Promise.all([
+                const [workoutRes, hoursRes, streakRes, historyRes, pbRes, exercisesRes, competitionsRes, allWorkoutsRes] = await Promise.all([
                     fetch(`${API_BASE_URL}/api/statistic/user/workouts-completed/${userID}`),
                     fetch(`${API_BASE_URL}/api/statistic/user/hours-trained/${userID}`),
                     fetch(`${API_BASE_URL}/api/statistic/user/workout-streak/${userID}`),
                     fetch(`${API_BASE_URL}/api/statistic/user/training-history/${userID}`),
                     fetch(`${API_BASE_URL}/api/statistics/user/personal-bests/${userID}`),
                     fetch(`${API_BASE_URL}/api/exercises`),
-                    fetch(`${API_BASE_URL}/api/competitions/${userID}`)
+                    fetch(`${API_BASE_URL}/api/competitions/${userID}`),
+                    fetch(`${API_BASE_URL}/api/workouts/${userID}`)
                 ])
 
             const workoutData = await workoutRes.json()
@@ -43,6 +44,7 @@ function StatisticsPage() {
             const pbsData = await pbRes.json()
             const exercisesData = await exercisesRes.json()
             const competitionsData = await competitionsRes.json()
+            const allWorkoutsData = await allWorkoutsRes.json()
             
             {/* Console Logs for testing purposes 
             console.log("Workout data:", workoutData)
@@ -53,7 +55,14 @@ function StatisticsPage() {
             */}
 
             setSummaryStats([
-                { label: "Total Workouts", value: workoutData["Completed Workouts"] || 0 },
+                { 
+                    label: "Total Workouts", 
+                    value: Array.isArray(allWorkoutsData.Workouts)
+                        ? allWorkoutsData.Workouts.filter((workout) =>
+                            workout.duration !== null && workout.isRoutine !== true
+                        ).length
+                        : 0
+                },
                 { 
                     label: "Hours Trained",
                     value: Number(hoursData["Hours Trained"] || 0).toFixed(1)
@@ -61,11 +70,37 @@ function StatisticsPage() {
                 { label: "Current Streak", value: streakData["Current Streak"] || 0 },
                 { label: "Personal Bests", value: pbsData["Personal Bests"]?.length || 0 }
             ])
-                console.log("History data:", historyData)
-                const history = historyData["Training History"] || historyData
-                const cardioProgression = Array.isArray(history.cardio) ? history.cardio : []
-                const weightedProgression = Array.isArray(history.weights) ? history.weights : []
-                setProgressionData([...cardioProgression, ...weightedProgression])
+                const allWorkouts = Array.isArray(allWorkoutsData.Workouts)
+                    ? allWorkoutsData.Workouts
+                    : []
+
+                const completedWorkouts = allWorkouts.filter((workout) =>
+                    workout.duration !== null &&
+                    workout.isRoutine !== true
+                )
+
+                const groupedByDate = completedWorkouts.reduce((acc, workout) => {
+                    const date = workout.date || "Unknown Date"
+
+                    if (!acc[date]) {
+                        acc[date] = {
+                            week: date,
+                            workouts: 0,
+                            hours: 0
+                        }
+                    }
+
+                    acc[date].workouts += 1
+                    acc[date].hours += Number(workout.duration || 0) / 60
+
+                    return acc
+                }, {})
+
+                const formattedProgression = Object.values(groupedByDate).sort((a, b) =>
+                    a.week.localeCompare(b.week)
+                )
+
+                setProgressionData(formattedProgression)
                 setPersonalBests(pbsData["Personal Bests"] || [])
                 setAvailableExercises(Array.isArray(exercisesData.Exercises) ? exercisesData.Exercises : [])
                 setCompetitionStats(Array.isArray(competitionsData.Competitions) ? competitionsData.Competitions : [])
@@ -140,8 +175,8 @@ function StatisticsPage() {
         exercise.name.toLowerCase().includes(exerciseSearch.toLowerCase())
     )
 
-    const maxWorkouts = Math.max(...progressionData.map(w => w.workouts || 0), 1)
-    const maxHours = Math.max(...progressionData.map(w => w.workouts || 0), 1)
+    const maxWorkouts = Math.max(...progressionData.map(w => Number(w.workouts || 0)), 1)
+    const maxHours = Math.max(...progressionData.map(w => Number(w.hours || 0)), 1)
     const formatCompetitionResult = (seconds) => {
         if (!seconds) return "No result recorded"
         
@@ -154,7 +189,7 @@ function StatisticsPage() {
             <Sidebar />
 
             <main className="flex-1 p-8">
-                <h1 className="text-3l1 font-bold text-blue-800 mb-6">
+                <h1 className="text-3xl font-bold text-blue-800 mb-6">
                     Statistics / Visualisation
                 </h1>
                 {error && (
@@ -190,9 +225,9 @@ function StatisticsPage() {
                                 progressionData.map((week, index) => (
                                 <div key={index} className="border border-gray-200 rounded-lg p-4">
                                     <div className="flex justify-between mb-1">
-                                        <span className="font-medium text-gray-800">{week.week}</span>
+                                        <span className="font-medium text-gray-800">{week.week || week.date || "Unknown date"}</span>
                                         <span className="text-sm text-gray-500">
-                                            {week.workouts} workouts
+                                            {Number(week.workouts || 1)} workouts
                                         </span>
                                     </div>
 
@@ -222,9 +257,9 @@ function StatisticsPage() {
                                 progressionData.map((week, index) => (
                                 <div key={index} className="border border-gray-200 rounded-lg p-4">
                                     <div className="flex justify-between mb-1">
-                                        <span className="font-medium text-gray-800">{week.week}</span>
+                                        <span className="font-medium text-gray-800">{week.week || week.date || "Unknown date"}</span>
                                         <span className="text-sm text-gray-500">
-                                            {week.hours} hrs
+                                            {Number(week.hours || (week.duration / 60) || 0).toFixed(1)} hrs
                                         </span>
                                     </div>
 
