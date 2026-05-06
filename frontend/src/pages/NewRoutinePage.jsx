@@ -38,12 +38,18 @@ function NewRoutinePage() {
     // Adds an exercise to the selected list with a default of 3 sets
     // Prevents duplicates by checking if the exercise is already in the list
     const addExercise = (exercise) => {
-        if (selectedExercises.find(ex => ex.exerciseID === exercise.exerciseID)) return
+        if (selectedExercises.find(ex => ex.exerciseID === exercise.exerciseID)) {
+            setError(`${exercise.name} is already added to this routine.`)
+            setShowDropdown(false)
+            setSearchTerm("")
+            return
+        }
         setSelectedExercises([...selectedExercises, {
             exerciseID: exercise.exerciseID,
             name: exercise.name,
             sets: 3
         }])
+        setError("")
         setSearchTerm("")
         setShowDropdown(false)
     }

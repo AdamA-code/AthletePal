@@ -61,8 +61,11 @@ function StatisticsPage() {
                 { label: "Current Streak", value: streakData["Current Streak"] || 0 },
                 { label: "Personal Bests", value: pbsData["Personal Bests"]?.length || 0 }
             ])
-
-                setProgressionData(historyData["Training History"] || [])
+                console.log("History data:", historyData)
+                const history = historyData["Training History"] || historyData
+                const cardioProgression = Array.isArray(history.cardio) ? history.cardio : []
+                const weightedProgression = Array.isArray(history.weights) ? history.weights : []
+                setProgressionData([...cardioProgression, ...weightedProgression])
                 setPersonalBests(pbsData["Personal Bests"] || [])
                 setAvailableExercises(Array.isArray(exercisesData.Exercises) ? exercisesData.Exercises : [])
                 setCompetitionStats(Array.isArray(competitionsData.Competitions) ? competitionsData.Competitions : [])
