@@ -136,7 +136,7 @@ function NewRoutinePage() {
 
                 <div className="mb-6">
                     <label htmlFor="routine-name" className="block text-sm font-semibold text-gray-700 mb-1">
-                        Routine Name <span className="text-red-600 font-normal">*required</span>
+                        Routine Name <span className="text-red-700 font-normal">*required</span>
                     </label>
                     <input
                         id="routine-name"

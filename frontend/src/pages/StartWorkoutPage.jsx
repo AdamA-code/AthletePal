@@ -209,7 +209,7 @@ function StartWorkoutPage() {
                     {!isScheduled && (
                         <div className="flex flex-col">
                             <label htmlFor="workout-duration" className="text-sm text-gray-700 mb-1">
-                                Duration (mins) <span className="text-red-600 text-xs">*required</span>
+                                Duration (mins) <span className="text-red-700 text-xs">*required</span>
                             </label>
                             <input
                                 id="workout-duration"

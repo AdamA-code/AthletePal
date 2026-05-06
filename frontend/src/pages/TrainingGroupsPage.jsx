@@ -306,7 +306,7 @@ function TrainingGroupsPage() {
 
                             <button
                                 onClick={() => navigate("/training-groups/create")}
-                                className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
+                                className="w-full bg-green-700 text-white py-2 rounded-lg hover:bg-green-800"
                             >
                                 Create Group
                             </button>

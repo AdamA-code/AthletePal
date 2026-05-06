@@ -52,13 +52,13 @@ function LoginPage () {
         
         <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
 
-            <div className="bg-white p-10 rounded-x1 shadow-lg w-full max-w-md">
+            <main className="bg-white p-10 rounded-x1 shadow-lg w-full max-w-md">
                 <h1 className="text-3xl font-bold text-center text-blue-800 mb-6">
                     AthletePal
                 </h1>
 
                 {error && (
-                    <p className="text-red-600 text-sm mb-4 text-center">{error}</p>
+                    <p className="text-red-700 text-sm mb-4 text-center" role="alert">{error}</p>
                 )}
                 <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
                     <div className="flex flex-col">
@@ -90,7 +90,7 @@ function LoginPage () {
                     </div>
                     <button 
                         type="submit"
-                        className="bg-blue-500 text-white py-2 rounded-md font-semibold hover:bg-blue-600 transition"
+                        className="bg-blue-700 text-white py-2 rounded-md font-semibold hover:bg-blue-800 transition"
                     >
                         Login
                     </button>
@@ -98,7 +98,7 @@ function LoginPage () {
 
                 <button
                     type="button"
-                    className="text-blue-500 text-sm mt-4 hover:underline"
+                    className="text-blue-700 text-sm mt-4 hover:underline"
                 >
                     Forgot password?
                 </button>
@@ -106,12 +106,12 @@ function LoginPage () {
                 <Link to="/create-account">
                     <button
                         type="button"
-                        className="mt-3 w-full border border-blue-500 text-blue-500 py-2 rounded-md font-semibold hover:bg-blue-50"
+                        className="mt-3 w-full border border-blue-700 text-blue-700 py-2 rounded-md font-semibold hover:bg-blue-50"
                     >
                         Create Account
                     </button>
                 </Link>
-            </div>
+            </main>
         </div>
     );
 }

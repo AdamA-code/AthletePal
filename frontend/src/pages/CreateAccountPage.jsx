@@ -60,7 +60,7 @@ function CreateAccountPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
 
-      <div className="bg-white p-8 rounded-xl shadow-lg w-[420px]">
+      <main className="bg-white p-8 rounded-xl shadow-lg w-[420px]">
 
         <h1 className="text-3xl font-bold text-center text-blue-800 mb-6">
           Create Account
@@ -122,8 +122,8 @@ function CreateAccountPage() {
             />
           </div>
 
-          <div className="flex flex-col">
-            <label className="text-sm font-semibold mb-1">Account Type</label>
+          <fieldset className="flex flex-col">
+            <legend className="text-sm font-semibold mb-1">Account Type</legend>
 
             <div className="flex gap-4">
               <label className="flex items-center gap-2">
@@ -148,7 +148,7 @@ function CreateAccountPage() {
                 User
               </label>
             </div>
-          </div>
+          </fieldset>
 
           <button
             type="submit"
@@ -167,7 +167,7 @@ function CreateAccountPage() {
         </p>
 
 
-      </div>
+      </main>
 
     </div>
   )
