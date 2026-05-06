@@ -23,7 +23,7 @@ function StatisticsPage() {
             setError("No user found. Please log in again.")
             return
         }
-        
+
         const fetchStatistics = async () => {
             try {
                 const [workoutRes, hoursRes, streakRes, historyRes, pbRes, exercisesRes, competitionsRes, allWorkoutsRes] = await Promise.all([
@@ -179,7 +179,7 @@ function StatisticsPage() {
     const maxHours = Math.max(...progressionData.map(w => Number(w.hours || 0)), 1)
     const formatCompetitionResult = (seconds) => {
         if (!seconds) return "No result recorded"
-        
+
         const mins = Math.floor(seconds / 60)
         const secs = seconds % 60
         return `${mins}:${secs.toString().padStart(2, "0")}`
@@ -203,7 +203,7 @@ function StatisticsPage() {
                     {summaryStats.map((stat, index) => (
                         <div key={index} className="bg-white rounded-xl shadow-md p-6">
                             <p className="text-sm text-gray-500 mb-2">{stat.label}</p>
-                            <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
+                            <h3 className="text-2xl font-bold text-gray-800">{stat.value}</h3>
                         </div>
                     ))}
                 </div>
@@ -217,7 +217,7 @@ function StatisticsPage() {
                         </h2>
 
                         <div className="space-y-4">
-                            {progressionData.length === 0? (
+                            {progressionData.length === 0 ? (
                                 <p className="text-gray-500 text-sm">
                                     No training data yet.
                                 </p>
@@ -231,14 +231,14 @@ function StatisticsPage() {
                                         </span>
                                     </div>
 
-                                    <div className="w-full bg-gray-200 rounded-full h-3">
-                                        <div
-                                            className="bg-blue-600 h-3 rounded-full transition-all"
-                                            style={{ width: `${(week.workouts / maxWorkouts) * 100}%` }}
-                                        />
+                                        <div className="w-full bg-gray-200 rounded-full h-3">
+                                            <div
+                                                className="bg-blue-600 h-3 rounded-full transition-all"
+                                                style={{ width: `${(week.workouts / maxWorkouts) * 100}%` }}
+                                            />
+                                        </div>
                                     </div>
-                                </div>
-                            )))}
+                                )))}
                         </div>
                     </div>
 
@@ -249,7 +249,7 @@ function StatisticsPage() {
                         </h2>
 
                         <div className="space-y-4">
-                            {progressionData.length === 0? (
+                            {progressionData.length === 0 ? (
                                 <p className="text-gray-500 text-sm">
                                     No training data yet.
                                 </p>
@@ -263,14 +263,14 @@ function StatisticsPage() {
                                         </span>
                                     </div>
 
-                                    <div className="w-full bg-gray-200 rounded-full h-3">
-                                        <div
-                                            className="bg-green-500 h-3 rounded-full transition-all"
-                                            style={{ width: `${(week.hours / maxHours) * 100}%` }}
-                                        />
+                                        <div className="w-full bg-gray-200 rounded-full h-3">
+                                            <div
+                                                className="bg-green-500 h-3 rounded-full transition-all"
+                                                style={{ width: `${(week.hours / maxHours) * 100}%` }}
+                                            />
+                                        </div>
                                     </div>
-                                </div>
-                            )))}
+                                )))}
                         </div>
                     </div>
                 </div>
@@ -301,7 +301,7 @@ function StatisticsPage() {
                                             {competition.result ? `Result: ${formatCompetitionResult(competition.result)}` : "No result recorded"}
                                         </p>
                                     </div>
-                                </div>                      
+                                </div>
                             ))}
                         </div>
                     </div>
@@ -315,6 +315,7 @@ function StatisticsPage() {
                             <div className="relative">
                                 <input
                                     type="text"
+                                    aria-label="Search exercise"
                                     placeholder="Search exercise e.g. Bench Press"
                                     value={exerciseSearch}
                                     onChange={(e) => {
@@ -355,6 +356,7 @@ function StatisticsPage() {
 
                             <input
                                 type="number"
+                                aria-label="Personal best value"
                                 placeholder="PB value e.g. 100"
                                 value={scoreValue}
                                 onChange={(e) => setScoreValue(e.target.value)}
@@ -375,7 +377,7 @@ function StatisticsPage() {
 
                         <div className="space-y-4">
                             {personalBests.map((pb, index) => (
-                                <div 
+                                <div
                                     key={index}
                                     className="border border-gray-200 rounded-lg p-4 flex justify-between"
                                 >

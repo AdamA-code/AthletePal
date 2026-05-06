@@ -217,7 +217,7 @@ function CardioPage() {
                 {/*Date*/}
                 <div className="mb-6">
                     <label htmlFor="cardio-date" className="block font-semibold mb-2">
-                        Date <span className="text-red-600 text-sm font-normal">*required</span>
+                        Date <span className="text-red-700 text-sm font-normal">*required</span>
                     </label>
                     <input
                         id="cardio-date"
@@ -231,7 +231,7 @@ function CardioPage() {
                 {/*Duration*/}
                 <div className="mb-6">
                     <label htmlFor="cardio-duration" className="block font-semibold mb-2">
-                        Duration (minutes) <span className="text-red-600 text-sm font-normal">*required</span>
+                        Duration (minutes) <span className="text-red-700 text-sm font-normal">*required</span>
                     </label>
                     <input
                         id="cardio-duration"
@@ -245,7 +245,7 @@ function CardioPage() {
                 {/*Notes*/}
                 <div className="mb-6">
                     <label htmlFor="cardio-notes" className="block font-semibold mb-2">
-                        Session Name <span className="text-gray-400 text-sm font-normal">(optional)</span>
+                        Session Name <span className="text-gray-600 text-sm font-normal">(optional)</span>
                     </label>
                     <input
                         id="cardio-notes"
@@ -260,7 +260,7 @@ function CardioPage() {
                 {/*Route section*/}
                 <div className="mb-6 bg-white p-4 rounded shadow">
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="font-semibold text-lg">Route <span className="text-gray-400 text-sm font-normal">(optional)</span></h3>
+                        <h3 className="font-semibold text-lg">Route <span className="text-gray-500 text-sm font-normal">(optional)</span></h3>
                         {routeMode && (
                             <button
                                 onClick={handleClearRoute}
@@ -278,7 +278,7 @@ function CardioPage() {
                             </p>
                             <div className="mb-4">
                                 <label htmlFor="route-name" className="block font-semibold mb-2">
-                                    Route Name <span className="text-gray-400 text-sm font-normal">(optional)</span>
+                                    Route Name <span className="text-gray-500 text-sm font-normal">(optional)</span>
                                 </label>
                                 <input
                                     id="route-name"
@@ -289,9 +289,9 @@ function CardioPage() {
                                 />
                             </div>
                             <div className="mb-4">
-                                <label className="block font-semibold mb-2">
+                                <p className="font-semibold mb-2">
                                     Draw Your Route on the Map
-                                </label>
+                                </p>
                                 <RouteMap onRouteDrawn={handleRouteDrawn} />
                                 {drawnRouteData && (
                                     <p className="text-green-700 text-sm mt-2">
@@ -332,7 +332,7 @@ function CardioPage() {
                             </p>
                             <div className="mb-4">
                                 <label htmlFor="route-name-draw" className="block font-semibold mb-2">
-                                    Route Name <span className="text-gray-400 text-sm font-normal">(optional)</span>
+                                    Route Name <span className="text-gray-500 text-sm font-normal">(optional)</span>
                                 </label>
                                 <input
                                     id="route-name-draw"
