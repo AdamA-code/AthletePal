@@ -110,7 +110,7 @@ function StatisticsPage() {
                 setAvailableExercises(Array.isArray(exercisesData.Exercises) ? exercisesData.Exercises : [])
                 setCompetitionStats(Array.isArray(competitionsData.Competitions) ? competitionsData.Competitions : [])
             } catch (err) {
-                console.error("Error fetching statistics:", err)
+                // console.error("Error fetching statistics:", err) - used for debugging
                 setError("Failed to fetch statistics.")
             }
         }
@@ -171,7 +171,7 @@ function StatisticsPage() {
                 setError(data.message || "Failed to add personal best.")
             }
         } catch (err) {
-            console.error("Add PB error:", err)
+            // console.error("Add PB error:", err)  Used for debugging
             setPbSuccess("")
             setError("Could not connect to server.")
         }
@@ -212,7 +212,7 @@ function StatisticsPage() {
                     {summaryStats.map((stat, index) => (
                         <div key={index} className="bg-white rounded-xl shadow-md p-6">
                             <p className="text-sm text-gray-500 mb-2">{stat.label}</p>
-                            <h3 className="text-2xl font-bold text-gray-800">{stat.value}</h3>
+                            <h2 className="text-2xl font-bold text-gray-800">{stat.value}</h2>
                         </div>
                     ))}
                 </div>

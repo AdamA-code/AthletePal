@@ -75,7 +75,7 @@ function ActivityHistoryPage() {
     return (
         <div className="min-h-screen bg-gray-100 flex">
             <Sidebar />
-            <div className="flex-1 p-8">
+            <main className="flex-1 p-8">
                 <h1 className="text-3xl font-bold text-blue-800 mb-6">
                     Activity History
                 </h1>
@@ -158,7 +158,7 @@ function ActivityHistoryPage() {
                         </div>
                     </div>
                 </div>
-            </div>
+            </main>
         </div>
     )
 }
