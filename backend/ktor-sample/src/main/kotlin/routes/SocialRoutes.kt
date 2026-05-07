@@ -9,6 +9,7 @@ import io.ktor.server.routing.get // Import GET HTTP request routes
 import io.ktor.server.routing.post // Import POST HTTP request routes
 import io.ktor.server.routing.put // Import PUT HTTP request routes
 import io.ktor.server.routing.route
+import models.GroupSessionRequest
 import models.UpdateGroupRequest // Import the data class model for requesting to update a group
 import services.DatabaseService // Import functions and methods for CRUD operations to db
 import services.DatabaseService.GroupSession as GroupSession
@@ -340,8 +341,8 @@ fun Route.socialRoutes() {
          */
         post("/session") {
             try {
-                val groupSession: GroupSession = call.receive<GroupSession>()
-                val id: Int = db.addGroupSession(groupSession)
+                val groupSession: GroupSessionRequest = call.receive<GroupSessionRequest>()
+                val id: Int = db.createGroupSessionWithWorkouts(groupSession.session, groupSession.createdBy)
 
                 if (id != -1) {
                     call.respond(HttpStatusCode.OK, mapOf("ID" to id))
