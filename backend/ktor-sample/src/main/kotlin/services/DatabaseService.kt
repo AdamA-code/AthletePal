@@ -2695,7 +2695,7 @@ class DatabaseService {
      * @return The created sessionID if successful, or -1 if not.
      */
     fun createGroupSessionWithWorkouts(session: GroupSession, createdBy: Int): Int {
-        val sessionID = addGroupSession(session) 
+        val sessionID = addGroupSession(session)
         if (sessionID == -1) return -1
 
         val routine = findWorkout(session.workoutID)
