@@ -123,10 +123,12 @@ function TrainingGroupsPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    sessionID: 0,
-                    groupID: Number(selectedGroupID),
-                    workoutID: Number(selectedWorkoutID),
-                    scheduledDate: sessionDate
+                    createdBy: Number(localStorage.getItem("userID")),
+                    session: {
+                        groupID: Number(selectedGroupID),
+                        workoutID: Number(selectedWorkoutID),
+                        scheduledDate: sessionDate,
+                    }
                 })
             })
 
