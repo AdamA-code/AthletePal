@@ -643,9 +643,11 @@ class SocialRoutesTest {
                     setBody(
                         """
                         {
+                            createdBy: ${userID!!},
+                            session: {
                             "groupID": ${groupID!!},
                             "workoutID": ${loggedWorkoutID!!},
-                            "scheduledDate": "2026-01-01"
+                            "scheduledDate": "2026-01-01"}
                         }
                         """.trimIndent(),
                     )
