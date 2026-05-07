@@ -12,7 +12,7 @@ function CreateTrainingGroupPage() {
     const [goal, setGoal] = useState("")
     const [error, setError] = useState("")
 
-    // Sends a new training group to the backend for the logged-in user.
+    // Validation for creating a group form and sends teh new group details to the backend for the current user who has logged in.
     const handleCreateGroup = async (event) => {
         event.preventDefault()
 

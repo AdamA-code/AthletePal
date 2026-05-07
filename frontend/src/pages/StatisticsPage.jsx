@@ -15,7 +15,9 @@ function StatisticsPage() {
     const [scoreValue, setScoreValue] = useState("")
     const [pbSuccess, setPbSuccess] = useState("")
     const [showExerciseDropdown, setShowExerciseDropdown] = useState(false)
+    const [pbError, setPbError] = useState("")
 
+    // Loads all stats data fro the user when the page opens by sending multiple requests to the backend for the different stats data and setting the respective states based on the returned data. Also handles errors while fetching data.
     useEffect(() => {
         const userID = localStorage.getItem("userID")
 
@@ -24,6 +26,7 @@ function StatisticsPage() {
             return
         }
 
+        // Fetches summary stats, workout history, personal bests, exercises and competitions from the backend.
         const fetchStatistics = async () => {
             try {
                 const [workoutRes, hoursRes, streakRes, historyRes, pbRes, exercisesRes, competitionsRes, allWorkoutsRes] = await Promise.all([
@@ -73,12 +76,14 @@ function StatisticsPage() {
                 const allWorkouts = Array.isArray(allWorkoutsData.Workouts)
                     ? allWorkoutsData.Workouts
                     : []
-
+                
+                // Removes routine template which then means that only workouts which have been completed by the user are used for the progression graph. This is because the routine templates don't have a duration and including them would mess up the hours trained graph and also including workouts without a duration would mess up both graphs.    
                 const completedWorkouts = allWorkouts.filter((workout) =>
                     workout.duration !== null &&
                     workout.isRoutine !== true
                 )
 
+                // Groups completed workouts by its date so that the progression graphs later can show the number of workouts and hours trained over time.
                 const groupedByDate = completedWorkouts.reduce((acc, workout) => {
                     const date = workout.date || "Unknown Date"
 
@@ -105,7 +110,7 @@ function StatisticsPage() {
                 setAvailableExercises(Array.isArray(exercisesData.Exercises) ? exercisesData.Exercises : [])
                 setCompetitionStats(Array.isArray(competitionsData.Competitions) ? competitionsData.Competitions : [])
             } catch (err) {
-                console.error("Error fetching statistics:", err)
+                // console.error("Error fetching statistics:", err) - used for debugging
                 setError("Failed to fetch statistics.")
             }
         }
@@ -113,7 +118,7 @@ function StatisticsPage() {
         fetchStatistics()
     }, [])
 
-    // Adds a personal best for the selected exercise.
+    // Validates the selected exercise and PB value, then saves the new personal best to the backend and updates the personal bests state to show the new PB on the frontend.
     const handleAddPersonalBest = async (event) => {
         event.preventDefault()
 
@@ -125,7 +130,7 @@ function StatisticsPage() {
         }
 
         if (!selectedExercise || !scoreValue) {
-            setError("Please select an exercise and enter a personal best value.")
+            setPbError("Please select an exercise and enter a personal best value.")
             return
         }
 
@@ -159,24 +164,28 @@ function StatisticsPage() {
                 setExerciseSearch("")
                 setSelectedExercise(null)
                 setScoreValue("")
-                setError("")
+                setPbError("")
                 setPbSuccess("Personal best added successfully.")
             } else {
                 setPbSuccess("")
                 setError(data.message || "Failed to add personal best.")
             }
         } catch (err) {
-            console.error("Add PB error:", err)
+            // console.error("Add PB error:", err)  Used for debugging
             setPbSuccess("")
             setError("Could not connect to server.")
         }
     }
+
+    // Filters through the available exercises based on the input from the user on the search bar.
     const filteredExercises = availableExercises.filter((exercise) =>
         exercise.name.toLowerCase().includes(exerciseSearch.toLowerCase())
     )
 
     const maxWorkouts = Math.max(...progressionData.map(w => Number(w.workouts || 0)), 1)
     const maxHours = Math.max(...progressionData.map(w => Number(w.hours || 0)), 1)
+
+    // Converts a compeition result stored in seconds into a more readable format of minutes and seconds. If there is no result recorded it returns a message saying that there is no result recorded.
     const formatCompetitionResult = (seconds) => {
         if (!seconds) return "No result recorded"
 
@@ -203,7 +212,7 @@ function StatisticsPage() {
                     {summaryStats.map((stat, index) => (
                         <div key={index} className="bg-white rounded-xl shadow-md p-6">
                             <p className="text-sm text-gray-500 mb-2">{stat.label}</p>
-                            <h3 className="text-2xl font-bold text-gray-800">{stat.value}</h3>
+                            <h2 className="text-2xl font-bold text-gray-800">{stat.value}</h2>
                         </div>
                     ))}
                 </div>
@@ -310,6 +319,12 @@ function StatisticsPage() {
                         <h2 className="text-2xl font-semibold text-gray-800 mb-4">
                             Personal Bests
                         </h2>
+
+                        {pbError && (
+                            <p className="text-red-700 text-sm mb-3" role="alert">
+                                {pbError}
+                            </p>
+                        )}
 
                         <form onSubmit={handleAddPersonalBest} className="mb-6 space-y-3">
                             <div className="relative">

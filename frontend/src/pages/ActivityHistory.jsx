@@ -10,6 +10,7 @@ function ActivityHistoryPage() {
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(true)
 
+    // Loads all workouts fro the logged in user when the pages opens and those workouts are then seperated by the respective workout types.
     useEffect(() => {
         const userID = localStorage.getItem("userID")
 
@@ -19,7 +20,7 @@ function ActivityHistoryPage() {
             return
         }
 
-        // Fetchs the logged in users activity history from the backend and sets the cardio and weight training states based on the workout type. Also handles errors and loading state.
+        // Fetches the logged in users activity history from the backend and sets the cardio and weight training states based on the workout type. Also handles errors and loading state.
         const fetchActivityHistory = async () => {
             try {
                 const response = await fetch(`${API_BASE_URL}/api/workouts/${userID}`)
@@ -57,12 +58,14 @@ function ActivityHistoryPage() {
         fetchActivityHistory()
     }, [])
 
+    //filters cardio workouts using the search input across workout type, date and notes
     const filteredCardio = cardioWorkouts.filter((workout) =>
         `${workout.workoutType || ""} ${workout.date || ""} ${workout.notes || ""}`
             .toLowerCase()
             .includes(searchTerm.toLowerCase())
     )
 
+    // Filters weight training workouts using the search input across workout type, date and notes
     const filteredWeights = weightTraining.filter((workout) =>
         `${workout.workoutType || ""} ${workout.date || ""} ${workout.notes || ""}`
             .toLowerCase()
@@ -72,7 +75,7 @@ function ActivityHistoryPage() {
     return (
         <div className="min-h-screen bg-gray-100 flex">
             <Sidebar />
-            <div className="flex-1 p-8">
+            <main className="flex-1 p-8">
                 <h1 className="text-3xl font-bold text-blue-800 mb-6">
                     Activity History
                 </h1>
@@ -112,7 +115,7 @@ function ActivityHistoryPage() {
                                             {workout.workoutType || "Cardio Workout"}
                                         </h3>
                                         <p className="text-gray-700">
-                                            Duration: {workout.duration} minutes
+                                            Duration: {workout.duration ? `${workout.duration} minutes` : "N/A"}
                                         </p>
                                         <p className="text-gray-600 mt-2">
                                             {workout.notes || "No notes added."}
@@ -142,7 +145,7 @@ function ActivityHistoryPage() {
                                             {workout.workoutType || "Weights Workout"}
                                         </h3>
                                         <p className="text-gray-700">
-                                            Duration: {workout.duration} minutes
+                                            Duration: {workout.duration ? `${workout.duration} minutes` : "N/A"}
                                         </p>
                                         <p className="text-gray-600 mt-2">
                                             {workout.notes || "No notes added."}
@@ -155,7 +158,7 @@ function ActivityHistoryPage() {
                         </div>
                     </div>
                 </div>
-            </div>
+            </main>
         </div>
     )
 }

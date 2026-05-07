@@ -16,7 +16,7 @@ function TrainingGroupsPage() {
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(true)
 
-    // Fetches training groups, joined groups and user's routines for group session creation.
+    // Loads all training groups, the users joined groups and the users routines when the page first opens
     useEffect(() => {
         const userID = localStorage.getItem("userID")
 
@@ -25,7 +25,8 @@ function TrainingGroupsPage() {
             setLoading(false)
             return
         }
-
+        
+        //Fetches all groups, joined groups and routine workouts then counts and marks which groups the user has already joined.
         const fetchGroups = async () => {
             try {
                 const [allGroupsRes, userGroupsRes, workoutsRes] = await Promise.all([
@@ -108,7 +109,7 @@ function TrainingGroupsPage() {
         }
     }
 
-    // Creates a scheduled session for a selected joined group using one of the user's routines.
+    // Validation for creating a group session form and sends the selected groups, routines and data to the backend.
     const handleCreateSession = async (event) => {
         event.preventDefault()
 

@@ -14,6 +14,7 @@ function CreateAccountPage() {
   const [error, setError] = useState("")
   const navigate = useNavigate()
 
+  // Handles the create account form submission by validating the entered information by checking the password length, then sending a request to the backend to create a new user account. If successful, it redirects the user to the login page, otherwise it shows a user-friendly error message. All returned user details are stored in localStorage for future authenticated requests.
   const handleSubmit = async (event) => {
     event.preventDefault() 
     if (!fullName || !email || !password || !age || !accountType) {
