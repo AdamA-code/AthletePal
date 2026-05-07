@@ -10,6 +10,7 @@ function DashboardPage() {
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(true)
 
+    // Loads dashboard data when the page opens using the logged in users email that is stored in localStorage to fetch the relevant data for that user from the backend. If no email is found, it shows an error message. Also handles errors and loading state while fetching data.
     useEffect(() => {
         const email = localStorage.getItem("email")
         {/* Console Logs for testing purposes 
@@ -23,7 +24,7 @@ function DashboardPage() {
             setLoading(false)
             return
         }
-        { /* Fetch dashboard data from backend */ }
+        // Fetches todays workouts, recent activity, and upcoming competitions for the logged in user from the backend and sets the respective states. Also handles errors and loading state.
         const fetchDashboardData = async () => {
             const headers = {
                 "Content-Type": "application/json"

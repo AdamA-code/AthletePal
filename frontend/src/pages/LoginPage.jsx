@@ -10,6 +10,9 @@ function LoginPage () {
     const [password, setPassword] = useState("")
     const [error, setError] = useState("")
 
+    // Handles the login form submission by using validation for the entered email and password, then sending a request to the backend to validate the user.
+    // If successful login, then its send the user to the dashboard page, otherwise it shows a user-friendly error message. All returned user details are stored in localStorage for future authenticated requests.
+
     const handleSubmit = async (event) => {
         event.preventDefault();
         if (!email || !password) {
@@ -17,7 +20,7 @@ function LoginPage () {
             return
         }
 
-        // Implemented logic to communicate with backend for fethcing the username and password and validating the user.
+        // Implemented logic to communicate with backend for fetching the username and password and validating the user.
         try {
             const response = await fetch(`${API_BASE_URL}/auth/login`, {
                 method: "POST",
