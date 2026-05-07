@@ -149,13 +149,12 @@ class DatabaseService {
     @Serializable
     data class Competition(
         val competitionID: Int = 0,
-        val competitionType: String? = null,
         val userID: Int,
         val name: String,
         val date: String,
         val rank: Int? = null,
         val result: Int? = null,
-        val competitionType: String? = null
+        val competitionType: String? = null,
     )
 
     /**
@@ -1580,7 +1579,8 @@ class DatabaseService {
         if (comp.rank != null && comp.rank <= 0) return -1
         if (comp.result != null && comp.result <= 0) return -1
         val validTypes = listOf("time", "score")
-        if (comp.competitionType != null && comp.competitionType !in validTypes) return -1
+        val validCompTypes = listOf("Weights", "Cardio")
+        if (comp.competitionType != null && comp.competitionType !in validCompTypes) return -1
 
         val stmt =
             db.connection.prepareStatement(
@@ -3213,6 +3213,7 @@ class DatabaseService {
             val workoutID = createWorkout(workout)
             if (workoutID == -1) {
                 db.connection.rollback()
+                println("Workout Creation Failure")
                 return -1
             }
             // Link each exercise to the workout, if fails undo everything
@@ -3228,6 +3229,7 @@ class DatabaseService {
                     )
                 if (addExerciseToWorkout(we) == -1) {
                     db.connection.rollback()
+                    println("Exercise Adding to workout Failed on exercise: $exercise")
                     return -1
                 }
             }
@@ -3237,6 +3239,7 @@ class DatabaseService {
         } catch (error: Exception) {
             // If any error undo everything
             db.connection.rollback()
+            println("Exception met")
             return -1
         } finally {
             db.connection.autoCommit = true // Restore autocommit

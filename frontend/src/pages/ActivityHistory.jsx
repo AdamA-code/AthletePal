@@ -9,7 +9,7 @@ function ActivityHistoryPage() {
     const [weightTraining, setWeightTraining] = useState([])
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(true)
-    
+
     useEffect(() => {
         const userID = localStorage.getItem("userID")
 
@@ -33,20 +33,20 @@ function ActivityHistoryPage() {
                 const workouts = Array.isArray(data.Workouts) ? data.Workouts : []
 
                 setCardioWorkouts(
-                    workouts.filter((workout) => 
-                    ["cardio", "running", "cycling", "swimming"].includes(
-                        workout.workoutType?.toLowerCase()
-                    
-                    )
+                    workouts.filter((workout) =>
+                        ["cardio", "running", "cycling", "swimming"].includes(
+                            workout.workoutType?.toLowerCase()
+
+                        )
                     )
                 )
 
                 setWeightTraining(
-                    workouts.filter((workout) => 
+                    workouts.filter((workout) =>
                         workout.workoutType?.toLowerCase() === "weights"
+                    )
                 )
-                )
-            } catch (err){
+            } catch (err) {
                 console.error("Activity history error:", err)
                 setError("Failed to load activity history")
             } finally {
@@ -59,14 +59,14 @@ function ActivityHistoryPage() {
 
     const filteredCardio = cardioWorkouts.filter((workout) =>
         `${workout.workoutType || ""} ${workout.date || ""} ${workout.notes || ""}`
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())
     )
 
     const filteredWeights = weightTraining.filter((workout) =>
         `${workout.workoutType || ""} ${workout.date || ""} ${workout.notes || ""}`
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())
     )
 
     return (
@@ -83,9 +83,10 @@ function ActivityHistoryPage() {
                 {loading && <p className="text-gray-600 mb-4">Loading activity history...</p>}
 
                 <div className="mb-6">
-                    <input 
+                    <input
                         type="text"
                         placeholder="Search workouts..."
+                        aria-label="Search workouts"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full md:w-96 border border-gray-300 rounded-lg py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
@@ -100,63 +101,63 @@ function ActivityHistoryPage() {
                         </h2>
 
                         <div className="h-[500px] overflow-y-auto pr-2 space-y-4">
-                        {filteredCardio.length > 0 ? (
-                            filteredCardio.map((workout) => (
-                                <div 
-                                    key={workout.workoutID}
-                                    className="border border-gray-200 rounded-lg p-4 bg-gray-50"
-                                >
-                                    <p className="text-sm text-gray-500 mb-2">{workout.date}</p>
-                                    <h3 className="text-lg font-semibold text-gray-800">
-                                        {workout.workoutType || "Cardio Workout"}
-                                    </h3>
-                                    <p className="text-gray-700">
-                                        Duration: {workout.duration} minutes 
-                                    </p>
-                                    <p className="text-gray-600 mt-2">
-                                        {workout.notes || "No notes added."}
-                                    </p>
-                                </div>
-                            ))
-                        ) : (
-                            <p className="text-gray-500">No cardio workouts found.</p>
-                        )}
+                            {filteredCardio.length > 0 ? (
+                                filteredCardio.map((workout) => (
+                                    <div
+                                        key={workout.workoutID}
+                                        className="border border-gray-200 rounded-lg p-4 bg-gray-50"
+                                    >
+                                        <p className="text-sm text-gray-500 mb-2">{workout.date}</p>
+                                        <h3 className="text-lg font-semibold text-gray-800">
+                                            {workout.workoutType || "Cardio Workout"}
+                                        </h3>
+                                        <p className="text-gray-700">
+                                            Duration: {workout.duration} minutes
+                                        </p>
+                                        <p className="text-gray-600 mt-2">
+                                            {workout.notes || "No notes added."}
+                                        </p>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-gray-500">No cardio workouts found.</p>
+                            )}
+                        </div>
+                    </div>
+                    {/* Weight Lifting Card */}
+                    <div className="bg-white rounded-xl shadow-md p-6">
+                        <h2 className="text-2xl font-semibold mb-4 text-gray-800">
+                            Weight Lifting History
+                        </h2>
+
+                        <div className="h-[500px] overflow-y-auto pr-2 space-y-4">
+                            {filteredWeights.length > 0 ? (
+                                filteredWeights.map((workout) => (
+                                    <div
+                                        key={workout.workoutID}
+                                        className="border border-gray-200 rounded-lg p-4 bg-gray-50"
+                                    >
+                                        <p className="text-sm text-gray-500 mb-2">{workout.date}</p>
+                                        <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                                            {workout.workoutType || "Weights Workout"}
+                                        </h3>
+                                        <p className="text-gray-700">
+                                            Duration: {workout.duration} minutes
+                                        </p>
+                                        <p className="text-gray-600 mt-2">
+                                            {workout.notes || "No notes added."}
+                                        </p>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-gray-500">No weightlifting workouts found.</p>
+                            )}
+                        </div>
                     </div>
                 </div>
-                {/* Weight Lifting Card */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-2xl font-semibold mb-4 text-gray-800">
-              Weight Lifting History
-            </h2>
-
-            <div className="h-[500px] overflow-y-auto pr-2 space-y-4">
-              {filteredWeights.length > 0 ? (
-                filteredWeights.map((workout) => (
-                  <div
-                    key={workout.workoutID}
-                    className="border border-gray-200 rounded-lg p-4 bg-gray-50"
-                  >
-                    <p className="text-sm text-gray-500 mb-2">{workout.date}</p>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                      {workout.workoutType || "Weights Workout"}
-                    </h3>
-                    <p className="text-gray-700">
-                        Duration: {workout.duration} minutes
-                    </p>
-                    <p className="text-gray-600 mt-2">
-                        {workout.notes || "No notes added."}
-                    </p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-500">No weightlifting workouts found.</p>
-              )}
             </div>
-          </div>
         </div>
-      </div>
-    </div>
-  )
+    )
 }
 
 export default ActivityHistoryPage

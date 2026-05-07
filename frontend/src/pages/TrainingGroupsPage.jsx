@@ -161,7 +161,7 @@ function TrainingGroupsPage() {
                     Join virtual training groups, work towards shared goals, and stay motivated together.
                 </p>
 
-                {error && <p className="text-red-700 text-sm mb-4" role="alert">{error}</p>}
+                
                 {loading && <p className="text-gray-600 mb-4">Loading training groups...</p>}
 
                 <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
@@ -223,6 +223,12 @@ function TrainingGroupsPage() {
                             {sessionSuccess && (
                                 <p className="text-green-700 text-sm mb-3" role="status">
                                     {sessionSuccess}
+                                </p>
+                            )}
+
+                            {error && (
+                                <p className="text-red-700 text-sm mb-3" role="alert">
+                                    {error}
                                 </p>
                             )}
 
@@ -300,7 +306,7 @@ function TrainingGroupsPage() {
 
                             <button
                                 onClick={() => navigate("/training-groups/create")}
-                                className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
+                                className="w-full bg-green-700 text-white py-2 rounded-lg hover:bg-green-800"
                             >
                                 Create Group
                             </button>

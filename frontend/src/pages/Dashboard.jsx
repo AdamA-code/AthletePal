@@ -74,7 +74,7 @@ function DashboardPage() {
                             <div className="space-y-2">
                                 {todaysWorkouts.map((workout, i) => (
                                     <p key={i} className="text-gray-700">
-                                        {workout.name || workout.type || "Workout"}
+                                        {workout.notes || workout.workoutType || "Workout"}
                                     </p>
                                 ))}
                             </div>
