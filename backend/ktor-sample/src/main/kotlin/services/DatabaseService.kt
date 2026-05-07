@@ -2682,24 +2682,24 @@ class DatabaseService {
     }
 
     /**
-     * This function logs a "routine" to every member of the group. The workout will be created
-     * by one member of the group and assigned to all in the group.
+     * Logs a "routine" to every member of a training group.
      * 
-     * First the function creates adds a group session to the database using addGroupSession(). Then it finds the required
+     * First the function adds a group session to the database using addGroupSession(). Then it finds the required
      * routine to be logged for all members using findWorkout().
      * The exercises are found in this routine using findAllWorkoutExercises() and the members who need the
      * routine assigned to are fetched using findGroupMembers(). Each member found is looped through with
      * logWorkout() being called for each so that workouts are logged atomically.
      * 
-     * @param session The information of the GroupSession
-     * @param createdBy The user in the group who created the group session
-     * @return The created group session ID if successful, -1 if there were any errors
+     * @param session The GroupSession data to store.
+     * @param createdBy The userID of the user in the group who created the group session.
+     * @return The created sessionID if successful, or -1 if not.
      */
     fun createGroupSessionWithWorkouts(session: GroupSession, createdBy: Int): Int {
         val sessionID = addGroupSession(session) 
         if (sessionID == -1) return -1
 
-        val routine = findWorkout(session.workoutID) ?: return -1
+        val routine = findWorkout(session.workoutID)
+        if (routine == null) return -1
         val exercises = findAllWorkoutExercises(session.workoutID)
         val members = findGroupMembers(session.groupID)
 
@@ -2712,7 +2712,8 @@ class DatabaseService {
                 notes = routine.notes,
                 isRoutine = false,
             )
-            if (logWorkout(memberWorkout, exercises) == -1) return -1
+            val workoutID = logWorkout(memberWorkout, exercises)
+            if (workoutID == -1) return -1
         }
 
         return sessionID
