@@ -31,7 +31,9 @@ function ActivityHistoryPage() {
                     return
                 }
 
-                const workouts = Array.isArray(data.Workouts) ? data.Workouts : []
+                const workouts = Array.isArray(data.Workouts)
+                    ? data.Workouts.filter((workout) => workout.isRoutine !== true) 
+                    : []
 
                 setCardioWorkouts(
                     workouts.filter((workout) =>

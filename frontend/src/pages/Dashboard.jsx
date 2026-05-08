@@ -40,7 +40,12 @@ function DashboardPage() {
                 const activityData = await activityResponse.json()
                 const competitionsData = await competitionsResponse.json()
                 
-                setTodaysWorkouts(Array.isArray(workoutsData.Workouts) ? workoutsData.Workouts : [])
+                setTodaysWorkouts(
+                    Array.isArray(workoutsData.Workouts)
+                        ? workoutsData.Workouts.filter((workout) => workout.isRoutine !== true) 
+                        : []
+                )
+
                 setRecentActivity(activityData || null)
                 setUpcomingCompetitions(Array.isArray(competitionsData.Competitions) ? competitionsData.Competitions : [])
             } catch (err) {
